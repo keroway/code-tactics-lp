@@ -1,0 +1,143 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// 外部リンク (本体リポジトリ / web 版プレイ)。LP 内に内部ページはまだない。
+const PLAY_URL = 'https://keroway.github.io/code-tactics/';
+const REPO_URL = 'https://github.com/keroway/code-tactics';
+
+// 遊び方 3 ステップ (content-plan.md より)
+const steps = [
+  {
+    no: '01',
+    title: 'ルールを組む',
+    body: 'ガンビット式で「もし〜なら〜する」を並べ、ユニットの AI を設計する。',
+  },
+  {
+    no: '02',
+    title: '自動戦闘を見る',
+    body: '操作はしない。組んだルールどおりに戦車が動く様子を観察する。',
+  },
+  {
+    no: '03',
+    title: 'ログで分析して直す',
+    body: '負けた理由を戦闘ログから読み解き、ルールを修正して再挑戦する。',
+  },
+];
+
+const features = [
+  {
+    title: 'ガンビット式 AI 設定',
+    body: '条件と行動を優先順で並べるだけ。プログラミング不要で AI の挙動を組める。',
+  },
+  {
+    title: '決定論シミュレーション',
+    body: '同じ条件なら必ず同じ結果。再現性があるからこそ、原因の特定と改善ができる。',
+  },
+  {
+    title: '戦闘ログによる分析',
+    body: '何が起きたかを時系列で確認。仮説を立て、ルールを直し、検証するサイクル。',
+  },
+];
+---
+
+<Layout>
+  <!-- ヒーロー (ファーストビュー) -->
+  <header class="mx-auto flex max-w-5xl flex-col items-start gap-6 px-6 pt-24 pb-16">
+    <p class="font-mono text-sm tracking-widest text-emerald-400 uppercase">
+      programmable auto-battle
+    </p>
+    <h1 class="text-4xl font-bold tracking-tight sm:text-6xl">
+      自分で組んだ AI で、<br />戦車を戦わせる。
+    </h1>
+    <p class="max-w-2xl text-lg text-slate-300">
+      ユニットは直接操作しない。戦う前に AI ルールを設計し、自動戦闘の結果とログを
+      観察して、負けた理由を直していく ―― そんなサイクルが中核のオートバトル。
+    </p>
+    <div class="mt-2 flex flex-wrap gap-4">
+      <a
+        href={PLAY_URL}
+        class="rounded-md bg-emerald-500 px-6 py-3 font-semibold text-slate-950 transition hover:bg-emerald-400"
+      >
+        今すぐプレイ
+      </a>
+      <a
+        href={REPO_URL}
+        class="rounded-md border border-slate-700 px-6 py-3 font-semibold text-slate-100 transition hover:border-slate-500"
+      >
+        GitHub を見る
+      </a>
+    </div>
+    <!-- TODO: ゲーム画面のスクリーンショット / GIF を差し込む -->
+  </header>
+
+  <main class="mx-auto flex max-w-5xl flex-col gap-24 px-6 pb-24">
+    <!-- コンセプト -->
+    <section>
+      <h2 class="text-2xl font-bold sm:text-3xl">直接操作しない。AI を組んで戦わせる。</h2>
+      <p class="mt-4 max-w-2xl text-slate-300">
+        設計 → 観察 → デバッグ → 改善。プレイヤーの腕前ではなく、組んだ AI の良し悪しで
+        勝敗が決まる。負けたら原因を分析してルールを直す、その繰り返しが面白さの核心。
+      </p>
+    </section>
+
+    <!-- 遊び方 3 ステップ -->
+    <section>
+      <h2 class="text-2xl font-bold sm:text-3xl">遊び方</h2>
+      <ol class="mt-8 grid gap-6 sm:grid-cols-3">
+        {
+          steps.map((s) => (
+            <li class="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
+              <span class="font-mono text-sm text-emerald-400">{s.no}</span>
+              <h3 class="mt-2 text-lg font-semibold">{s.title}</h3>
+              <p class="mt-2 text-sm text-slate-300">{s.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <!-- 特徴 / 魅力 -->
+    <section>
+      <h2 class="text-2xl font-bold sm:text-3xl">特徴</h2>
+      <div class="mt-8 grid gap-6 sm:grid-cols-3">
+        {
+          features.map((f) => (
+            <div class="rounded-lg border border-slate-800 bg-slate-900/50 p-6">
+              <h3 class="text-lg font-semibold">{f.title}</h3>
+              <p class="mt-2 text-sm text-slate-300">{f.body}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <!-- TODO: スクリーンショット / デモ, ロードマップ セクション (content-plan.md 参照) -->
+
+    <!-- フッター CTA -->
+    <section class="rounded-xl border border-slate-800 bg-slate-900/50 p-10 text-center">
+      <h2 class="text-2xl font-bold sm:text-3xl">まずは 1 戦、組んでみる。</h2>
+      <div class="mt-6 flex flex-wrap justify-center gap-4">
+        <a
+          href={PLAY_URL}
+          class="rounded-md bg-emerald-500 px-6 py-3 font-semibold text-slate-950 transition hover:bg-emerald-400"
+        >
+          今すぐプレイ
+        </a>
+        <a
+          href={REPO_URL}
+          class="rounded-md border border-slate-700 px-6 py-3 font-semibold text-slate-100 transition hover:border-slate-500"
+        >
+          GitHub を見る
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-slate-800">
+    <div class="mx-auto max-w-5xl px-6 py-8 text-sm text-slate-500">
+      <p>
+        code-tactics ―― 2D プログラマブル・オートバトル。MIT License.
+      </p>
+    </div>
+  </footer>
+</Layout>
