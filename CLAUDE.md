@@ -15,21 +15,36 @@ LP の文言はそこから引いて短く言い換える方針 (`docs/content-p
 
 ## 現状とスタック
 
-**実装前段階**。`package.json` もビルド構成もまだ存在せず、コンテンツは `docs/` の
-検討ドキュメントのみ。次の作業は選定フレームワークでの scaffold。
+**実装済み・公開中** (<https://keroway.github.io/code-tactics-lp/>)。Astro でビルドし
+GitHub Pages へ自動デプロイ。中身はまだ初期スケルトンで、デザイン作り込みとアセット
+差し込みが今後の主作業。
 
 確定済みスタック (`docs/decisions.md` が決定記録):
 
-- フレームワーク: **Astro**
-- スタイリング: **Tailwind CSS**
-- ホスティング: **GitHub Pages**
-
-scaffold 後に有効化される想定のコマンド (現時点では未存在):
+- フレームワーク: **Astro** (v6)
+- スタイリング: **Tailwind CSS** (v4 / `@tailwindcss/vite` プラグイン経由。
+  グローバル CSS は `src/styles/global.css` の `@import "tailwindcss";` のみ。
+  v3 系の `tailwind.config` や `@astrojs/tailwind` 統合は使わない)
+- ホスティング: **GitHub Pages** (`.github/workflows/deploy.yml` が `withastro/action@v5`
+  で main push 時にデプロイ。Pages のソースは「GitHub Actions」)
 
 ```sh
-npm run dev     # 開発サーバー
-npm run build   # 静的出力 (本番ビルド)
+npm run dev          # 開発サーバー (/code-tactics-lp/ 配下で配信)
+npm run build        # 静的出力 → dist/
+npm run preview      # ビルド結果のプレビュー
+npm run astro check  # 型チェック
 ```
+
+## デプロイ
+
+main にマージすると GitHub Actions が自動でビルド・デプロイする。手動実行は Actions の
+"Deploy to GitHub Pages" ワークフローの `workflow_dispatch` から。
+
+## 主要ファイル
+
+- `astro.config.mjs` — `site` / `base` (`/code-tactics-lp`) と Tailwind の Vite プラグイン
+- `src/layouts/Layout.astro` — `<head>` / meta / OGP。アセットは `import.meta.env.BASE_URL` 前置
+- `src/pages/index.astro` — LP 本体 (1 ページ)。セクション構成は `docs/content-plan.md` に対応
 
 ## 実装時の重要な制約
 
