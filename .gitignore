@@ -1,0 +1,24 @@
+# dependencies
+node_modules/
+
+# build output (フレームワーク確定後に調整)
+dist/
+build/
+.output/
+.astro/
+.svelte-kit/
+.next/
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
