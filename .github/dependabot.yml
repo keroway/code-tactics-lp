@@ -1,0 +1,26 @@
+version: 2
+updates:
+  # npm (Astro / Tailwind 等)。package.json 作成後に自動で有効化される
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      # マイナー/パッチはまとめて 1 PR にしてノイズを抑える
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions (今後の GitHub Pages デプロイ用ワークフロー)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        update-types:
+          - "minor"
+          - "patch"
