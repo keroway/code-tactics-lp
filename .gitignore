@@ -22,3 +22,6 @@ npm-debug.log*
 .DS_Store
 .vscode/
 .idea/
+
+# agent tooling (ローカルの Claude Code 作業ディレクトリ)
+.claude/
