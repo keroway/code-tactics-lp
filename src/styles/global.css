@@ -8,6 +8,24 @@
 @theme {
   --color-accent: var(--color-emerald-400);
   --color-accent-strong: var(--color-emerald-500);
+
+  /*
+   * タイポグラフィ (docs/design-direction.md):
+   *   本文/見出し = 可読性重視のサンセリフ (見出しは font-bold で「力強さ」を出す)
+   *   等幅       = ログ/ルール/コード風の演出 (プログラマブル感の核)
+   * Web フォントは読み込まず、日本語を含むシステムフォントスタックで最適化する。
+   * ネットワーク取得が無いため FOUT/CLS が発生しない (= 静的 LP の速度を損なわない)。
+   * 等幅で扱う内容 (ルール条件・戦闘ログ) はすべて ASCII のため和文等幅は不要。
+   */
+  /* prettier-ignore */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", YuGothic,
+    Meiryo, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  /* prettier-ignore */
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
 /* うっすらしたグリッド背景でエンジニアリング感を出す (装飾なので減色寄り) */
