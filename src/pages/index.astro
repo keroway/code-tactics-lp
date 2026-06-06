@@ -1,105 +1,127 @@
 ---
-import Layout from '../layouts/Layout.astro';
+import Layout from "../layouts/Layout.astro";
 
 // 外部リンク (本体リポジトリ / web 版プレイ)。LP 内に内部ページはまだない。
-const PLAY_URL = 'https://keroway.github.io/code-tactics/';
-const REPO_URL = 'https://github.com/keroway/code-tactics';
+const PLAY_URL = "https://keroway.github.io/code-tactics/";
+const REPO_URL = "https://github.com/keroway/code-tactics";
 
 // 遊び方 3 ステップ (本体 SPEC.md の基本ゲームループより)
 const steps = [
   {
-    no: '01',
-    title: 'ルールを組む',
-    body: 'ガンビット式で「もし〜なら〜する」を優先順に並べ、ユニットの AI を設計する。',
+    no: "01",
+    title: "ルールを組む",
+    body: "ガンビット式で「もし〜なら〜する」を優先順に並べ、ユニットの AI を設計する。",
   },
   {
-    no: '02',
-    title: '自動戦闘を見る',
-    body: '操作はしない。組んだルールどおりに戦車が動く様子を観察する。',
+    no: "02",
+    title: "自動戦闘を見る",
+    body: "操作はしない。組んだルールどおりに戦車が動く様子を観察する。",
   },
   {
-    no: '03',
-    title: 'ログで分析して直す',
-    body: '負けた理由を戦闘ログから読み解き、ルールを修正して再挑戦する。',
+    no: "03",
+    title: "ログで分析して直す",
+    body: "負けた理由を戦闘ログから読み解き、ルールを修正して再挑戦する。",
   },
 ];
 
 const features = [
   {
-    title: 'ガンビット式 AI 設定',
-    body: '条件と行動を優先順で並べるだけ。プログラミング不要で AI の挙動を組める。',
+    title: "ガンビット式 AI 設定",
+    body: "条件と行動を優先順で並べるだけ。プログラミング不要で AI の挙動を組める。",
   },
   {
-    title: '決定論シミュレーション',
-    body: '同じ条件・同じ乱数シードなら必ず同じ結果。再現性があるから原因を特定できる。',
+    title: "決定論シミュレーション",
+    body: "同じ条件・同じ乱数シードなら必ず同じ結果。再現性があるから原因を特定できる。",
   },
   {
-    title: '戦闘ログによる分析',
-    body: 'いつ・どのルールが発動し何が起きたかを時系列で確認。仮説 → 修正 → 検証のサイクル。',
+    title: "戦闘ログによる分析",
+    body: "いつ・どのルールが発動し何が起きたかを時系列で確認。仮説 → 修正 → 検証のサイクル。",
   },
 ];
 
 // ショーケース用。本体 SPEC.md のガンビットルール例をそのまま使用。
 const sampleRules = [
-  { cond: 'hp_below 30%', action: 'move_away (nearest_enemy)' },
-  { cond: 'enemy_in_range && weapon_ready', action: 'attack (nearest_enemy)' },
-  { cond: 'enemy_detected', action: 'move_to (nearest_enemy)' },
-  { cond: 'always', action: 'stop' },
+  { cond: "hp_below 30%", action: "move_away (nearest_enemy)" },
+  { cond: "enemy_in_range && weapon_ready", action: "attack (nearest_enemy)" },
+  { cond: "enemy_detected", action: "move_to (nearest_enemy)" },
+  { cond: "always", action: "stop" },
 ];
 
 // ショーケース用。本体 SPEC.md の戦闘ログ例。
 const sampleLog = [
-  'tick=120 unit=TankA rule=2 condition=enemy_in_range action=attack',
-  'tick=121 unit=TankB event=damaged from=TankA damage=10 hp=70',
-  'tick=300 unit=TankA rule=1 condition=hp_below action=move_away',
-  'tick=450 unit=TankB event=destroyed',
+  "tick=120 unit=TankA rule=2 condition=enemy_in_range action=attack",
+  "tick=121 unit=TankB event=damaged from=TankA damage=10 hp=70",
+  "tick=300 unit=TankA rule=1 condition=hp_below action=move_away",
+  "tick=450 unit=TankB event=destroyed",
 ];
 
 // ロードマップ (本体 SPEC.md「将来的な拡張方針」より)
 const roadmap = [
   {
-    version: 'MVP',
-    status: '現在',
-    items: ['1on1 の自動戦闘', '戦車型ユニット 1 種', 'ガンビット式ルール', '戦闘 / ルール発動ログ'],
+    version: "MVP",
+    status: "現在",
+    items: [
+      "1on1 の自動戦闘",
+      "戦車型ユニット 1 種",
+      "ガンビット式ルール",
+      "戦闘 / ルール発動ログ",
+    ],
   },
   {
-    version: 'v0.2',
-    status: '次',
-    items: ['2on2・複数ユニット編成', 'ルール発動統計', 'リプレイ保存', '簡易ステージ制'],
+    version: "v0.2",
+    status: "次",
+    items: [
+      "2on2・複数ユニット編成",
+      "ルール発動統計",
+      "リプレイ保存",
+      "簡易ステージ制",
+    ],
   },
   {
-    version: 'v0.3',
-    status: '予定',
-    items: ['障害物・射線判定', '簡易経路探索', 'keep_distance 行動', 'ターゲット選択の拡充'],
+    version: "v0.3",
+    status: "予定",
+    items: [
+      "障害物・射線判定",
+      "簡易経路探索",
+      "keep_distance 行動",
+      "ターゲット選択の拡充",
+    ],
   },
   {
-    version: 'v0.4',
-    status: '予定',
-    items: ['ユニット種別追加 (軽/重/偵察/ミサイル)', '武器種追加', '役割分担'],
+    version: "v0.4",
+    status: "予定",
+    items: ["ユニット種別追加 (軽/重/偵察/ミサイル)", "武器種追加", "役割分担"],
   },
   {
-    version: 'v0.5',
-    status: '構想',
-    items: ['簡易プログラム言語', 'ガンビット ⇄ AST/JSON 相互変換'],
+    version: "v0.5",
+    status: "構想",
+    items: ["簡易プログラム言語", "ガンビット ⇄ AST/JSON 相互変換"],
   },
   {
-    version: 'v1.0',
-    status: '構想',
-    items: ['ひとり用キャンペーン', '非同期ネット対戦', 'リプレイ共有・ランキング'],
+    version: "v1.0",
+    status: "構想",
+    items: [
+      "ひとり用キャンペーン",
+      "非同期ネット対戦",
+      "リプレイ共有・ランキング",
+    ],
   },
 ];
 ---
 
 <Layout>
   <!-- ヒーロー (ファーストビュー) -->
-  <header class="mx-auto flex max-w-5xl flex-col items-start gap-6 px-6 pt-24 pb-16">
+  <header
+    class="mx-auto flex max-w-5xl flex-col items-start gap-6 px-6 pt-24 pb-16"
+  >
     <p class="eyebrow">programmable auto-battle</p>
     <h1 class="text-4xl font-bold tracking-tight sm:text-6xl">
       自分で組んだ AI で、<br />戦車を戦わせる。
     </h1>
     <p class="max-w-2xl text-lg text-slate-300">
-      ユニットは直接操作しない。戦う前に AI ルールを設計し、自動戦闘の結果とログを
-      観察して、負けた理由を直していく ―― そんなサイクルが中核のオートバトル。
+      ユニットは直接操作しない。戦う前に AI
+      ルールを設計し、自動戦闘の結果とログを 観察して、負けた理由を直していく ――
+      そんなサイクルが中核のオートバトル。
     </p>
     <div class="mt-2 flex flex-wrap gap-4">
       <a href={PLAY_URL} class="btn-primary">今すぐプレイ</a>
@@ -111,9 +133,12 @@ const roadmap = [
     <!-- コンセプト -->
     <section>
       <p class="eyebrow">concept</p>
-      <h2 class="mt-3 text-2xl font-bold sm:text-3xl">直接操作しない。AI を組んで戦わせる。</h2>
+      <h2 class="mt-3 text-2xl font-bold sm:text-3xl">
+        直接操作しない。AI を組んで戦わせる。
+      </h2>
       <p class="mt-4 max-w-2xl text-slate-300">
-        設計 → 観察 → デバッグ → 改善。プレイヤーの腕前ではなく、組んだ AI の良し悪しで
+        設計 → 観察 → デバッグ → 改善。プレイヤーの腕前ではなく、組んだ AI
+        の良し悪しで
         勝敗が決まる。負けたら原因を分析してルールを直す、その繰り返しが面白さの核心。
       </p>
     </section>
@@ -159,11 +184,17 @@ const roadmap = [
     -->
     <section>
       <p class="eyebrow">how it works</p>
-      <h2 class="mt-3 text-2xl font-bold sm:text-3xl">ルールを組み、ログで読み解く。</h2>
+      <h2 class="mt-3 text-2xl font-bold sm:text-3xl">
+        ルールを組み、ログで読み解く。
+      </h2>
       <div class="mt-8 grid gap-6 lg:grid-cols-2">
         <!-- ルールエディタ (モック) -->
-        <figure class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60">
-          <figcaption class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400">
+        <figure
+          class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
+        >
+          <figcaption
+            class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400"
+          >
             <span class="size-2.5 rounded-full bg-rose-500/70"></span>
             <span class="size-2.5 rounded-full bg-amber-500/70"></span>
             <span class="size-2.5 rounded-full bg-emerald-500/70"></span>
@@ -173,7 +204,9 @@ const roadmap = [
             {
               sampleRules.map((r, i) => (
                 <li class="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
-                  <span class="text-emerald-400">{String(i + 1).padStart(2, '0')}</span>
+                  <span class="text-emerald-400">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
                   <span class="text-slate-300">
                     if <span class="text-sky-300">{r.cond}</span>
                   </span>
@@ -186,27 +219,36 @@ const roadmap = [
         </figure>
 
         <!-- 戦闘ログ (モック) -->
-        <figure class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60">
-          <figcaption class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400">
+        <figure
+          class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
+        >
+          <figcaption
+            class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400"
+          >
             <span class="size-2.5 rounded-full bg-rose-500/70"></span>
             <span class="size-2.5 rounded-full bg-amber-500/70"></span>
             <span class="size-2.5 rounded-full bg-emerald-500/70"></span>
             <span class="ml-2">battle log</span>
           </figcaption>
-          <pre class="overflow-x-auto px-4 py-3 font-mono text-sm leading-relaxed text-slate-400"><code>{sampleLog.join('\n')}</code></pre>
+          <pre
+            class="overflow-x-auto px-4 py-3 font-mono text-sm leading-relaxed text-slate-400"><code>{sampleLog.join('\n')}</code></pre>
         </figure>
       </div>
       <p class="mt-4 font-mono text-xs text-slate-500">
-        ※ 上記はゲームの仕組みを示すイメージ。実際のプレイ画面は「今すぐプレイ」から。
+        ※
+        上記はゲームの仕組みを示すイメージ。実際のプレイ画面は「今すぐプレイ」から。
       </p>
     </section>
 
     <!-- ロードマップ -->
     <section>
       <p class="eyebrow">roadmap</p>
-      <h2 class="mt-3 text-2xl font-bold sm:text-3xl">これからのロードマップ</h2>
+      <h2 class="mt-3 text-2xl font-bold sm:text-3xl">
+        これからのロードマップ
+      </h2>
       <p class="mt-4 max-w-2xl text-slate-300">
-        現在は 1on1 の MVP。手応えを確かめながら、複数ユニット戦・障害物・簡易プログラム
+        現在は 1on1 の
+        MVP。手応えを確かめながら、複数ユニット戦・障害物・簡易プログラム
         言語・ネット対戦へと段階的に広げていく (本体の SPEC に連動)。
       </p>
       <ol class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -214,13 +256,17 @@ const roadmap = [
           roadmap.map((r) => (
             <li class="rounded-lg border border-slate-800 bg-slate-900/50 p-5">
               <div class="flex items-baseline justify-between">
-                <span class="font-mono text-lg font-bold text-emerald-400">{r.version}</span>
+                <span class="font-mono text-lg font-bold text-emerald-400">
+                  {r.version}
+                </span>
                 <span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">
                   {r.status}
                 </span>
               </div>
               <ul class="mt-3 space-y-1 text-sm text-slate-300">
-                {r.items.map((it) => <li>・{it}</li>)}
+                {r.items.map((it) => (
+                  <li>・{it}</li>
+                ))}
               </ul>
             </li>
           ))
@@ -229,7 +275,9 @@ const roadmap = [
     </section>
 
     <!-- フッター CTA -->
-    <section class="rounded-xl border border-slate-800 bg-slate-900/50 p-10 text-center">
+    <section
+      class="rounded-xl border border-slate-800 bg-slate-900/50 p-10 text-center"
+    >
       <h2 class="text-2xl font-bold sm:text-3xl">まずは 1 戦、組んでみる。</h2>
       <div class="mt-6 flex flex-wrap justify-center gap-4">
         <a href={PLAY_URL} class="btn-primary">今すぐプレイ</a>
@@ -239,7 +287,9 @@ const roadmap = [
   </main>
 
   <footer class="border-t border-slate-800">
-    <div class="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      class="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between"
+    >
       <p>code-tactics ―― 2D プログラマブル・オートバトル。MIT License.</p>
       <nav class="flex gap-4">
         <a href={PLAY_URL} class="hover:text-slate-300">プレイ</a>
