@@ -71,7 +71,21 @@ const jsonLd = {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     {canonical && <meta property="og:url" content={canonical} />}
-    {ogImage && <meta property="og:image" content={ogImage} />}
+    {
+      /* og:image は寸法 (1200x630, generate-og.mjs と一致) と alt を併記。
+         SNS のカードを再フェッチ無しで正しく描画させ、代替テキストも提供する */
+      ogImage && (
+        <>
+          <meta property="og:image" content={ogImage} />
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+          <meta
+            property="og:image:alt"
+            content="code-tactics — AI ルールを組んで戦車を自動戦闘させるオートバトル"
+          />
+        </>
+      )
+    }
     <meta name="twitter:card" content="summary_large_image" />
 
     <script
