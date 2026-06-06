@@ -48,6 +48,10 @@ const jsonLd = {
       /* モバイルのブラウザ UI 色。favicon (#8) の背景色と揃え、accent(emerald) の土台となる暗色にする */
     }
     <meta name="theme-color" content="#0b1222" />
+    {
+      /* ダーク専用サイト。UA にダークを宣言し、ネイティブ UI(スクロールバー等)の暗色化と初期描画の白フラッシュ防止 */
+    }
+    <meta name="color-scheme" content="dark" />
     <title>{title}</title>
     <meta name="description" content={description} />
     {canonical && <link rel="canonical" href={canonical} />}
