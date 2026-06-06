@@ -77,6 +77,13 @@ body {
   }
 }
 
+/* アンカー遷移のスムーズスクロール。動きを抑える設定では無効化する (#21 ナビ)。 */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 /* アニメーションは控えめに。動きを抑える設定を尊重する。 */
 @media (prefers-reduced-motion: reduce) {
   * {
