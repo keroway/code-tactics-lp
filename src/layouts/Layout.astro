@@ -1,5 +1,5 @@
 ---
-import '../styles/global.css';
+import "../styles/global.css";
 
 interface Props {
   title?: string;
@@ -7,8 +7,8 @@ interface Props {
 }
 
 const {
-  title = 'code-tactics — AI ルールを組んで戦わせるオートバトル',
-  description = 'ユニットを直接操作せず、AI ルール (ガンビット式) を組んで自動戦闘させる 2D プログラマブル・オートバトルゲーム。負けた理由をログで分析し、ルールを直して再挑戦する。',
+  title = "code-tactics — AI ルールを組んで戦わせるオートバトル",
+  description = "ユニットを直接操作せず、AI ルール (ガンビット式) を組んで自動戦闘させる 2D プログラマブル・オートバトルゲーム。負けた理由をログで分析し、ルールを直して再挑戦する。",
 } = Astro.props;
 
 // GitHub Pages のサブパス配信に対応。アセットは BASE_URL 前置で参照する。
@@ -18,7 +18,7 @@ const canonical = Astro.site
   ? new URL(Astro.url.pathname, Astro.site).href
   : undefined;
 const ogImage = Astro.site
-  ? new URL(`${base}/og.png`.replace(/\/+/g, '/'), Astro.site).href
+  ? new URL(`${base}/og.png`.replace(/\/+/g, "/"), Astro.site).href
   : undefined;
 ---
 

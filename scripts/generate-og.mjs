@@ -1,12 +1,12 @@
 // OGP 画像 (1200x630) を SVG から生成して public/og.png に出力する。
 // 実行: node scripts/generate-og.mjs
 // フォント環境差を避けるため、テキストはラテン文字 + 等幅のみで構成する。
-import sharp from 'sharp';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import sharp from "sharp";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const out = join(__dirname, '..', 'public', 'og.png');
+const out = join(__dirname, "..", "public", "og.png");
 
 const W = 1200;
 const H = 630;
