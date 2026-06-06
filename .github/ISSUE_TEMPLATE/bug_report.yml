@@ -1,0 +1,49 @@
+name: バグ報告
+description: LP の表示崩れ・リンク切れ・動作不具合などを報告する
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        不具合の報告ありがとうございます。再現に必要な情報を記入してください。
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: 何が起きているかを簡潔に
+      placeholder: 例) ヒーローの CTA ボタンがモバイルで折り返して崩れる
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: 不具合を再現する手順
+      placeholder: |
+        1. <https://keroway.github.io/code-tactics-lp/> を開く
+        2. 画面幅を 375px にする
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する挙動
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 環境
+      description: ブラウザ / OS / 画面幅など
+      placeholder: 例) Safari 18 / iOS 18 / 375px
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: スクリーンショット・補足
+      description: あれば画像やログを添付
+    validations:
+      required: false
