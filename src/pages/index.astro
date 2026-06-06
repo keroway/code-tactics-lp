@@ -129,7 +129,11 @@ const roadmap = [
     </div>
   </header>
 
-  <main class="mx-auto flex max-w-5xl flex-col gap-24 px-6 pb-24">
+  <main
+    id="main"
+    tabindex="-1"
+    class="mx-auto flex max-w-5xl flex-col gap-24 px-6 pb-24 focus:outline-none"
+  >
     <!-- コンセプト -->
     <section>
       <p class="eyebrow">concept</p>
@@ -190,14 +194,21 @@ const roadmap = [
       <div class="mt-8 grid gap-6 lg:grid-cols-2">
         <!-- ルールエディタ (モック) -->
         <figure
+          aria-label="ルールエディタの画面イメージ。TankA のガンビットルールを優先順に並べた一覧"
           class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
         >
           <figcaption
             class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400"
           >
-            <span class="size-2.5 rounded-full bg-rose-500/70"></span>
-            <span class="size-2.5 rounded-full bg-amber-500/70"></span>
-            <span class="size-2.5 rounded-full bg-emerald-500/70"></span>
+            <span
+              class="size-2.5 rounded-full bg-rose-500/70"
+              aria-hidden="true"></span>
+            <span
+              class="size-2.5 rounded-full bg-amber-500/70"
+              aria-hidden="true"></span>
+            <span
+              class="size-2.5 rounded-full bg-emerald-500/70"
+              aria-hidden="true"></span>
             <span class="ml-2">rule editor — TankA</span>
           </figcaption>
           <ol class="divide-y divide-slate-800 font-mono text-sm">
@@ -220,14 +231,21 @@ const roadmap = [
 
         <!-- 戦闘ログ (モック) -->
         <figure
+          aria-label="戦闘ログの画面イメージ。各 tick でどのルールが発動し何が起きたかの時系列記録"
           class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
         >
           <figcaption
             class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400"
           >
-            <span class="size-2.5 rounded-full bg-rose-500/70"></span>
-            <span class="size-2.5 rounded-full bg-amber-500/70"></span>
-            <span class="size-2.5 rounded-full bg-emerald-500/70"></span>
+            <span
+              class="size-2.5 rounded-full bg-rose-500/70"
+              aria-hidden="true"></span>
+            <span
+              class="size-2.5 rounded-full bg-amber-500/70"
+              aria-hidden="true"></span>
+            <span
+              class="size-2.5 rounded-full bg-emerald-500/70"
+              aria-hidden="true"></span>
             <span class="ml-2">battle log</span>
           </figcaption>
           <pre
