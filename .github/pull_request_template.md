@@ -7,6 +7,7 @@
 ## 関連 Issue
 
 <!-- 自動クローズする場合は Closes #番号 -->
+
 Closes #
 
 ## 変更内容
@@ -16,6 +17,7 @@ Closes #
 ## テスト方法
 
 <!-- レビュアーが動作確認できる手順。例: -->
+
 ```sh
 npm install
 npm run astro check
