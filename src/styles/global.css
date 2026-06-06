@@ -13,8 +13,16 @@
 /* うっすらしたグリッド背景でエンジニアリング感を出す (装飾なので減色寄り) */
 body {
   background-image:
-    linear-gradient(to right, color-mix(in srgb, var(--color-slate-800) 35%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--color-slate-800) 35%, transparent) 1px, transparent 1px);
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--color-slate-800) 35%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-slate-800) 35%, transparent) 1px,
+      transparent 1px
+    );
   background-size: 48px 48px;
 }
 
