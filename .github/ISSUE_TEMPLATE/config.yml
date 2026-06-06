@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: code-tactics 本体リポジトリ
+    url: https://github.com/keroway/code-tactics
+    about: ゲーム本体に関する Issue はこちらへ（この LP リポジトリは紹介ページ専用です）
+  - name: web 版をプレイ
+    url: https://keroway.github.io/code-tactics/
+    about: 実際のゲーム画面を確認できます
