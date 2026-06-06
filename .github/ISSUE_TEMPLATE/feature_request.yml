@@ -1,0 +1,41 @@
+name: 機能・改善の提案
+description: LP への追加・改善（コンテンツ / デザイン / SEO / 運用など）を提案する
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提案ありがとうございます。背景と完了条件が分かると着手しやすくなります。
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景・課題
+      description: なぜこの変更が必要か
+      placeholder: 例) ショーケースがテキストモックのままで訴求力が弱い
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案内容
+      description: 何をどう変えたいか
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 受け入れ条件
+      description: 完了の定義（チェックリスト形式が望ましい）
+      placeholder: |
+        - [ ] ...
+        - [ ] `npm run build` が通る
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: 技術的メモ・補足
+      description: 実装上の注意点や参考リンク（任意）
+    validations:
+      required: false
