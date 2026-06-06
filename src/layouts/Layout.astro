@@ -27,6 +27,10 @@ const ogImage = Astro.site
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {
+      /* モバイルのブラウザ UI 色。favicon (#8) の背景色と揃え、accent(emerald) の土台となる暗色にする */
+    }
+    <meta name="theme-color" content="#0b1222" />
     <title>{title}</title>
     <meta name="description" content={description} />
     {canonical && <link rel="canonical" href={canonical} />}
@@ -49,6 +53,15 @@ const ogImage = Astro.site
     <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
+    {
+      /* 本文へスキップ。通常は視覚的に隠し、キーボードフォーカス時のみ表示する */
+    }
+    <a
+      href="#main"
+      class="sr-only rounded-md bg-emerald-500 font-semibold text-slate-950 focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+    >
+      本文へスキップ
+    </a>
     <slot />
   </body>
 </html>
