@@ -20,6 +20,23 @@ const canonical = Astro.site
 const ogImage = Astro.site
   ? new URL(`${base}/og.png`.replace(/\/+/g, "/"), Astro.site).href
   : undefined;
+
+// 構造化データ (JSON-LD)。LP の主題はゲーム本体なので SoftwareApplication で表現する。
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "code-tactics",
+  applicationCategory: "GameApplication",
+  operatingSystem: "Web browser",
+  description,
+  ...(canonical ? { url: canonical } : {}),
+  ...(ogImage ? { image: ogImage } : {}),
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "JPY",
+  },
+};
 ---
 
 <!doctype html>
@@ -42,11 +59,18 @@ const ogImage = Astro.site
     />
 
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="code-tactics" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     {canonical && <meta property="og:url" content={canonical} />}
     {ogImage && <meta property="og:image" content={ogImage} />}
     <meta name="twitter:card" content="summary_large_image" />
+
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify(jsonLd)}
+    />
   </head>
   <body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
     <slot />
