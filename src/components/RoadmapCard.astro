@@ -1,0 +1,25 @@
+---
+// ロードマップの 1 マイルストーン。バージョン + ステータス + 項目リスト。
+interface Props {
+  version: string;
+  status: string;
+  items: string[];
+}
+const { version, status, items } = Astro.props;
+---
+
+<li class="rounded-lg border border-slate-800 bg-slate-900/50 p-5">
+  <div class="flex items-baseline justify-between">
+    <span class="font-mono text-lg font-bold text-emerald-400">
+      {version}
+    </span>
+    <span
+      class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400"
+    >
+      {status}
+    </span>
+  </div>
+  <ul class="mt-3 space-y-1 text-sm text-slate-300">
+    {items.map((it) => <li>・{it}</li>)}
+  </ul>
+</li>

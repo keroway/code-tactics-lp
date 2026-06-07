@@ -1,0 +1,22 @@
+---
+// ヒーロー (ファーストビュー)。#top はヘッダのロゴからのスクロール先。
+import { PLAY_URL, REPO_URL } from "../consts";
+---
+
+<section
+  id="top"
+  class="mx-auto flex max-w-5xl flex-col items-start gap-6 px-6 pt-24 pb-16"
+>
+  <p class="eyebrow">programmable auto-battle</p>
+  <h1 class="text-4xl font-bold tracking-tight sm:text-6xl">
+    自分で組んだ AI で、<br />戦車を戦わせる。
+  </h1>
+  <p class="max-w-2xl text-lg text-slate-300">
+    ユニットは直接操作しない。戦う前に AI ルールを設計し、自動戦闘の結果とログを
+    観察して、負けた理由を直していく ―― そんなサイクルが中核のオートバトル。
+  </p>
+  <div class="mt-2 flex flex-wrap gap-4">
+    <a href={PLAY_URL} class="btn-primary">今すぐプレイ</a>
+    <a href={REPO_URL} class="btn-ghost">GitHub を見る</a>
+  </div>
+</section>
