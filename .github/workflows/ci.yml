@@ -36,3 +36,49 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # ビルド成果物をプレビュー配信し、内部アンカー・外部リンク・アセットの死活を検証する。
+  # サブパス (/code-tactics-lp/) 配信を実環境同様に再現するため、ファイル直読みではなく
+  # preview サーバー経由で検査する。
+  linkcheck:
+    name: Link check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Start preview server
+        run: nohup npm run preview > preview.log 2>&1 &
+
+      - name: Wait for server
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4321/code-tactics-lp/ >/dev/null; then
+              echo "server is up"; exit 0
+            fi
+            sleep 1
+          done
+          echo "preview server did not start in time" >&2
+          cat preview.log >&2 || true
+          exit 1
+
+      - name: Link check (lychee)
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # lychee.toml の設定 (リトライ/タイムアウト/許容コード/除外) を併用する。
+          # --include-fragments で内部アンカー (#concept 等) の存在も検証する。
+          args: "--no-progress --include-fragments http://localhost:4321/code-tactics-lp/"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fail: true
