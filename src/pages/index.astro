@@ -204,7 +204,83 @@ const faqJsonLd = {
         class="ml-auto rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 sm:ml-4"
         >今すぐプレイ</a
       >
+      <!-- ハンバーガーボタン (sm 未満のみ)。aria-expanded/aria-controls で開閉状態を伝える -->
+      <button
+        id="menu-toggle"
+        type="button"
+        class="-mr-1 ml-1 inline-flex size-9 items-center justify-center rounded-md text-slate-300 transition hover:text-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 sm:hidden"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-label="メニューを開く"
+      >
+        <!-- ハンバーガー / クローズの 2 状態。CSS の group-aria で切り替える -->
+        <svg
+          class="size-6"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <line class="menu-icon-open" x1="4" y1="7" x2="20" y2="7"></line>
+          <line class="menu-icon-open" x1="4" y1="12" x2="20" y2="12"></line>
+          <line class="menu-icon-open" x1="4" y1="17" x2="20" y2="17"></line>
+          <line class="menu-icon-close" x1="6" y1="6" x2="18" y2="18"></line>
+          <line class="menu-icon-close" x1="18" y1="6" x2="6" y2="18"></line>
+        </svg>
+      </button>
     </nav>
+
+    <!--
+      モバイル開閉パネル (sm 未満のみ)。デスクトップナビとは別立てで、
+      hidden 属性で初期非表示。トグルで hidden を外し is-open を付与する。
+    -->
+    <div
+      id="mobile-menu"
+      class="mobile-menu border-t border-slate-800/80 sm:hidden"
+      hidden
+    >
+      <ul
+        class="mx-auto flex max-w-5xl flex-col gap-1 px-6 py-3 text-slate-300"
+      >
+        <li>
+          <a
+            href="#concept"
+            class="block rounded-md px-2 py-2.5 transition hover:bg-slate-900 hover:text-emerald-400 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-400"
+            >コンセプト</a
+          >
+        </li>
+        <li>
+          <a
+            href="#how-to-play"
+            class="block rounded-md px-2 py-2.5 transition hover:bg-slate-900 hover:text-emerald-400 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-400"
+            >遊び方</a
+          >
+        </li>
+        <li>
+          <a
+            href="#features"
+            class="block rounded-md px-2 py-2.5 transition hover:bg-slate-900 hover:text-emerald-400 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-400"
+            >特徴</a
+          >
+        </li>
+        <li>
+          <a
+            href="#roadmap"
+            class="block rounded-md px-2 py-2.5 transition hover:bg-slate-900 hover:text-emerald-400 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-400"
+            >ロードマップ</a
+          >
+        </li>
+        <li>
+          <a
+            href="#faq"
+            class="block rounded-md px-2 py-2.5 transition hover:bg-slate-900 hover:text-emerald-400 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-400"
+            >FAQ</a
+          >
+        </li>
+      </ul>
+    </div>
   </header>
 
   <!-- ヒーロー (ファーストビュー)。#top はヘッダのロゴからのスクロール先 -->
@@ -459,6 +535,84 @@ const faqJsonLd = {
     reduce 設定時は global.css 側のメディアクエリでフェード自体が無効化される。
   */
   }
+  {
+    /*
+    モバイルナビの開閉 (#41)。クライアント JS 最小方針につきバニラで実装。
+    - aria-expanded / hidden を同期し、開いている間だけパネル内をフォーカストラップ
+    - アンカータップで遷移後に閉じる / Esc で閉じてボタンへフォーカスを戻す
+    - sm 以上に広げた場合 (パネルは CSS で非表示) は状態を閉じへリセット
+    開閉アニメーション自体は global.css 側で prefers-reduced-motion を尊重する。
+  */
+  }
+  <script is:inline>
+    (() => {
+      const toggle = document.getElementById("menu-toggle");
+      const menu = document.getElementById("mobile-menu");
+      if (!toggle || !menu) return;
+
+      const isOpen = () => toggle.getAttribute("aria-expanded") === "true";
+      const focusables = () =>
+        menu.querySelectorAll("a[href], button:not([disabled])");
+
+      const open = () => {
+        menu.hidden = false;
+        // hidden 解除直後にトランジション用クラスを付け、開くアニメを効かせる
+        requestAnimationFrame(() => menu.classList.add("is-open"));
+        toggle.setAttribute("aria-expanded", "true");
+        toggle.setAttribute("aria-label", "メニューを閉じる");
+        const first = focusables()[0];
+        if (first) first.focus();
+      };
+
+      const close = ({ restoreFocus = true } = {}) => {
+        menu.classList.remove("is-open");
+        menu.hidden = true;
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.setAttribute("aria-label", "メニューを開く");
+        if (restoreFocus) toggle.focus();
+      };
+
+      toggle.addEventListener("click", () => {
+        if (isOpen()) {
+          close();
+        } else {
+          open();
+        }
+      });
+
+      // アンカーをタップしたら遷移先へスクロールしつつ閉じる (フォーカスは戻さない)
+      menu.addEventListener("click", (e) => {
+        if (e.target.closest("a")) close({ restoreFocus: false });
+      });
+
+      // Esc で閉じる / Tab はパネル内 (とトグル) でフォーカストラップ
+      document.addEventListener("keydown", (e) => {
+        if (!isOpen()) return;
+        if (e.key === "Escape") {
+          close();
+          return;
+        }
+        if (e.key !== "Tab") return;
+        const items = [toggle, ...focusables()];
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      });
+
+      // sm 以上へリサイズしたらデスクトップナビに切り替わるので状態をリセット
+      const mq = window.matchMedia("(min-width: 40rem)");
+      mq.addEventListener("change", (e) => {
+        if (e.matches && isOpen()) close({ restoreFocus: false });
+      });
+    })();
+  </script>
+
   <script is:inline>
     if ("IntersectionObserver" in window) {
       document.documentElement.classList.add("js-fade");
