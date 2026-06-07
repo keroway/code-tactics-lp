@@ -84,6 +84,37 @@ body {
   }
 }
 
+/*
+ * モバイルナビ (#41)。ハンバーガー ⇄ クローズのアイコン切替と開閉アニメ。
+ * トグルの aria-expanded を単一の真実源にし、アイコン表示を CSS だけで連動させる。
+ */
+#menu-toggle .menu-icon-close,
+#menu-toggle[aria-expanded="true"] .menu-icon-open {
+  display: none;
+}
+#menu-toggle[aria-expanded="true"] .menu-icon-close {
+  display: inline;
+}
+
+/*
+ * 開閉はスライド + フェード。動きを抑える設定では下記メディアクエリ内のみ有効化し、
+ * reduce 時は瞬時に開閉する (* セレクタの duration 上書きとも整合)。
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .mobile-menu {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition:
+      max-height 0.25s ease-out,
+      opacity 0.25s ease-out;
+  }
+  .mobile-menu.is-open {
+    max-height: 20rem;
+    opacity: 1;
+  }
+}
+
 /* アニメーションは控えめに。動きを抑える設定を尊重する。 */
 @media (prefers-reduced-motion: reduce) {
   * {
