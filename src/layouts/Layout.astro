@@ -4,11 +4,14 @@ import "../styles/global.css";
 interface Props {
   title?: string;
   description?: string;
+  // 検索エンジンにインデックスさせないページ (例: 404) で true にする
+  noindex?: boolean;
 }
 
 const {
   title = "code-tactics — AI ルールを組んで戦わせるオートバトル",
   description = "ユニットを直接操作せず、AI ルール (ガンビット式) を組んで自動戦闘させる 2D プログラマブル・オートバトルゲーム。負けた理由をログで分析し、ルールを直して再挑戦する。",
+  noindex = false,
 } = Astro.props;
 
 // GitHub Pages のサブパス配信に対応。アセットは BASE_URL 前置で参照する。
@@ -52,6 +55,7 @@ const jsonLd = {
       /* ダーク専用サイト。UA にダークを宣言し、ネイティブ UI(スクロールバー等)の暗色化と初期描画の白フラッシュ防止 */
     }
     <meta name="color-scheme" content="dark" />
+    {noindex && <meta name="robots" content="noindex" />}
     <title>{title}</title>
     <meta name="description" content={description} />
     {canonical && <link rel="canonical" href={canonical} />}

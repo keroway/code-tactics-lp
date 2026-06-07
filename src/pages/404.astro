@@ -1,0 +1,35 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+// 外部リンク (本体リポジトリ / web 版プレイ)。index.astro と揃える。
+const PLAY_URL = "https://keroway.github.io/code-tactics/";
+const REPO_URL = "https://github.com/keroway/code-tactics";
+
+// GitHub Pages のサブパス配信に対応。トップへの内部リンクは BASE_URL を使う。
+const base = import.meta.env.BASE_URL;
+const home = `${base}/`.replace(/\/+/g, "/");
+---
+
+<Layout
+  title="404 — ページが見つかりません | code-tactics"
+  description="お探しのページは見つかりませんでした。トップからプレイや GitHub へどうぞ。"
+  noindex={true}
+>
+  <main
+    class="mx-auto flex min-h-screen max-w-2xl flex-col items-start justify-center gap-6 px-6 py-24"
+  >
+    <p class="eyebrow">error 404</p>
+    <h1 class="text-4xl font-bold tracking-tight sm:text-6xl">
+      ページが見つかりません。
+    </h1>
+    <p class="max-w-xl text-lg text-slate-300">
+      お探しのページは移動または削除された可能性があります。URL
+      をご確認のうえ、下記からトップへお戻りください。
+    </p>
+    <div class="mt-2 flex flex-wrap gap-4">
+      <a href={home} class="btn-primary">トップへ戻る</a>
+      <a href={PLAY_URL} class="btn-ghost">今すぐプレイ</a>
+      <a href={REPO_URL} class="btn-ghost">GitHub を見る</a>
+    </div>
+  </main>
+</Layout>
