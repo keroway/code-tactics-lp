@@ -1,6 +1,11 @@
 ---
 // フッター CTA。最後のひと押しでプレイ / GitHub へ誘導する。
-import { PLAY_URL, REPO_URL } from "../consts";
+import {
+  PLAY_URL,
+  REPO_URL,
+  EXTERNAL_LINK_ATTRS,
+  externalLinkLabel,
+} from "../consts";
 ---
 
 <section
@@ -9,7 +14,17 @@ import { PLAY_URL, REPO_URL } from "../consts";
 >
   <h2 class="text-2xl font-bold sm:text-3xl">まずは 1 戦、組んでみる。</h2>
   <div class="mt-6 flex flex-wrap justify-center gap-4">
-    <a href={PLAY_URL} class="btn-primary">今すぐプレイ</a>
-    <a href={REPO_URL} class="btn-ghost">GitHub を見る</a>
+    <a
+      href={PLAY_URL}
+      class="btn-primary"
+      aria-label={externalLinkLabel("今すぐプレイ")}
+      {...EXTERNAL_LINK_ATTRS}>今すぐプレイ</a
+    >
+    <a
+      href={REPO_URL}
+      class="btn-ghost"
+      aria-label={externalLinkLabel("GitHub を見る")}
+      {...EXTERNAL_LINK_ATTRS}>GitHub を見る</a
+    >
   </div>
 </section>
