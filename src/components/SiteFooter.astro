@@ -1,0 +1,16 @@
+---
+// サイトフッター。ライセンス表記と最小限の回遊リンク。
+import { PLAY_URL, REPO_URL } from "../consts";
+---
+
+<footer class="border-t border-slate-800">
+  <div
+    class="mx-auto flex max-w-5xl flex-col gap-2 px-6 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <p>code-tactics ―― 2D プログラマブル・オートバトル。MIT License.</p>
+    <nav class="flex gap-4">
+      <a href={PLAY_URL} class="hover:text-slate-300">プレイ</a>
+      <a href={REPO_URL} class="hover:text-slate-300">GitHub</a>
+    </nav>
+  </div>
+</footer>

@@ -1,0 +1,88 @@
+---
+// ゲームの中身ショーケース。
+// 実際のスクリーンショット / デモ GIF が用意できたら、各パネルを差し替える
+// (本体 web 版から取得 → src/assets/ に置き、astro:assets の <Image> で表示)。
+// 現状はゲームの仕組みを SPEC のルール/ログ形式に忠実なモックで表現している。
+
+// ショーケース用。本体 SPEC.md のガンビットルール例をそのまま使用。
+const sampleRules = [
+  { cond: "hp_below 30%", action: "move_away (nearest_enemy)" },
+  { cond: "enemy_in_range && weapon_ready", action: "attack (nearest_enemy)" },
+  { cond: "enemy_detected", action: "move_to (nearest_enemy)" },
+  { cond: "always", action: "stop" },
+];
+
+// ショーケース用。本体 SPEC.md の戦闘ログ例。
+const sampleLog = [
+  "tick=120 unit=TankA rule=2 condition=enemy_in_range action=attack",
+  "tick=121 unit=TankB event=damaged from=TankA damage=10 hp=70",
+  "tick=300 unit=TankA rule=1 condition=hp_below action=move_away",
+  "tick=450 unit=TankB event=destroyed",
+];
+---
+
+<section id="how-it-works" data-animate class="scroll-mt-20">
+  <p class="eyebrow">how it works</p>
+  <h2 class="mt-3 text-2xl font-bold sm:text-3xl">
+    ルールを組み、ログで読み解く。
+  </h2>
+  <div class="mt-8 grid gap-6 lg:grid-cols-2">
+    <!-- ルールエディタ (モック) -->
+    <figure
+      aria-label="ルールエディタの画面イメージ。TankA のガンビットルールを優先順に並べた一覧"
+      class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
+    >
+      <figcaption
+        class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400"
+      >
+        <span class="size-2.5 rounded-full bg-rose-500/70" aria-hidden="true"
+        ></span>
+        <span class="size-2.5 rounded-full bg-amber-500/70" aria-hidden="true"
+        ></span>
+        <span class="size-2.5 rounded-full bg-emerald-500/70" aria-hidden="true"
+        ></span>
+        <span class="ml-2">rule editor — TankA</span>
+      </figcaption>
+      <ol class="divide-y divide-slate-800 font-mono text-sm">
+        {
+          sampleRules.map((r, i) => (
+            <li class="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
+              <span class="text-emerald-400">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span class="text-slate-300">
+                if <span class="text-sky-300">{r.cond}</span>
+              </span>
+              <span class="text-slate-500">→</span>
+              <span class="text-slate-100">{r.action}</span>
+            </li>
+          ))
+        }
+      </ol>
+    </figure>
+
+    <!-- 戦闘ログ (モック) -->
+    <figure
+      aria-label="戦闘ログの画面イメージ。各 tick でどのルールが発動し何が起きたかの時系列記録"
+      class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
+    >
+      <figcaption
+        class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400"
+      >
+        <span class="size-2.5 rounded-full bg-rose-500/70" aria-hidden="true"
+        ></span>
+        <span class="size-2.5 rounded-full bg-amber-500/70" aria-hidden="true"
+        ></span>
+        <span class="size-2.5 rounded-full bg-emerald-500/70" aria-hidden="true"
+        ></span>
+        <span class="ml-2">battle log</span>
+      </figcaption>
+      <pre
+        class="overflow-x-auto px-4 py-3 font-mono text-sm leading-relaxed text-slate-400"><code>{sampleLog.join('\n')}</code></pre>
+    </figure>
+  </div>
+  <p class="mt-4 font-mono text-xs text-slate-500">
+    ※
+    上記はゲームの仕組みを示すイメージ。実際のプレイ画面は「今すぐプレイ」から。
+  </p>
+</section>
