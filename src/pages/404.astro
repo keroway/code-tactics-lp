@@ -1,9 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
-
-// 外部リンク (本体リポジトリ / web 版プレイ)。index.astro と揃える。
-const PLAY_URL = "https://keroway.github.io/code-tactics/";
-const REPO_URL = "https://github.com/keroway/code-tactics";
+import { PLAY_URL, REPO_URL } from "../consts";
 
 // GitHub Pages のサブパス配信に対応。トップへの内部リンクは BASE_URL を使う。
 const base = import.meta.env.BASE_URL;
