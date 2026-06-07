@@ -1,0 +1,30 @@
+---
+// 遊び方 3 ステップ (本体 SPEC.md の基本ゲームループより)。
+import StepCard from "./StepCard.astro";
+
+const steps = [
+  {
+    no: "01",
+    title: "ルールを組む",
+    body: "ガンビット式で「もし〜なら〜する」を優先順に並べ、ユニットの AI を設計する。",
+  },
+  {
+    no: "02",
+    title: "自動戦闘を見る",
+    body: "操作はしない。組んだルールどおりに戦車が動く様子を観察する。",
+  },
+  {
+    no: "03",
+    title: "ログで分析して直す",
+    body: "負けた理由を戦闘ログから読み解き、ルールを修正して再挑戦する。",
+  },
+];
+---
+
+<section id="how-to-play" data-animate class="scroll-mt-20">
+  <p class="eyebrow">how to play</p>
+  <h2 class="mt-3 text-2xl font-bold sm:text-3xl">遊び方</h2>
+  <ol class="mt-8 grid gap-6 sm:grid-cols-3">
+    {steps.map((s) => <StepCard no={s.no} title={s.title} body={s.body} />)}
+  </ol>
+</section>
