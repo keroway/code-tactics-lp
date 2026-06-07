@@ -1,0 +1,25 @@
+---
+// FAQ の 1 問。details/summary でノー JS かつ a11y 良好に。
+interface Props {
+  q: string;
+  a: string;
+}
+const { q, a } = Astro.props;
+---
+
+<details class="group">
+  <summary
+    class="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 font-semibold transition hover:text-emerald-400 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-emerald-400 [&::-webkit-details-marker]:hidden"
+  >
+    <span>{q}</span>
+    <span
+      class="shrink-0 text-xl text-emerald-400 transition-transform group-open:rotate-45"
+      aria-hidden="true"
+    >
+      ＋
+    </span>
+  </summary>
+  <p class="px-6 pb-5 text-sm leading-relaxed text-slate-300">
+    {a}
+  </p>
+</details>

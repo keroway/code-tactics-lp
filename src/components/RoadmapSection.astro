@@ -1,0 +1,73 @@
+---
+// ロードマップ (本体 SPEC.md「将来的な拡張方針」より)。
+import RoadmapCard from "./RoadmapCard.astro";
+
+const roadmap = [
+  {
+    version: "MVP",
+    status: "現在",
+    items: [
+      "1on1 の自動戦闘",
+      "戦車型ユニット 1 種",
+      "ガンビット式ルール",
+      "戦闘 / ルール発動ログ",
+    ],
+  },
+  {
+    version: "v0.2",
+    status: "次",
+    items: [
+      "2on2・複数ユニット編成",
+      "ルール発動統計",
+      "リプレイ保存",
+      "簡易ステージ制",
+    ],
+  },
+  {
+    version: "v0.3",
+    status: "予定",
+    items: [
+      "障害物・射線判定",
+      "簡易経路探索",
+      "keep_distance 行動",
+      "ターゲット選択の拡充",
+    ],
+  },
+  {
+    version: "v0.4",
+    status: "予定",
+    items: ["ユニット種別追加 (軽/重/偵察/ミサイル)", "武器種追加", "役割分担"],
+  },
+  {
+    version: "v0.5",
+    status: "構想",
+    items: ["簡易プログラム言語", "ガンビット ⇄ AST/JSON 相互変換"],
+  },
+  {
+    version: "v1.0",
+    status: "構想",
+    items: [
+      "ひとり用キャンペーン",
+      "非同期ネット対戦",
+      "リプレイ共有・ランキング",
+    ],
+  },
+];
+---
+
+<section id="roadmap" data-animate class="scroll-mt-20">
+  <p class="eyebrow">roadmap</p>
+  <h2 class="mt-3 text-2xl font-bold sm:text-3xl">これからのロードマップ</h2>
+  <p class="mt-4 max-w-2xl text-slate-300">
+    現在は 1on1 の
+    MVP。手応えを確かめながら、複数ユニット戦・障害物・簡易プログラム
+    言語・ネット対戦へと段階的に広げていく (本体の SPEC に連動)。
+  </p>
+  <ol class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {
+      roadmap.map((r) => (
+        <RoadmapCard version={r.version} status={r.status} items={r.items} />
+      ))
+    }
+  </ol>
+</section>

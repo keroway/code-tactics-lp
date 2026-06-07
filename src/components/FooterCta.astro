@@ -1,0 +1,15 @@
+---
+// フッター CTA。最後のひと押しでプレイ / GitHub へ誘導する。
+import { PLAY_URL, REPO_URL } from "../consts";
+---
+
+<section
+  data-animate
+  class="rounded-xl border border-slate-800 bg-slate-900/50 p-10 text-center"
+>
+  <h2 class="text-2xl font-bold sm:text-3xl">まずは 1 戦、組んでみる。</h2>
+  <div class="mt-6 flex flex-wrap justify-center gap-4">
+    <a href={PLAY_URL} class="btn-primary">今すぐプレイ</a>
+    <a href={REPO_URL} class="btn-ghost">GitHub を見る</a>
+  </div>
+</section>

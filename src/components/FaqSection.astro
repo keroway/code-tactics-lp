@@ -1,0 +1,58 @@
+---
+// FAQ (よくある質問)。初見の疑問に答える。
+// 表示テキストと FAQPage JSON-LD は必ず一致させる (不一致は構造化データの
+// スパム判定リスク)。両者を同じ faq 配列から生成して一致を担保する。
+import FaqItem from "./FaqItem.astro";
+
+const faq = [
+  {
+    q: "プログラミングの知識は必要ですか？",
+    a: "不要です。「もし〜なら〜する」という条件と行動を優先順に選んで並べるだけ (ガンビット式)。コードは書きません。",
+  },
+  {
+    q: "「直接操作しない」とはどういうことですか？",
+    a: "戦闘中はユニットを動かしません。事前に組んだ AI ルールに従って自動で戦います。プレイヤーの役割は、ルールの設計とログを使った分析・改善です。",
+  },
+  {
+    q: "料金はかかりますか？対応環境は？",
+    a: "無料で遊べます。モダンなウェブブラウザで動作し、インストールは不要です。「今すぐプレイ」からすぐに始められます。",
+  },
+  {
+    q: "同じ条件なら結果は同じになりますか？",
+    a: "はい。決定論シミュレーションのため、同じルール・同じ乱数シードなら必ず同じ結果になります。だからこそ負けた原因を特定し、再現しながら改善できます。",
+  },
+  {
+    q: "今はどこまで遊べますか？",
+    a: "現在は 1on1 の自動戦闘が遊べる MVP です。今後 2on2・複数ユニット編成・障害物・簡易プログラム言語・ネット対戦などへ段階的に拡張していく予定です (ロードマップ参照)。",
+  },
+];
+
+// FAQ の構造化データ (FAQPage)。上記 faq から生成し可視テキストと一致させる。
+// Layout 側 (SoftwareApplication) とは別の JSON-LD として本ページに出力する。
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faq.map((item) => ({
+    "@type": "Question",
+    name: item.q,
+    acceptedAnswer: { "@type": "Answer", text: item.a },
+  })),
+};
+---
+
+<section id="faq" data-animate class="scroll-mt-20">
+  <p class="eyebrow">faq</p>
+  <h2 class="mt-3 text-2xl font-bold sm:text-3xl">よくある質問</h2>
+  <div
+    class="mt-8 divide-y divide-slate-800 overflow-hidden rounded-lg border border-slate-800 bg-slate-900/50"
+  >
+    {faq.map((item) => <FaqItem q={item.q} a={item.a} />)}
+  </div>
+</section>
+
+{/* FAQ の構造化データ。可視の FAQ と内容を一致させている */}
+<script
+  is:inline
+  type="application/ld+json"
+  set:html={JSON.stringify(faqJsonLd)}
+/>
