@@ -25,3 +25,6 @@ npm-debug.log*
 
 # agent tooling (ローカルの Claude Code 作業ディレクトリ)
 .claude/
+
+# Lighthouse CI のローカル出力
+.lighthouseci/

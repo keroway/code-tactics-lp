@@ -1,0 +1,44 @@
+name: Lighthouse
+
+# PR 段階で Lighthouse を実行し、Performance / Accessibility / Best Practices / SEO の
+# 品質スコアを計測・ゲートする。閾値は lighthouserc.json で管理。
+# ci.yml とは別ワークフローにして検証ゲートを独立させている。
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # lhci autorun が startServerCommand (astro preview) を起動し、
+      # サブパス配信 URL に対して計測 → lighthouserc.json の閾値で assert する。
+      - name: Lighthouse CI
+        run: npm run lhci
+
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci
+          if-no-files-found: ignore
