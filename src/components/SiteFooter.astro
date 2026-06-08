@@ -1,6 +1,11 @@
 ---
 // サイトフッター。ライセンス表記と最小限の回遊リンク。
-import { PLAY_URL, REPO_URL } from "../consts";
+import {
+  PLAY_URL,
+  REPO_URL,
+  EXTERNAL_LINK_ATTRS,
+  externalLinkLabel,
+} from "../consts";
 ---
 
 <footer class="border-t border-slate-800">
@@ -9,8 +14,18 @@ import { PLAY_URL, REPO_URL } from "../consts";
   >
     <p>code-tactics ―― 2D プログラマブル・オートバトル。MIT License.</p>
     <nav class="flex gap-4">
-      <a href={PLAY_URL} class="hover:text-slate-300">プレイ</a>
-      <a href={REPO_URL} class="hover:text-slate-300">GitHub</a>
+      <a
+        href={PLAY_URL}
+        class="hover:text-slate-300"
+        aria-label={externalLinkLabel("プレイ")}
+        {...EXTERNAL_LINK_ATTRS}>プレイ</a
+      >
+      <a
+        href={REPO_URL}
+        class="hover:text-slate-300"
+        aria-label={externalLinkLabel("GitHub")}
+        {...EXTERNAL_LINK_ATTRS}>GitHub</a
+      >
     </nav>
   </div>
 </footer>

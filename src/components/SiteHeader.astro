@@ -1,7 +1,12 @@
 ---
 // スティッキーヘッダ (回遊ナビ + 常時表示 CTA)。控えめにし半透明 + ぼかしで背景に馴染ませる。
 // デスクトップナビ / モバイル開閉パネルを内包し、モバイルナビの開閉 JS も持つ。
-import { PLAY_URL, NAV_LINKS } from "../consts";
+import {
+  PLAY_URL,
+  NAV_LINKS,
+  EXTERNAL_LINK_ATTRS,
+  externalLinkLabel,
+} from "../consts";
 ---
 
 <header
@@ -35,7 +40,8 @@ import { PLAY_URL, NAV_LINKS } from "../consts";
     <a
       href={PLAY_URL}
       class="ml-auto rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 sm:ml-4"
-      >今すぐプレイ</a
+      aria-label={externalLinkLabel("今すぐプレイ")}
+      {...EXTERNAL_LINK_ATTRS}>今すぐプレイ</a
     >
     <!-- ハンバーガーボタン (sm 未満のみ)。aria-expanded/aria-controls で開閉状態を伝える -->
     <button
