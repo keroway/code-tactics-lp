@@ -1,6 +1,11 @@
 ---
 // ヒーロー (ファーストビュー)。#top はヘッダのロゴからのスクロール先。
-import { PLAY_URL, REPO_URL } from "../consts";
+import {
+  PLAY_URL,
+  REPO_URL,
+  EXTERNAL_LINK_ATTRS,
+  externalLinkLabel,
+} from "../consts";
 ---
 
 <section
@@ -16,7 +21,17 @@ import { PLAY_URL, REPO_URL } from "../consts";
     観察して、負けた理由を直していく ―― そんなサイクルが中核のオートバトル。
   </p>
   <div class="mt-2 flex flex-wrap gap-4">
-    <a href={PLAY_URL} class="btn-primary">今すぐプレイ</a>
-    <a href={REPO_URL} class="btn-ghost">GitHub を見る</a>
+    <a
+      href={PLAY_URL}
+      class="btn-primary"
+      aria-label={externalLinkLabel("今すぐプレイ")}
+      {...EXTERNAL_LINK_ATTRS}>今すぐプレイ</a
+    >
+    <a
+      href={REPO_URL}
+      class="btn-ghost"
+      aria-label={externalLinkLabel("GitHub を見る")}
+      {...EXTERNAL_LINK_ATTRS}>GitHub を見る</a
+    >
   </div>
 </section>
