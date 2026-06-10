@@ -25,6 +25,8 @@ const ogImage = Astro.site
   : undefined;
 
 // 構造化データ (JSON-LD)。LP の主題はゲーム本体なので SoftwareApplication で表現する。
+// author は本体ゲームの開発元 (keroway) を Organization として明示し、検索結果側で
+// 制作者を辿れるようにする。
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
@@ -34,6 +36,11 @@ const jsonLd = {
   description,
   ...(canonical ? { url: canonical } : {}),
   ...(ogImage ? { image: ogImage } : {}),
+  author: {
+    "@type": "Organization",
+    name: "keroway",
+    url: "https://github.com/keroway",
+  },
   offers: {
     "@type": "Offer",
     price: "0",
@@ -72,6 +79,10 @@ const jsonLd = {
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="code-tactics" />
+    {
+      /* og:locale はサイトの言語/地域を SNS クローラへ明示する。LP は日本語のみ。 */
+    }
+    <meta property="og:locale" content="ja_JP" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     {canonical && <meta property="og:url" content={canonical} />}
