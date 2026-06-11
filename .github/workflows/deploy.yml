@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - name: Build with Astro
         uses: withastro/action@15aa0a5a1e067940253e3b259413ab2ae882a740 # v5.2.0
         # base/site は astro.config.mjs で設定済みのため引数指定は不要
