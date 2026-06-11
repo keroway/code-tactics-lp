@@ -23,7 +23,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
       - name: Build with Astro
-        uses: withastro/action@15aa0a5a1e067940253e3b259413ab2ae882a740 # v5.2.0
+        uses: withastro/action@b7d53628f8b666036b0238aadb0b984a2a489f26 # v6.1.1
         # base/site は astro.config.mjs で設定済みのため引数指定は不要
 
   deploy:
