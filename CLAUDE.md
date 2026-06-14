@@ -16,9 +16,11 @@ LP の文言はそこから引いて短く言い換える方針 (`docs/content-p
 ## 現状とスタック
 
 **実装済み・公開中** (<https://keroway.github.io/code-tactics-lp/>)。Astro でビルドし
-GitHub Pages へ自動デプロイ。デザイン基盤 (配色/タイポグラフィ・SEO・アクセシビリティ・
-スクロール演出・回遊ナビ) は概ね実装済み。残る主作業はゲーム画面のスクショ/GIF など
-**実アセットの差し込み** (#6) とコンテンツ拡充。
+GitHub Pages へ自動デプロイ。デザイン基盤 (配色/タイポグラフィ・SEO/OGP・アクセシビリティ・
+スクロール演出・回遊ナビ・モバイルナビ・404 ページ) と主要セクション
+(Hero / Concept / HowToPlay / Features / HowItWorks / Roadmap / FAQ) は実装済み。
+CI で Lighthouse 計測とリンク切れ検出も走らせている。残る主作業はゲーム画面のスクショ/GIF など
+**実アセットの差し込み** (#6) とコピーの磨き込み。
 
 確定済みスタック (`docs/decisions.md` が決定記録):
 
