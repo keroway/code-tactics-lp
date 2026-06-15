@@ -28,3 +28,7 @@ npm-debug.log*
 
 # Lighthouse CI のローカル出力
 .lighthouseci/
+
+# CI（Ubuntu）で生成するアセット。ローカルと CI でバイナリが異なるため Git 非管理。
+public/og.png
+public/apple-touch-icon.png
