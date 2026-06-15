@@ -75,6 +75,21 @@ npm run format:check  # 差分チェックのみ
 > GitHub Pages のサブパス配信に合わせ `astro.config.mjs` で `base: /code-tactics-lp` を
 > 設定済み。開発サーバーも `/code-tactics-lp/` 配下で配信される。
 
+### 生成アセットの再生成
+
+`public/og.png` と `public/apple-touch-icon.png` はリポジトリにコミットされているが、
+実体は `scripts/generate-og.mjs` / `scripts/generate-icons.mjs` の生成物。配色やコピー、
+SVG テンプレートを変更したときは必ず再生成してコミットする。
+
+```sh
+npm run og      # public/og.png (1200x630) を再生成
+npm run icons   # public/apple-touch-icon.png (180x180) を再生成
+```
+
+CI (`.github/workflows/ci.yml` の `assets` ジョブ) で同じコマンドを実行し
+`git diff --exit-code -- public/` で差分が無いか検証する。再生成漏れがあれば
+PR の CI が落ちるので、ローカルで上記コマンドを流し直してコミットすれば解消する。
+
 ## Deploy
 
 `main` への push で GitHub Actions の `Deploy to GitHub Pages`
