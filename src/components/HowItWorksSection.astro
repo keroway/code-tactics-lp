@@ -1,24 +1,8 @@
 ---
-// ゲームの中身ショーケース。
-// 実際のスクリーンショット / デモ GIF が用意できたら、各パネルを差し替える
-// (本体 web 版から取得 → src/assets/ に置き、astro:assets の <Image> で表示)。
-// 現状はゲームの仕組みを SPEC のルール/ログ形式に忠実なモックで表現している。
-
-// ショーケース用。本体 SPEC.md のガンビットルール例をそのまま使用。
-const sampleRules = [
-  { cond: "hp_below 30%", action: "move_away (nearest_enemy)" },
-  { cond: "enemy_in_range && weapon_ready", action: "attack (nearest_enemy)" },
-  { cond: "enemy_detected", action: "move_to (nearest_enemy)" },
-  { cond: "always", action: "stop" },
-];
-
-// ショーケース用。本体 SPEC.md の戦闘ログ例。
-const sampleLog = [
-  "tick=120 unit=TankA rule=2 condition=enemy_in_range action=attack",
-  "tick=121 unit=TankB event=damaged from=TankA damage=10 hp=70",
-  "tick=300 unit=TankA rule=1 condition=hp_below action=move_away",
-  "tick=450 unit=TankB event=destroyed",
-];
+// ゲームの中身ショーケース。実画面キャプチャで「ルールエディタ」と「戦闘ログ」を提示する。
+import { Image } from "astro:assets";
+import ruleEditorImg from "../assets/game-rule-editor.png";
+import battleLogImg from "../assets/game-battle-log.png";
 ---
 
 <section id="how-it-works" data-animate class="scroll-mt-20">
@@ -27,9 +11,9 @@ const sampleLog = [
     ルールを組み、ログで読み解く。
   </h2>
   <div class="mt-8 grid gap-6 lg:grid-cols-2">
-    <!-- ルールエディタ (モック) -->
+    <!-- ルールエディタ (実画面) -->
     <figure
-      aria-label="ルールエディタの画面イメージ。TankA のガンビットルールを優先順に並べた一覧"
+      aria-label="ルールエディタの実画面。TankA のガンビットルールを優先順に並べた一覧：#1 敵が射程内かつ武器使用可なら攻撃、#2 敵を発見したら近づく、#3 常に停止"
       class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
     >
       <figcaption
@@ -41,29 +25,19 @@ const sampleLog = [
         ></span>
         <span class="size-2.5 rounded-full bg-emerald-500/70" aria-hidden="true"
         ></span>
-        <span class="ml-2">rule editor — TankA</span>
+        <span class="ml-2">rule editor — player-tank</span>
       </figcaption>
-      <ol class="divide-y divide-slate-800 font-mono text-sm">
-        {
-          sampleRules.map((r, i) => (
-            <li class="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
-              <span class="text-emerald-400">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span class="text-slate-300">
-                if <span class="text-sky-300">{r.cond}</span>
-              </span>
-              <span class="text-slate-500">→</span>
-              <span class="text-slate-100">{r.action}</span>
-            </li>
-          ))
-        }
-      </ol>
+      <Image
+        src={ruleEditorImg}
+        alt="code-tactics ガンビットエディタの画面。優先順に並んだ 3 件のルール：#1 敵が射程内かつ武器使用可 → 攻撃、#2 敵を発見 → 近づく、#3 常に → 停止"
+        class="w-full object-cover"
+        loading="lazy"
+      />
     </figure>
 
-    <!-- 戦闘ログ (モック) -->
+    <!-- 戦闘ログ (実画面) -->
     <figure
-      aria-label="戦闘ログの画面イメージ。各 tick でどのルールが発動し何が起きたかの時系列記録"
+      aria-label="戦闘ログの実画面。各 tick でどのルールが評価され発動したかの時系列記録"
       class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
     >
       <figcaption
@@ -77,13 +51,15 @@ const sampleLog = [
         ></span>
         <span class="ml-2">battle log</span>
       </figcaption>
-      <pre
-        tabindex="0"
-        class="overflow-x-auto px-4 py-3 font-mono text-sm leading-relaxed text-slate-400"><code>{sampleLog.join('\n')}</code></pre>
+      <Image
+        src={battleLogImg}
+        alt="code-tactics 戦闘ログの画面。tick 119 で cpu-tank と player-tank が attack-when-ready ルールを評価（不一致）→ approach-detected-enemy ルールを評価（一致）→ 近づく行動を発動した記録"
+        class="w-full object-cover"
+        loading="lazy"
+      />
     </figure>
   </div>
   <p class="mt-4 font-mono text-xs text-slate-500">
-    ※
-    上記はゲームの仕組みを示すイメージ。実際のプレイ画面は「今すぐプレイ」から。
+    ※ 上記はゲームの実際のプレイ画面。「今すぐプレイ」からすぐに試せる。
   </p>
 </section>
