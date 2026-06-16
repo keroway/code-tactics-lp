@@ -54,6 +54,48 @@ jobs:
       - name: Build
         run: npm run build
 
+  # axe-core でアクセシビリティ違反の具体的箇所を検出する。
+  # Lighthouse CI の a11y スコア閾値チェックとは相補的な役割（こちらは違反ルールと対象要素を特定する）。
+  a11y:
+    name: A11y check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install chromium --with-deps
+
+      - name: Build
+        run: npm run build
+
+      - name: Start preview server
+        run: nohup npm run preview > preview.log 2>&1 &
+
+      - name: Wait for server
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4321/code-tactics-lp/ >/dev/null; then
+              echo "server is up"; exit 0
+            fi
+            sleep 1
+          done
+          echo "preview server did not start in time" >&2
+          cat preview.log >&2 || true
+          exit 1
+
+      - name: A11y check (axe-core)
+        run: npm run smoke:a11y
+
   # ビルド成果物をプレビュー配信し、内部アンカー・外部リンク・アセットの死活を検証する。
   # サブパス (/code-tactics-lp/) 配信を実環境同様に再現するため、ファイル直読みではなく
   # preview サーバー経由で検査する。
