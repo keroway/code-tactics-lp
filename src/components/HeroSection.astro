@@ -6,6 +6,8 @@ import {
   EXTERNAL_LINK_ATTRS,
   externalLinkLabel,
 } from "../consts";
+import { Image } from "astro:assets";
+import gameScreenshot from "../assets/game-screenshot.png";
 ---
 
 <section
@@ -35,4 +37,16 @@ import {
       {...EXTERNAL_LINK_ATTRS}>GitHub を見る</a
     >
   </div>
+
+  <figure
+    aria-label="code-tactics のゲーム画面。左にルールエディタ（ガンビット）、中央に 2 体の戦車が接近する戦場キャンバス、下にリアルタイム戦闘ログ"
+    class="mt-4 w-full overflow-hidden rounded-xl border border-slate-800 shadow-2xl"
+  >
+    <Image
+      src={gameScreenshot}
+      alt="code-tactics のゲーム全体画面。右パネルのガンビットエディタで AI ルールを設定し、中央キャンバスで 2 体の戦車（青・赤）が互いの射程に接近した場面"
+      class="w-full"
+      loading="eager"
+    />
+  </figure>
 </section>
