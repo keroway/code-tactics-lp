@@ -1,0 +1,53 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+const base = import.meta.env.BASE_URL;
+const home = `${base}/`.replace(/\/+/g, "/");
+---
+
+<Layout
+  title="プライバシー | code-tactics"
+  description="code-tactics LP のアクセス解析とプライバシーに関する説明。クッキーレス構成で Cookie バナーは不要です。"
+>
+  <main class="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-24">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">プライバシー</h1>
+
+    <section class="flex flex-col gap-4 text-slate-300">
+      <h2 class="text-xl font-semibold text-slate-100">アクセス解析について</h2>
+      <p>
+        このサイトでは <strong class="text-slate-100"
+          >Cloudflare Web Analytics</strong
+        > を使ってページビューを計測しています。
+      </p>
+      <ul class="list-disc list-inside flex flex-col gap-2">
+        <li>
+          <strong class="text-slate-100">クッキーレス</strong>:
+          Cookie・localStorage を一切使用しません。Cookie バナーは不要です。
+        </li>
+        <li>
+          <strong class="text-slate-100">GDPR / CCPA 準拠</strong>:
+          個人を特定する情報は収集・保存しません。
+        </li>
+        <li>
+          計測するデータはページビュー数・リファラー・ブラウザ種別・国など、
+          統計的な集計値のみです。
+        </li>
+        <li>
+          収集したデータは Cloudflare が管理するサーバーに保存されます。詳細は
+          <a
+            href="https://www.cloudflare.com/privacypolicy/"
+            class="text-emerald-400 hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Cloudflare プライバシーポリシー（新しいタブで開く）"
+            >Cloudflare プライバシーポリシー</a
+          > をご参照ください。
+        </li>
+      </ul>
+    </section>
+
+    <div class="mt-4">
+      <a href={home} class="btn-primary">トップへ戻る</a>
+    </div>
+  </main>
+</Layout>
