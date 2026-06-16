@@ -1,6 +1,6 @@
 // LP 全体で共有する定数。複数のコンポーネントから参照する。
 
-// 外部リンク (本体リポジトリ / web 版プレイ)。LP 内に内部ページはまだない。
+// 外部リンク (本体リポジトリ / web 版プレイ)。
 export const PLAY_URL = "https://keroway.github.io/code-tactics/";
 export const REPO_URL = "https://github.com/keroway/code-tactics";
 
