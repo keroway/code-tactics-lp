@@ -6,6 +6,9 @@ import {
   EXTERNAL_LINK_ATTRS,
   externalLinkLabel,
 } from "../consts";
+
+const base = import.meta.env.BASE_URL;
+const privacyUrl = `${base}/privacy`.replace(/\/+/g, "/");
 ---
 
 <footer class="border-t border-slate-800">
@@ -14,6 +17,7 @@ import {
   >
     <p>code-tactics ―― 2D プログラマブル・オートバトル。MIT License.</p>
     <nav class="flex gap-4">
+      <a href={privacyUrl} class="hover:text-slate-300">プライバシー</a>
       <a
         href={PLAY_URL}
         class="hover:text-slate-300"
