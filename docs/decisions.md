@@ -99,11 +99,11 @@ Cloudflare Web Analytics (JavaScript Snippet 版) にはカスタムクリック
 
 #### UTM 命名規約
 
-| パラメータ | 値 | 意味 |
-|-----------|---|------|
-| `utm_source` | `lp` | 流入元: この LP |
-| `utm_medium` | `cta` | 媒体種別: CTA ボタン |
-| `utm_campaign` | `lp-cta` | キャンペーン識別子 |
-| `utm_content` | `<出現箇所>` | ボタン識別子（例: `hero`, `footer`） |
+| パラメータ     | 値           | 意味                                 |
+| -------------- | ------------ | ------------------------------------ |
+| `utm_source`   | `lp`         | 流入元: この LP                      |
+| `utm_medium`   | `cta`        | 媒体種別: CTA ボタン                 |
+| `utm_campaign` | `lp-cta`     | キャンペーン識別子                   |
+| `utm_content`  | `<出現箇所>` | ボタン識別子（例: `hero`, `footer`） |
 
 例: `https://keroway.github.io/code-tactics/?utm_source=lp&utm_medium=cta&utm_campaign=lp-cta&utm_content=hero`
