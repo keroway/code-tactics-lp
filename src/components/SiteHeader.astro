@@ -6,6 +6,7 @@ import {
   NAV_LINKS,
   EXTERNAL_LINK_ATTRS,
   externalLinkLabel,
+  withUtm,
 } from "../consts";
 ---
 
@@ -38,7 +39,7 @@ import {
       }
     </ul>
     <a
-      href={PLAY_URL}
+      href={withUtm(PLAY_URL, "header")}
       class="ml-auto rounded-md bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 sm:ml-4"
       aria-label={externalLinkLabel("今すぐプレイ")}
       {...EXTERNAL_LINK_ATTRS}>今すぐプレイ</a
