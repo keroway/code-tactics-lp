@@ -5,6 +5,7 @@ import {
   REPO_URL,
   EXTERNAL_LINK_ATTRS,
   externalLinkLabel,
+  withUtm,
 } from "../consts";
 import { Image } from "astro:assets";
 import gameScreenshot from "../assets/game-screenshot.png";
@@ -25,7 +26,7 @@ import gameScreenshot from "../assets/game-screenshot.png";
   </p>
   <div class="mt-2 flex flex-wrap gap-4">
     <a
-      href={PLAY_URL}
+      href={withUtm(PLAY_URL, "hero")}
       class="btn-primary"
       aria-label={externalLinkLabel("今すぐプレイ")}
       {...EXTERNAL_LINK_ATTRS}>今すぐプレイ</a
