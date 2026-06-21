@@ -3,6 +3,7 @@
 import {
   PLAY_URL,
   REPO_URL,
+  REPO_IS_PUBLIC,
   EXTERNAL_LINK_ATTRS,
   externalLinkLabel,
   withUtm,
@@ -25,12 +26,22 @@ const privacyUrl = `${base}/privacy`.replace(/\/+/g, "/");
         aria-label={externalLinkLabel("プレイ")}
         {...EXTERNAL_LINK_ATTRS}>プレイ</a
       >
-      <a
-        href={REPO_URL}
-        class="hover:text-slate-300"
-        aria-label={externalLinkLabel("GitHub")}
-        {...EXTERNAL_LINK_ATTRS}>GitHub</a
-      >
+      {
+        REPO_IS_PUBLIC ? (
+          <a
+            href={REPO_URL}
+            class="hover:text-slate-300"
+            aria-label={externalLinkLabel("GitHub")}
+            {...EXTERNAL_LINK_ATTRS}
+          >
+            GitHub
+          </a>
+        ) : (
+          <span class="text-slate-600" aria-disabled="true">
+            GitHub（準備中）
+          </span>
+        )
+      }
     </nav>
   </div>
 </footer>

@@ -3,6 +3,7 @@
 import {
   PLAY_URL,
   REPO_URL,
+  REPO_IS_PUBLIC,
   EXTERNAL_LINK_ATTRS,
   externalLinkLabel,
   withUtm,
@@ -21,11 +22,21 @@ import {
       aria-label={externalLinkLabel("今すぐプレイ")}
       {...EXTERNAL_LINK_ATTRS}>今すぐプレイ</a
     >
-    <a
-      href={REPO_URL}
-      class="btn-ghost"
-      aria-label={externalLinkLabel("GitHub を見る")}
-      {...EXTERNAL_LINK_ATTRS}>GitHub を見る</a
-    >
+    {
+      REPO_IS_PUBLIC ? (
+        <a
+          href={REPO_URL}
+          class="btn-ghost"
+          aria-label={externalLinkLabel("GitHub を見る")}
+          {...EXTERNAL_LINK_ATTRS}
+        >
+          GitHub を見る
+        </a>
+      ) : (
+        <span class="btn-ghost-disabled" aria-disabled="true">
+          GitHub（準備中）
+        </span>
+      )
+    }
   </div>
 </section>

@@ -4,6 +4,17 @@
 export const PLAY_URL = "https://keroway.github.io/code-tactics/";
 export const REPO_URL = "https://github.com/keroway/code-tactics";
 
+// 本体リポジトリの公開状態フラグ (issue #97)。
+// code-tactics 本体は現在 private のため、未ログイン訪問者が GitHub CTA を
+// 押すと 404 になる。本体が public 化されるまで GitHub リンクを「準備中」表示に
+// 切り替えて 404 を防ぐ。
+// 公開後は deploy ワークフロー (または .env) に PUBLIC_REPO_PUBLIC=true を
+// 設定するだけで通常リンクへ戻る。コード側の文言・ハードコードを消し忘れる
+// 心配がなく、ワンステップで復帰できる。
+// 公開状況の確認: gh repo view keroway/code-tactics --json visibility
+//   または curl -s -o /dev/null -w "%{http_code}" https://github.com/keroway/code-tactics
+export const REPO_IS_PUBLIC = import.meta.env.PUBLIC_REPO_PUBLIC === "true";
+
 // 「今すぐプレイ」CTA に UTM パラメータを付与するヘルパー。
 // 遷移先 (code-tactics 本体) の Cloudflare Analytics で LP 経由の流入を
 // 出現箇所別 (utm_content) に区別する。命名規約は docs/decisions.md 決定4が正典。
