@@ -5,7 +5,7 @@ import RoadmapCard from "./RoadmapCard.astro";
 const roadmap = [
   {
     version: "MVP",
-    status: "現在",
+    status: "実装済み",
     items: [
       "1on1 の自動戦闘",
       "戦車型ユニット 1 種",
@@ -15,7 +15,7 @@ const roadmap = [
   },
   {
     version: "v0.2",
-    status: "次",
+    status: "実装済み",
     items: [
       "2on2・複数ユニット編成",
       "ルール発動統計",
@@ -25,7 +25,7 @@ const roadmap = [
   },
   {
     version: "v0.3",
-    status: "予定",
+    status: "実装済み",
     items: [
       "障害物・射線判定",
       "簡易経路探索",
@@ -35,17 +35,17 @@ const roadmap = [
   },
   {
     version: "v0.4",
-    status: "予定",
+    status: "実装済み",
     items: ["ユニット種別追加 (軽/重/偵察/ミサイル)", "武器種追加", "役割分担"],
   },
   {
     version: "v0.5",
-    status: "構想",
+    status: "実装済み",
     items: ["簡易プログラム言語", "ガンビット ⇄ AST/JSON 相互変換"],
   },
   {
     version: "v1.0",
-    status: "構想",
+    status: "開発中",
     items: [
       "ひとり用キャンペーン",
       "非同期ネット対戦",
@@ -59,9 +59,10 @@ const roadmap = [
   <p class="eyebrow">roadmap</p>
   <h2 class="mt-3 text-2xl font-bold sm:text-3xl">これからのロードマップ</h2>
   <p class="mt-4 max-w-2xl text-slate-300">
-    現在は 1on1 の
-    MVP。手応えを確かめながら、複数ユニット戦・障害物・簡易プログラム
-    言語・ネット対戦へと段階的に広げていく (本体の SPEC に連動)。
+    複数ユニット戦・障害物・経路探索からユニット種別・武器種、そして簡易プログラム言語まで、SPEC
+    のマイルストーンは v0.5 まで実装済み。現在はひとり用キャンペーン (v1.0)
+    を開発中で、ネット対戦・リプレイ共有へと段階的に広げていく (本体の SPEC
+    に連動)。
   </p>
   <ol class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     {
