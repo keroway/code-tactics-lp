@@ -9,8 +9,8 @@ interface Props {
 }
 
 const {
-  title = "code-tactics — AI を組んで部隊を戦わせるオートバトル",
-  description = "ユニットを直接操作せず、ガンビット式 AI ルールや簡易プログラムで部隊を設計する 2D プログラマブル・オートバトルゲーム。ログとリプレイで分析し、ルールを直して再挑戦する。",
+  title = "code-tactics — ガンビット＆プログラムで AI 部隊を戦わせる 2D オートバトル",
+  description = "戦車・ドローン・ミサイルなど複数ユニットの AI をガンビット UI またはテキストプログラムで設計し、自動戦闘を観察・分析・改善するプログラマブル・オートバトルゲーム。Web ブラウザで無料プレイ。",
   noindex = false,
 } = Astro.props;
 
@@ -31,10 +31,13 @@ const ogImage = Astro.site
 // 制作者を辿れるようにする。
 const jsonLd = {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
+  "@type": ["SoftwareApplication", "VideoGame"],
   name: "code-tactics",
   applicationCategory: "GameApplication",
-  operatingSystem: "Web browser",
+  genre: ["Strategy", "Simulation"],
+  gamePlatform: ["Web browser", "Windows", "macOS", "Linux"],
+  operatingSystem: "Web browser, Windows, macOS, Linux",
+  playMode: "SinglePlayer",
   description,
   ...(canonical ? { url: canonical } : {}),
   ...(ogImage ? { image: ogImage } : {}),

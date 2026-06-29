@@ -47,6 +47,7 @@ export const NAV_LINKS = [
   { href: "#concept", label: "コンセプト" },
   { href: "#how-to-play", label: "遊び方" },
   { href: "#features", label: "特徴" },
+  { href: "#program", label: "プログラム" },
   { href: "#roadmap", label: "ロードマップ" },
   { href: "#faq", label: "FAQ" },
 ];
