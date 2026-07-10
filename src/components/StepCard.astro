@@ -4,11 +4,12 @@ interface Props {
   no: string;
   title: string;
   body: string;
+  index?: number;
 }
-const { no, title, body } = Astro.props;
+const { no, title, body, index = 0 } = Astro.props;
 ---
 
-<li class="card p-6">
+<li class="card p-6" style={`--i:${index}`}>
   <span class="font-mono text-sm text-emerald-400">{no}</span>
   <h3 class="mt-2 text-lg font-semibold">{title}</h3>
   <p class="mt-2 text-sm text-slate-300">{body}</p>

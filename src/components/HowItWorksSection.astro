@@ -35,32 +35,131 @@ import battleLogImg from "../assets/game-battle-log.png";
       />
     </figure>
 
-    <!-- 戦闘ログ (実画面) -->
-    <figure
-      aria-label="戦闘ログの実画面。各 tick でどのルールが評価され発動したかの時系列記録"
-      class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
-    >
-      <figcaption
-        class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400"
+    <!-- 戦闘ログ (実画面 + 擬似ストリーム演出) -->
+    <div class="flex flex-col gap-3">
+      <figure
+        aria-label="戦闘ログの実画面。各 tick でどのルールが評価され発動したかの時系列記録"
+        class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
       >
-        <span class="size-2.5 rounded-full bg-rose-500/70" aria-hidden="true"
-        ></span>
-        <span class="size-2.5 rounded-full bg-amber-500/70" aria-hidden="true"
-        ></span>
-        <span class="size-2.5 rounded-full bg-emerald-500/70" aria-hidden="true"
-        ></span>
-        <span class="ml-2">battle log</span>
-      </figcaption>
-      <Image
-        src={battleLogImg}
-        alt="code-tactics 戦闘ログの画面。tick 119 で cpu-tank と player-tank が attack-when-ready ルールを評価（不一致）→ approach-detected-enemy ルールを評価（一致）→ 近づく行動を発動した記録"
-        class="w-full object-cover"
-        loading="lazy"
-      />
-    </figure>
+        <figcaption
+          class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400"
+        >
+          <span class="size-2.5 rounded-full bg-rose-500/70" aria-hidden="true"
+          ></span>
+          <span class="size-2.5 rounded-full bg-amber-500/70" aria-hidden="true"
+          ></span>
+          <span
+            class="size-2.5 rounded-full bg-emerald-500/70"
+            aria-hidden="true"></span>
+          <span class="ml-2">battle log</span>
+        </figcaption>
+        <Image
+          src={battleLogImg}
+          alt="code-tactics 戦闘ログの画面。tick 119 で cpu-tank と player-tank が attack-when-ready ルールを評価（不一致）→ approach-detected-enemy ルールを評価（一致）→ 近づく行動を発動した記録"
+          class="w-full object-cover"
+          loading="lazy"
+        />
+      </figure>
+
+      <!-- 装飾用の擬似ログストリーム (#B-2)。実情報ではないため aria-hidden 。 -->
+      <div
+        id="log-stream"
+        aria-hidden="true"
+        class="overflow-hidden rounded-lg border border-slate-800 bg-slate-950/80 p-3 font-mono text-xs text-slate-400"
+      >
+        <span class="log-stream-cursor">_</span>
+      </div>
+    </div>
   </div>
   <p class="mt-4 font-mono text-xs text-slate-500">
     ※
     上記はゲームの実際のプレイ画面。現在はキャンペーンや非同期対戦も追加されている。
   </p>
 </section>
+
+<script is:inline>
+  // 戦闘ログの擬似ストリーム演出 (#B-2)。IntersectionObserver 可用かつ reduced-motion でない時のみ、
+  // 可視の間のみ 1 行ずつログを差し込む。非対応・ JS 無効時は全行を静的表示する。
+  (function () {
+    const lines = [
+      "tick 117  cpu-tank  eval attack-when-ready  -> false",
+      "tick 118  cpu-tank  eval approach-detected-enemy -> true",
+      "tick 118  cpu-tank  action approach(player-tank)",
+      "tick 119  player-tank  eval hp_below(30) -> false",
+      "tick 119  player-tank  eval enemy_in_range -> true",
+      "tick 119  player-tank  action attack(cpu-tank)",
+      "tick 120  cpu-tank  eval weapon_ready -> true",
+      "tick 120  cpu-tank  action attack(player-tank)",
+    ];
+    const container = document.getElementById("log-stream");
+    if (!container) return;
+
+    const reduceMotion =
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const cursor = container.querySelector(".log-stream-cursor");
+
+    function renderStatic() {
+      lines.forEach(function (text) {
+        const row = document.createElement("p");
+        row.textContent = "> " + text;
+        container.insertBefore(row, cursor);
+      });
+    }
+
+    if (reduceMotion || !("IntersectionObserver" in window)) {
+      renderStatic();
+      return;
+    }
+
+    let index = 0;
+    let timer = null;
+    let started = false;
+
+    function appendLine() {
+      const row = document.createElement("p");
+      row.className = "log-stream-line";
+      row.textContent = "> " + lines[index % lines.length];
+      container.insertBefore(row, cursor);
+      // 表示行数を抱えすぎないように古い行を間引く (カーソルは除外)
+      while (container.children.length > 7) {
+        const first = container.firstElementChild;
+        if (first === cursor) break;
+        container.removeChild(first);
+      }
+      requestAnimationFrame(function () {
+        row.classList.add("is-visible");
+      });
+      index += 1;
+    }
+
+    function start() {
+      if (started) return;
+      started = true;
+      appendLine();
+      timer = window.setInterval(appendLine, 1400);
+    }
+
+    function stop() {
+      if (!started) return;
+      started = false;
+      if (timer) window.clearInterval(timer);
+      timer = null;
+    }
+
+    const io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            start();
+          } else {
+            stop();
+          }
+        });
+      },
+      { threshold: 0.3 },
+    );
+    io.observe(container);
+  })();
+</script>
