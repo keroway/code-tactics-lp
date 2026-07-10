@@ -23,8 +23,10 @@ npm-debug.log*
 .vscode/
 .idea/
 
-# agent tooling (ローカルの Claude Code 作業ディレクトリ)
+# agent tooling (ローカルの Claude Code / Pi 作業ディレクトリ)
 .claude/
+.pi/remote-pi/
+.pi/todos/
 
 # Lighthouse CI のローカル出力
 .lighthouseci/

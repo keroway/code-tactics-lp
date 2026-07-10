@@ -10,14 +10,17 @@
     ガンビットでも、テキストでも。
   </h2>
   <p class="mt-4 max-w-2xl text-slate-300">
-    ガンビット UI で並べたルールは、テキストの簡易プログラム言語に変換して編集できる。
-    両者は相互に変換でき、どちらで書いても結果は変わらない。
-    GUI で大まかに組み、細かい条件はテキストで調整するといった使い方もできる。
+    ガンビット UI
+    で並べたルールは、テキストの簡易プログラム言語に変換して編集できる。
+    両者は相互に変換でき、どちらで書いても結果は変わらない。 GUI
+    で大まかに組み、細かい条件はテキストで調整するといった使い方もできる。
   </p>
 
   <div class="mt-8 grid gap-6 lg:grid-cols-2">
     <!-- ガンビット UI (疑似表示) -->
-    <div class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60">
+    <div
+      class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
+    >
       <div
         class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400"
       >
@@ -30,7 +33,10 @@
         <span class="ml-2">gambits — player-tank</span>
       </div>
       <div class="p-4">
-        <ol class="space-y-2 font-mono text-sm" aria-label="ガンビットルール一覧">
+        <ol
+          class="space-y-2 font-mono text-sm"
+          aria-label="ガンビットルール一覧"
+        >
           {
             [
               {
@@ -39,7 +45,11 @@
                 action: "attack",
               },
               { no: "#2", cond: "hp_below(30)", action: "keep_distance" },
-              { no: "#3", cond: "enemy_in_range", action: "approach weakest_enemy" },
+              {
+                no: "#3",
+                cond: "enemy_in_range",
+                action: "approach weakest_enemy",
+              },
               { no: "#4", cond: "always", action: "idle" },
             ].map((r) => (
               <li class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded border border-slate-800 bg-slate-950/60 px-3 py-2">
@@ -56,7 +66,9 @@
     </div>
 
     <!-- テキスト構文 (対応するプログラム) -->
-    <div class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60">
+    <div
+      class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
+    >
       <div
         class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400"
       >
@@ -70,8 +82,7 @@
       </div>
       <pre
         class="overflow-x-auto p-4 font-mono text-sm leading-relaxed"
-        aria-label="ガンビットと等価なプログラムテキスト"
-      ><code><span class="text-slate-500">// 相互変換後のテキスト表現</span>
+        aria-label="ガンビットと等価なプログラムテキスト"><code><span class="text-slate-500">// 相互変換後のテキスト表現</span>
 <span class="text-amber-400">rule</span> <span class="text-emerald-300">attack-first</span>
   <span class="text-amber-400">when</span> enemy_in_range <span class="text-slate-400">and</span> weapon_ready
   <span class="text-amber-400">do</span>   attack
@@ -91,6 +102,7 @@
   </div>
 
   <p class="mt-4 font-mono text-xs text-slate-500">
-    ※ ガンビット UI とテキストは双方向に変換できる。構文は実際のゲームのものを掲載。
+    ※ ガンビット UI
+    とテキストは双方向に変換できる。構文は実際のゲームのものを掲載。
   </p>
 </section>
