@@ -35,7 +35,7 @@ const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
     自分で組んだ AI で、<br />部隊を戦わせる。
   </h1>
   <p class="max-w-2xl text-lg text-slate-300">
-    複数ユニットの AI をガンビット UI
+    複数ユニットの AI を行動ルール UI
     またはテキストプログラムで設計し、自動戦闘を観察してログで分析する。
     軽戦車・重戦車・偵察ドローン・ミサイル車両、障害物、キャンペーン、非同期対戦まで広がった、
     観察とデバッグが中核のプログラマブル・オートバトル。
@@ -87,12 +87,12 @@ const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
       </figure>
     ) : (
       <figure
-        aria-label="code-tactics のゲーム画面。左にルールエディタ（ガンビット）、中央に 2 体の戦車が接近する戦場キャンバス、下にリアルタイム戦闘ログ"
+        aria-label="code-tactics のゲーム画面。左に行動ルールエディタ、中央に 2 体の戦車が接近する戦場キャンバス、下にリアルタイム戦闘ログ"
         class="mt-4 w-full overflow-hidden rounded-xl border border-slate-800 shadow-2xl"
       >
         <Image
           src={gameScreenshot}
-          alt="code-tactics のゲーム全体画面。右パネルのガンビットエディタで AI ルールを設定し、中央キャンバスで 2 体の戦車（青・赤）が互いの射程に接近した場面"
+          alt="code-tactics のゲーム全体画面。右パネルの行動ルールエディタで AI ルールを設定し、中央キャンバスで 2 体の戦車（青・赤）が互いの射程に接近した場面"
           class="w-full"
           loading="eager"
         />
