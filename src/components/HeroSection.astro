@@ -12,16 +12,14 @@ import { Image } from "astro:assets";
 import { existsSync } from "node:fs";
 import gameScreenshot from "../assets/game-screenshot.png";
 
-// プレイ動画 (#A)。public/hero-battle.{webm,mp4} と public/hero-poster.png が
-// 用意されたら <video> を使い、未用意の間は従来の静止画にフォールバックする
-// (存在しないファイルを参照して 404 や Lighthouse エラーを発生させないため)。
-// #94/#95 で実アセットが揃い次第、public/ に上記 3 ファイルを置くだけで自動切り替わる。
+// プレイ動画 (#95)。WebM を優先し、未対応ブラウザ向けに MP4 も配信する。
+// アセットが欠けたビルドでは、404 や空の video 要素を避けるため静止画へフォールバックする。
 const base = import.meta.env.BASE_URL;
 const publicDir = new URL("../../public/", import.meta.url);
 const hasHeroVideo =
   existsSync(new URL("hero-battle.webm", publicDir)) &&
   existsSync(new URL("hero-battle.mp4", publicDir)) &&
-  existsSync(new URL("hero-poster.png", publicDir));
+  existsSync(new URL("hero-poster.jpg", publicDir));
 const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
 ---
 
@@ -73,12 +71,14 @@ const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
       >
         <video
           class="w-full"
-          poster={withBase("hero-poster.png")}
-          autoplay
+          poster={withBase("hero-poster.jpg")}
+          width="1280"
+          height="800"
           muted
           loop
           playsinline
-          preload="metadata"
+          controls
+          preload="none"
           data-motion-optional
         >
           <source src={withBase("hero-battle.webm")} type="video/webm" />
@@ -102,17 +102,30 @@ const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
 </section>
 
 <script is:inline>
-  // reduce-motion 時は自動再生を停止し poster 静止画で成立させる (WCAG 2.2.2)。
+  // 通常時だけ、表示領域に入った動画を自動再生する。preload="none" と組み合わせ、
+  // ファーストビューで不要な動画転送を避ける。reduce-motion 時は poster のままにし、
+  // 利用者が controls の再生ボタンを押した場合のみ再生できるようにする。
   (function () {
-    const reduceMotion =
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!reduceMotion) return;
-    document
-      .querySelectorAll("video[data-motion-optional]")
-      .forEach(function (video) {
-        video.removeAttribute("autoplay");
-        video.pause();
-      });
+    const video = document.querySelector("video[data-motion-optional]");
+    if (!video || !(video instanceof HTMLVideoElement)) return;
+
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mediaQuery.matches || !("IntersectionObserver" in window)) return;
+
+    const observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            video.play().catch(function () {
+              // ブラウザの自動再生ポリシーで拒否されても controls から再生できる。
+            });
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { threshold: 0.5 },
+    );
+    observer.observe(video);
   })();
 </script>
