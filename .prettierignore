@@ -1,5 +1,6 @@
 dist/
+# CLAUDE.md への symlink（prettier は symlink をエラーにする）
+AGENTS.md
 node_modules/
 .astro/
-package-lock.json
 .pi/

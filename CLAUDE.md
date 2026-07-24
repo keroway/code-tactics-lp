@@ -24,18 +24,33 @@ CI で Lighthouse 計測とリンク切れ検出も走らせている。残る�
 
 確定済みスタック (`docs/decisions.md` が決定記録):
 
-- フレームワーク: **Astro** (v6)
+- フレームワーク: **Astro** (v7)
 - スタイリング: **Tailwind CSS** (v4 / `@tailwindcss/vite` プラグイン経由。
   グローバル CSS は `src/styles/global.css` の `@import "tailwindcss";` のみ。
   v3 系の `tailwind.config` や `@astrojs/tailwind` 統合は使わない)
-- ホスティング: **GitHub Pages** (`.github/workflows/deploy.yml` が `withastro/action@v5`
+- ホスティング: **GitHub Pages** (`.github/workflows/deploy.yml` が `withastro/action@v6`
   で main push 時にデプロイ。Pages のソースは「GitHub Actions」)
 
+## ツールチェーン
+
+- PM: **pnpm 11** / Node **24**（`mise.toml` でピン。`packageManager` フィールドあり）
+- Lint/format: **Biome**（ts/js/mjs/json。`biome.json`）+ 補助 **Prettier**
+  （`.astro` / `.md` のみ。`prettier-plugin-astro`）
+- git hooks: **lefthook**（`postinstall` で自動インストール。pre-commit で
+  biome / prettier / astro check、pre-push で `pnpm run check`）
+- `justfile` は package.json scripts への薄い委譲（`just --list` 参照）
+
 ```sh
-npm run dev          # 開発サーバー (/code-tactics-lp/ 配下で配信)
-npm run build        # 静的出力 → dist/
-npm run preview      # ビルド結果のプレビュー
-npm run astro check  # 型チェック
+pnpm run dev          # 開発サーバー (/code-tactics-lp/ 配下で配信)
+pnpm run build        # 静的出力 → dist/
+pnpm run preview      # ビルド結果のプレビュー
+pnpm run lint         # biome ci .
+pnpm run format:check # prettier --check (.astro / .md)
+pnpm run check        # lint + format:check + astro check の全通し
+pnpm run og           # scripts/generate-og.mjs で og.png 生成（Git 非管理、CI で生成）
+pnpm run icons        # scripts/generate-icons.mjs で apple-touch-icon.png 生成（同上）
+pnpm run lhci         # Lighthouse CI（閾値は lighthouserc.json）
+pnpm run smoke:a11y   # axe-core a11y スモーク（build + preview 起動後に実行）
 ```
 
 ## デプロイ

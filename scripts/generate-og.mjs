@@ -1,9 +1,10 @@
 // OGP 画像 (1200x630) を実ゲーム画面に SVG オーバーレイを重ねて public/og.png に出力する。
 // 実行: node scripts/generate-og.mjs
 // フォント環境差を避けるため、テキストはラテン文字 + 等幅のみで構成する。
-import sharp from "sharp";
-import { fileURLToPath } from "node:url";
+
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import sharp from "sharp";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const screenshot = join(
@@ -11,7 +12,7 @@ const screenshot = join(
   "..",
   "src",
   "assets",
-  "game-screenshot.png",
+  "game-screenshot.png"
 );
 const out = join(__dirname, "..", "public", "og.png");
 

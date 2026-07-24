@@ -1,0 +1,5 @@
+# esbuild の postinstall はネイティブバイナリの検証のみのため許可する
+allowBuilds:
+  esbuild: true
+  # lefthook の postinstall は git hooks のインストールのため許可する
+  lefthook: true

@@ -1,0 +1,6 @@
+# keroway 標準 mise 設定テンプレート。
+# Node / pnpm のバージョンをリポジトリ単位でピンする。
+# bun リポジトリ（obsidian-clipper）では node/pnpm の代わりに bun をピンする。
+[tools]
+node = "24"
+pnpm = "11"
