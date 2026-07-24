@@ -1,5 +1,5 @@
-import { chromium } from "playwright";
 import { AxeBuilder } from "@axe-core/playwright";
+import { chromium } from "playwright";
 
 const BASE_URL =
   process.env.BASE_URL ?? "http://localhost:4321/code-tactics-lp/";
@@ -14,7 +14,7 @@ try {
 
   if (results.violations.length > 0) {
     console.error(
-      `axe-core: ${results.violations.length} violation(s) found\n`,
+      `axe-core: ${results.violations.length} violation(s) found\n`
     );
     for (const v of results.violations) {
       console.error(`[${v.impact}] ${v.id}: ${v.description}`);
@@ -29,7 +29,7 @@ try {
   }
 
   console.log(
-    `axe-core: no violations found (${results.passes.length} rules passed)`,
+    `axe-core: no violations found (${results.passes.length} rules passed)`
   );
 } finally {
   await browser.close();

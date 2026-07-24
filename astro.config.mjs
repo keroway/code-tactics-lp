@@ -1,7 +1,8 @@
 // @ts-check
-import { defineConfig } from "astro/config";
+
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "astro/config";
 
 // GitHub Pages (https://keroway.github.io/code-tactics-lp/) でのサブパス配信に合わせ
 // site / base を設定。base を誤ると内部リンク・アセットパスが壊れるため必須。

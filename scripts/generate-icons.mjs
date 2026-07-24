@@ -2,9 +2,10 @@
 // 実行: node scripts/generate-icons.mjs (npm run icons)
 // iOS ホーム画面はアイコンを自動で角丸にするため、ここでは角丸なし・不透明の
 // フルブリード背景にする。配色は favicon.svg / og.png と統一 (accent = emerald-400)。
-import sharp from "sharp";
-import { fileURLToPath } from "node:url";
+
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import sharp from "sharp";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const out = join(__dirname, "..", "public", "apple-touch-icon.png");
