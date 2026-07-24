@@ -12,6 +12,9 @@ pre-commit:
 
     - name: prettier (staged .astro / .md)
       glob: "*.{astro,md}"
+      exclude:
+        # CLAUDE.md への symlink（prettier は symlink をエラーにする）
+        - AGENTS.md
       run: pnpm exec prettier --write {staged_files}
       stage_fixed: true
 
