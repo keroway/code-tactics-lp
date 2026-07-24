@@ -1,5 +1,4 @@
 dist/
 node_modules/
 .astro/
-package-lock.json
 .pi/
