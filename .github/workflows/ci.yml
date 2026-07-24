@@ -15,44 +15,50 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
-          cache: npm
+          node-version: 24
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Type check (astro check)
-        run: npm run astro check
+        run: pnpm run astro check
 
   build:
     name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
-          cache: npm
+          node-version: 24
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
-      - name: Lint (ESLint)
-        run: npm run lint
+      - name: Lint (Biome)
+        run: pnpm run lint
 
-      - name: Format check (Prettier)
-        run: npm run format:check
+      - name: Format check (Prettier for .astro / .md)
+        run: pnpm run format:check
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
   # axe-core でアクセシビリティ違反の具体的箇所を検出する。
   # Lighthouse CI の a11y スコア閾値チェックとは相補的な役割（こちらは違反ルールと対象要素を特定する）。
@@ -61,29 +67,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
-          cache: npm
+          node-version: 24
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browser
-        run: npx playwright install chromium --with-deps
+        run: pnpm exec playwright install chromium --with-deps
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
       - name: Start preview server
-        run: nohup npm run preview > preview.log 2>&1 &
+        run: nohup pnpm run preview > preview.log 2>&1 &
 
       - name: Wait for server
         run: |
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             if curl -sf http://localhost:4321/code-tactics-lp/ >/dev/null; then
               echo "server is up"; exit 0
             fi
@@ -94,7 +103,7 @@ jobs:
           exit 1
 
       - name: A11y check (axe-core)
-        run: npm run smoke:a11y
+        run: pnpm run smoke:a11y
 
   # ビルド成果物をプレビュー配信し、内部アンカー・外部リンク・アセットの死活を検証する。
   # サブパス (/code-tactics-lp/) 配信を実環境同様に再現するため、ファイル直読みではなく
@@ -104,29 +113,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
-          cache: npm
+          node-version: 24
+          cache: pnpm
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Generate assets
-        run: npm run og && npm run icons
+        run: pnpm run og && pnpm run icons
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
       - name: Start preview server
-        run: nohup npm run preview > preview.log 2>&1 &
+        run: nohup pnpm run preview > preview.log 2>&1 &
 
       - name: Wait for server
         run: |
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             if curl -sf http://localhost:4321/code-tactics-lp/ >/dev/null; then
               echo "server is up"; exit 0
             fi
