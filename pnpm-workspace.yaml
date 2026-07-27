@@ -3,3 +3,10 @@ allowBuilds:
   esbuild: true
   # lefthook の postinstall は git hooks のインストールのため許可する
   lefthook: true
+
+# @lhci/cli (devDependency) の推移的依存に既知脆弱性 (osv-scanner 検出)。
+# @lhci/cli 自体は 0.15.1 が最新で直接の修正版は無いため、patch/minor 範囲で上書きする。
+overrides:
+  brace-expansion: ">=1.1.17"
+  tmp: ">=0.2.4"
+  uuid: ">=9"
