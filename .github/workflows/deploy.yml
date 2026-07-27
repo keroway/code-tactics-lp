@@ -5,11 +5,8 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# GITHUB_TOKEN に Pages デプロイ権限を付与
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # 同時実行は最新の 1 本に集約 (進行中のデプロイはキャンセルしない)
 concurrency:
@@ -22,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
@@ -46,6 +45,10 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    # GITHUB_TOKEN に Pages デプロイ権限を付与（このジョブでのみ必要な最小権限に絞る）
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
