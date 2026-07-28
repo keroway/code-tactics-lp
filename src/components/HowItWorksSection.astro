@@ -1,8 +1,11 @@
 ---
-// ゲームの中身ショーケース。実画面キャプチャで「ルールエディタ」と「戦闘ログ」を提示する。
+// ゲームの中身ショーケース。実画面キャプチャで「ルールエディタ」「戦闘ログ」
+// 「プログラムエディタ」「複数ユニット戦」を提示する。
 import { Image } from "astro:assets";
 import ruleEditorImg from "../assets/game-rule-editor.png";
 import battleLogImg from "../assets/game-battle-log.png";
+import programEditorImg from "../assets/game-program-editor.png";
+import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
 ---
 
 <section id="how-it-works" data-animate class="scroll-mt-20">
@@ -70,10 +73,58 @@ import battleLogImg from "../assets/game-battle-log.png";
         <span class="log-stream-cursor">_</span>
       </div>
     </div>
+
+    <!-- プログラムエディタ (実画面) -->
+    <figure
+      aria-label="プログラムエディタの実画面。行動ルール UI で組んだ内容をテキストの簡易プログラム言語に変換した表示：attack-when-ready、approach-detected-enemy、stop-otherwise の 3 ルール"
+      class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60"
+    >
+      <figcaption
+        class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400"
+      >
+        <span class="size-2.5 rounded-full bg-rose-500/70" aria-hidden="true"
+        ></span>
+        <span class="size-2.5 rounded-full bg-amber-500/70" aria-hidden="true"
+        ></span>
+        <span class="size-2.5 rounded-full bg-emerald-500/70" aria-hidden="true"
+        ></span>
+        <span class="ml-2">program — player-tank.ct</span>
+      </figcaption>
+      <Image
+        src={programEditorImg}
+        alt='code-tactics プログラムエディタの画面。rule "attack-when-ready" when enemy_in_range and weapon_ready target nearest_enemy do attack など、行動ルールから変換された 3 件のテキストルール'
+        class="w-full object-cover"
+        loading="lazy"
+      />
+    </figure>
+
+    <!-- 複数ユニット戦 (実画面) -->
+    <figure
+      aria-label="複数ユニット戦の実画面。2 対 2 の編成で味方 2 体・敵 2 体がそれぞれ射程円を表示しながら対峙している"
+      class="overflow-hidden rounded-lg border border-slate-800 bg-slate-900/60 lg:col-span-2"
+    >
+      <figcaption
+        class="flex items-center gap-2 border-b border-slate-800 px-4 py-2 font-mono text-xs text-slate-400"
+      >
+        <span class="size-2.5 rounded-full bg-rose-500/70" aria-hidden="true"
+        ></span>
+        <span class="size-2.5 rounded-full bg-amber-500/70" aria-hidden="true"
+        ></span>
+        <span class="size-2.5 rounded-full bg-emerald-500/70" aria-hidden="true"
+        ></span>
+        <span class="ml-2">2on2 — multi-unit battle</span>
+      </figcaption>
+      <Image
+        src={multiUnitBattleImg}
+        alt="code-tactics の 2 対 2 複数ユニット戦の画面。味方戦車・味方戦車2 と 敵戦車・敵戦車2 の 4 体が、それぞれの射程円を表示しながら盤面に配置されている"
+        class="w-full object-cover"
+        loading="lazy"
+      />
+    </figure>
   </div>
   <p class="mt-4 font-mono text-xs text-slate-500">
     ※
-    上記はゲームの実際のプレイ画面。現在はキャンペーンや非同期対戦も追加されている。
+    上記はゲームの実際の画面。現在はプログラムタブや複数ユニット編成、キャンペーンや非同期対戦も追加されている。
   </p>
 </section>
 
