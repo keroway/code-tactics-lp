@@ -47,17 +47,17 @@ LP は「速くて軽い静的サイト」が最適。下記で確定。決定�
 
 ## Getting started
 
-> **必要環境**: Node.js 22 (CI も `node-version: 22` で動かしている)。`nvm use` などで合わせる。
+> **必要環境**: Node.js 26 (CI も `node-version: 26` で動かしている)。mise などで合わせる。
 
 ```sh
 # 依存インストール
-npm install
+pnpm install
 
 # 開発サーバー (http://localhost:4321/code-tactics-lp/)
-npm run dev
+pnpm run dev
 
 # 本番ビルド (静的出力 → dist/)
-npm run build
+pnpm run build
 
 # ビルド結果のローカルプレビュー
 npm run preview

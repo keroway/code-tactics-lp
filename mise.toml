@@ -2,5 +2,5 @@
 # Node / pnpm のバージョンをリポジトリ単位でピンする。
 # bun リポジトリ（obsidian-clipper）では node/pnpm の代わりに bun をピンする。
 [tools]
-node = "24"
+node = "26"
 pnpm = "11"

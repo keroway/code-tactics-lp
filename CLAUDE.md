@@ -33,7 +33,7 @@ CI で Lighthouse 計測とリンク切れ検出も走らせている。残る�
 
 ## ツールチェーン
 
-- PM: **pnpm 11** / Node **24**（`mise.toml` でピン。`packageManager` フィールドあり）
+- PM: **pnpm 11** / Node **26**（`mise.toml` でピン。`packageManager` フィールドあり）
 - Lint/format: **Biome**（ts/js/mjs/json。`biome.json`）+ 補助 **Prettier**
   （`.astro` / `.md` のみ。`prettier-plugin-astro`）
 - git hooks: **lefthook**（`postinstall` で自動インストール。pre-commit で
