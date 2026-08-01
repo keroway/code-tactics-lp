@@ -1,8 +1,20 @@
 name: Deploy to GitHub Pages
 
+# LP の生成物に影響しない文書・Issue テンプレートだけの更新では再デプロイしない。
+# デプロイは required check ではないため、push の paths フィルターで安全に省略できる。
 on:
   push:
     branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "scripts/**"
+      - "astro.config.mjs"
+      - "tsconfig.json"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
 permissions:

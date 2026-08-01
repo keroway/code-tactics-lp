@@ -1,7 +1,8 @@
 name: CI
 
-# PR 段階で型チェック / lint / format / build を並列ジョブで検証する。
-# 壊れた変更が main にマージされるのを防ぐゲート。
+# すべての PR で静的解析・書式検査を行い、サイトに影響する差分に限って
+# ビルド後のブラウザ検証を実行する。paths フィルターを workflow 自体に付けると
+# required check が Pending のままになるため、常に起動して job 単位で判定する。
 on:
   pull_request:
   workflow_dispatch:
@@ -9,158 +10,163 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  typecheck:
-    name: Type check
+  changes:
+    name: Detect site changes
+    runs-on: ubuntu-latest
+    outputs:
+      site: ${{ steps.filter.outputs.site }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Classify changes
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          # 手動実行では比較対象がないため、意図どおり全検証を実行する。
+          if [[ -z "$BASE_SHA" ]]; then
+            echo "site=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed_files="$(git diff --name-only "$BASE_SHA" HEAD)"
+          printf '%s\n' "$changed_files"
+          if grep -Eq '^(src/|public/|scripts/|astro\.config\.mjs$|tsconfig\.json$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|lighthouserc\.json$|lychee\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed_files"; then
+            echo "site=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "site=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  quality:
+    name: Lint and format
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
-
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 26
           cache: pnpm
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Type check (astro check)
-        run: pnpm run astro check
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
-
-      - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 26
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Lint (Biome)
         run: pnpm run lint
-
       - name: Format check (Prettier for .astro / .md)
         run: pnpm run format:check
 
-      - name: Build
-        run: pnpm run build
-
-  # axe-core でアクセシビリティ違反の具体的箇所を検出する。
-  # Lighthouse CI の a11y スコア閾値チェックとは相補的な役割（こちらは違反ルールと対象要素を特定する）。
-  a11y:
-    name: A11y check
+  build:
+    name: Build and type check
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
-
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 26
           cache: pnpm
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Install Playwright browser
-        run: pnpm exec playwright install chromium --with-deps
-
+      - name: Type check (astro check)
+        run: pnpm run astro check
+      - name: Generate deployment assets
+        run: pnpm run og && pnpm run icons
       - name: Build
         run: pnpm run build
+      - name: Upload site artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: site-dist
+          path: dist
+          if-no-files-found: error
 
+  # axe-core は違反ルールと対象要素を報告し、Lighthouse のスコア閾値を補完する。
+  a11y:
+    name: A11y check
+    needs: [changes, build]
+    if: needs.changes.outputs.site == 'true' && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 26
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright browser
+        run: pnpm exec playwright install chromium --with-deps
+      - name: Download site artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: site-dist
+          path: dist
       - name: Start preview server
         run: nohup pnpm run preview > preview.log 2>&1 &
-
       - name: Wait for server
-        run: |
-          for _ in $(seq 1 30); do
-            if curl -sf http://localhost:4321/code-tactics-lp/ >/dev/null; then
-              echo "server is up"; exit 0
-            fi
-            sleep 1
-          done
-          echo "preview server did not start in time" >&2
-          cat preview.log >&2 || true
-          exit 1
-
+        run: bash scripts/wait-for-preview.sh
       - name: A11y check (axe-core)
         run: pnpm run smoke:a11y
 
-  # ビルド成果物をプレビュー配信し、内部アンカー・外部リンク・アセットの死活を検証する。
-  # サブパス (/code-tactics-lp/) 配信を実環境同様に再現するため、ファイル直読みではなく
-  # preview サーバー経由で検査する。
+  # ビルド済み成果物をサブパス配信し、リンク・アンカー・アセットを検証する。
   linkcheck:
     name: Link check
+    needs: [changes, build]
+    if: needs.changes.outputs.site == 'true' && needs.build.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
-
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 26
           cache: pnpm
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Generate assets
-        run: pnpm run og && pnpm run icons
-
-      - name: Build
-        run: pnpm run build
-
+      - name: Download site artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: site-dist
+          path: dist
       - name: Start preview server
         run: nohup pnpm run preview > preview.log 2>&1 &
-
       - name: Wait for server
-        run: |
-          for _ in $(seq 1 30); do
-            if curl -sf http://localhost:4321/code-tactics-lp/ >/dev/null; then
-              echo "server is up"; exit 0
-            fi
-            sleep 1
-          done
-          echo "preview server did not start in time" >&2
-          cat preview.log >&2 || true
-          exit 1
-
+        run: bash scripts/wait-for-preview.sh
       - name: Link check (lychee)
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
-          # lychee.toml の設定 (リトライ/タイムアウト/許容コード/除外) を併用する。
-          # --include-fragments で内部アンカー (#concept 等) の存在も検証する。
           args: "--no-progress --include-fragments http://localhost:4321/code-tactics-lp/"
           token: ${{ secrets.GITHUB_TOKEN }}
           fail: true
