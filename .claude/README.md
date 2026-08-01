@@ -5,7 +5,7 @@
 
 ## 構成
 
-```
+```text
 .claude/
 ├── hooks/
 │   └── post-stop-check.sh   # Stop: 変更があれば biome ci (lint) + astro check を実行

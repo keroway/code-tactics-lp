@@ -84,11 +84,11 @@ fi
 
 CHANGED_FILES="$(
   {
-    git diff --name-only
-    git diff --cached --name-only
+    git diff --no-renames --name-only
+    git diff --cached --no-renames --name-only
     git ls-files --others --exclude-standard
     if [ -n "$UNPUSHED_RANGE" ]; then
-      git log --name-only --pretty=format: "$UNPUSHED_RANGE" 2>/dev/null || true
+      git log --no-renames --name-only --pretty=format: "$UNPUSHED_RANGE" 2>/dev/null || true
     fi
   } | sed '/^$/d' | sort -u
 )"
