@@ -1,8 +1,7 @@
 name: Lighthouse
 
-# PR 段階で Lighthouse を実行し、Performance / Accessibility / Best Practices / SEO の
-# 品質スコアを計測・ゲートする。閾値は lighthouserc.json で管理。
-# ci.yml とは別ワークフローにして検証ゲートを独立させている。
+# サイトに影響する変更だけを計測する。workflow 全体を paths で絞ると required
+# check が Pending のままになるため、常に起動し job 単位でスキップする。
 on:
   pull_request:
   workflow_dispatch:
@@ -10,36 +9,66 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  changes:
+    name: Detect site changes
+    runs-on: ubuntu-latest
+    outputs:
+      site: ${{ steps.filter.outputs.site }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Classify changes
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          if [[ -z "$BASE_SHA" ]]; then
+            echo "site=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed_files="$(git diff --name-only "$BASE_SHA" HEAD)"
+          printf '%s\n' "$changed_files"
+          if grep -Eq '^(src/|public/|scripts/|astro\.config\.mjs$|tsconfig\.json$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|lighthouserc\.json$|\.github/workflows/(ci|lighthouse)\.yml$)' <<<"$changed_files"; then
+            echo "site=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "site=false" >> "$GITHUB_OUTPUT"
+          fi
+
   lighthouse:
     name: Lighthouse CI
+    needs: changes
+    if: needs.changes.outputs.site == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
-
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 26
           cache: pnpm
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
+      - name: Generate deployment assets
+        run: pnpm run og && pnpm run icons
       - name: Build
         run: pnpm run build
-
-      # lhci autorun が startServerCommand (astro preview) を起動し、
-      # サブパス配信 URL に対して計測 → lighthouserc.json の閾値で assert する。
       - name: Lighthouse CI
         run: pnpm run lhci
-
       - name: Upload Lighthouse report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
