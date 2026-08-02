@@ -24,7 +24,12 @@ npm-debug.log*
 .idea/
 
 # agent tooling (ローカルの Claude Code / Pi 作業ディレクトリ)
-.claude/
+# .claude/ 配下は個人ローカル設定 (settings.local.json, worktrees/ 等) を既定で除外しつつ、
+# 共有設定 (settings.json, hooks/, README.md) だけコミット対象にする
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+!.claude/README.md
 .pi/remote-pi/
 .pi/todos/
 
