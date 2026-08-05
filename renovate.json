@@ -16,6 +16,13 @@
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "github-actions minor/patch",
       "groupSlug": "github-actions"
+    },
+    {
+      "description": "astro check が依存する @astrojs/language-server が TypeScript 7.x のプログラマティックAPIに未対応（astro check がクラッシュする）。TS7 対応まで typescript の major 更新を抑止する。参照: https://github.com/withastro/roadmap/discussions/1321 / 孤児PR #114 で実際に astro check が fail することを確認",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["typescript"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }
