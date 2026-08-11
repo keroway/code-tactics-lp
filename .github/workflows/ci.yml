@@ -94,6 +94,12 @@ jobs:
         run: pnpm run og && pnpm run icons
       - name: Build
         run: pnpm run build
+      # REPO_IS_PUBLIC ゲートの漏れを検出する (#143)。lychee のリンク検査は
+      # lychee.toml で本体リポジトリの URL を除外しているため、この検査が
+      # 無いと漏れても誰も気づけない。dist/ を直接見るだけなので preview
+      # サーバーの起動は不要で、ビルド直後に置くのが最も早く落ちる。
+      - name: Check repo visibility gate
+        run: pnpm run check:repo-gate
       - name: Upload site artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

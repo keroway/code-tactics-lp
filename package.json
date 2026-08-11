@@ -17,7 +17,8 @@
     "og": "node scripts/generate-og.mjs",
     "icons": "node scripts/generate-icons.mjs",
     "lhci": "lhci autorun",
-    "smoke:a11y": "node scripts/smoke-a11y.mjs"
+    "smoke:a11y": "node scripts/smoke-a11y.mjs",
+    "check:repo-gate": "node scripts/check-repo-gate.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
