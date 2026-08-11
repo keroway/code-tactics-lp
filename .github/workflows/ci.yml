@@ -106,6 +106,19 @@ jobs:
           name: site-dist
           path: dist
           if-no-files-found: error
+      # 公開側の分岐も CI で実行する。CI は PUBLIC_REPO_PUBLIC を設定しないため、
+      # 上の検査だけだと**未公開側しか通らず、公開側の判定は CI 上で死んでいる**。
+      # 本体を public 化して env を deploy にだけ設定した場合、この分岐が壊れて
+      # いても気づけないことになる。
+      #
+      # matrix にせず再ビルドで済ませているのは、成果物名 (site-dist) が衝突し、
+      # 後続の A11y / Link check ジョブがどちらを受け取るか曖昧になるため。
+      # このステップは成果物アップロードの後に置いてあるので、dist/ を
+      # 上書きしても影響しない。
+      - name: Check repo visibility gate (public mode)
+        env:
+          PUBLIC_REPO_PUBLIC: "true"
+        run: pnpm run build && pnpm run check:repo-gate
 
   # axe-core は違反ルールと対象要素を報告し、Lighthouse のスコア閾値を補完する。
   a11y:

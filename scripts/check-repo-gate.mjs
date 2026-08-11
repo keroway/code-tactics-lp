@@ -26,8 +26,13 @@ import { join } from "node:path";
 
 const DIST_DIR = "dist";
 
-// 本体ゲームリポジトリ。LP 自身（-lp 接尾）は対象外にする。
-const REPO_URL_PATTERN = /https:\/\/github\.com\/keroway\/code-tactics(?!-lp)/g;
+// 本体ゲームリポジトリ。LP 自身（`-lp` 接尾）は対象外にする。
+// 否定先読みは `-lp` ではなく**リポジトリ名に使える文字全般**を弾く。
+// `(?!-lp)` だと `code-tactics-docs` や `code-tactics2` のような別リポジトリまで
+// 拾ってしまい、無関係な URL で CI が落ちる。
+// `/issues` や末尾の `"` は文字クラス外なので、意図どおり一致する。
+const REPO_URL_PATTERN =
+  /https:\/\/github\.com\/keroway\/code-tactics(?![A-Za-z0-9._-])/g;
 
 // ビルド時と同じ判定（src/consts.ts の REPO_IS_PUBLIC と揃える）。
 const repoIsPublic = process.env.PUBLIC_REPO_PUBLIC === "true";
