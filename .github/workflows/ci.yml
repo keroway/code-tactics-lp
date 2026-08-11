@@ -94,12 +94,31 @@ jobs:
         run: pnpm run og && pnpm run icons
       - name: Build
         run: pnpm run build
+      # REPO_IS_PUBLIC ゲートの漏れを検出する (#143)。lychee のリンク検査は
+      # lychee.toml で本体リポジトリの URL を除外しているため、この検査が
+      # 無いと漏れても誰も気づけない。dist/ を直接見るだけなので preview
+      # サーバーの起動は不要で、ビルド直後に置くのが最も早く落ちる。
+      - name: Check repo visibility gate
+        run: pnpm run check:repo-gate
       - name: Upload site artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: site-dist
           path: dist
           if-no-files-found: error
+      # 公開側の分岐も CI で実行する。CI は PUBLIC_REPO_PUBLIC を設定しないため、
+      # 上の検査だけだと**未公開側しか通らず、公開側の判定は CI 上で死んでいる**。
+      # 本体を public 化して env を deploy にだけ設定した場合、この分岐が壊れて
+      # いても気づけないことになる。
+      #
+      # matrix にせず再ビルドで済ませているのは、成果物名 (site-dist) が衝突し、
+      # 後続の A11y / Link check ジョブがどちらを受け取るか曖昧になるため。
+      # このステップは成果物アップロードの後に置いてあるので、dist/ を
+      # 上書きしても影響しない。
+      - name: Check repo visibility gate (public mode)
+        env:
+          PUBLIC_REPO_PUBLIC: "true"
+        run: pnpm run build && pnpm run check:repo-gate
 
   # axe-core は違反ルールと対象要素を報告し、Lighthouse のスコア閾値を補完する。
   a11y:
