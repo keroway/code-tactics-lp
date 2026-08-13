@@ -42,3 +42,9 @@ npm-debug.log*
 # CI（Ubuntu）で生成するアセット。ローカルと CI でバイナリが異なるため Git 非管理。
 public/og.png
 public/apple-touch-icon.png
+
+# Codex CLI / agent-assets symlink (~/.agents) / pi のローカル生成物・個人状態。
+# いずれも絶対パスや個人環境固有の値を含みうる個人ローカル層で、
+# 共有すると他の環境で壊れる (keroway/agent-assets#186)
+.agents/
+.pi/
