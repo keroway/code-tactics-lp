@@ -1,3 +1,12 @@
+# サプライチェーン保護水準をワークスペース全体で統一 (agent-assets#171、2026-08-14決定)。
+# pnpm 11 既定の minimumReleaseAge (1440分=1日) を 3日 (4320分) に固定し、
+# 制約を満たすバージョンが無いときに resolve を失敗させる minimumReleaseAgeStrict も有効化する。
+minimumReleaseAge: 4320
+minimumReleaseAgeStrict: true
+# time フィールドを持たないレジストリ/ミラー経由でも age チェックを素通りさせない
+# (既定 true だと time 欠落パッケージが無条件で許可される)。
+minimumReleaseAgeIgnoreMissingTime: false
+
 # esbuild の postinstall はネイティブバイナリの検証のみのため許可する
 allowBuilds:
   esbuild: true
