@@ -1,0 +1,16 @@
+# osv-scanner の無視リスト。設定形式: https://google.github.io/osv-scanner/configuration/
+#
+# 各エントリは「修正版が存在しない」「実行時に到達しない (devDependency のみ)」等、
+# override では解消できない既知脆弱性を対象とする。安易な追加を防ぐため、
+# 追加時は必ず出典 Issue と再評価条件を reason に書く。
+
+[[IgnoredVulns]]
+id = "GHSA-jmr9-qjv8-65gv"
+reason = """
+extract-zip@2.0.1 (npm) — CVSS 8.6 High。修正版は未リリース (npm 上の最新も 2.0.1)。
+依存経路: @lhci/cli(devDependency) > lighthouse > puppeteer-core > @puppeteer/browsers
+> extract-zip。lhci autorun (CI のみ) が Chrome バイナリ展開に使うだけで、
+ビルド成果物・ブラウザ実行コードには含まれない。upstream で修正版が出たら
+このエントリを外し、可能なら pnpm-workspace.yaml の overrides に切り替える。
+keroway/code-tactics-lp#149
+"""
