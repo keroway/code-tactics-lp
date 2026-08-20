@@ -87,9 +87,10 @@ npm run og      # public/og.png (1200x630) を再生成
 npm run icons   # public/apple-touch-icon.png (180x180) を再生成
 ```
 
-CI (`.github/workflows/ci.yml` の `assets` ジョブ) で同じコマンドを実行し
-`git diff --exit-code -- public/` で差分が無いか検証する。再生成漏れがあれば
-PR の CI が落ちるので、ローカルで上記コマンドを流し直してコミットすれば解消する。
+CI (`.github/workflows/ci.yml` / `deploy.yml` / `lighthouse.yml`) は各ワークフロー内で
+同じコマンドを実行してビルド用にアセットを都度再生成するが、コミット済みファイルとの
+差分検証 (`git diff --exit-code`) は行っていない。再生成漏れは CI では検知されないため、
+テンプレートを変更したら必ずローカルで上記コマンドを実行し、生成物をコミットすること。
 
 ## Deploy
 
