@@ -1,7 +1,7 @@
 {
   "ci": {
     "collect": {
-      "startServerCommand": "npm run preview",
+      "startServerCommand": "pnpm run preview",
       "startServerReadyPattern": "localhost:4321",
       "url": [
         "http://localhost:4321/code-tactics-lp/",
