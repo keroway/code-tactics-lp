@@ -60,17 +60,17 @@ pnpm run dev
 pnpm run build
 
 # ビルド結果のローカルプレビュー
-npm run preview
+pnpm run preview
 
 # 型チェック
-npm run astro check
+pnpm run astro check
 
-# Lint (ESLint + eslint-plugin-astro)
-npm run lint
+# Lint (Biome)
+pnpm run lint
 
 # 整形 (Prettier + prettier-plugin-astro)
-npm run format        # 上書き整形
-npm run format:check  # 差分チェックのみ
+pnpm run format        # 上書き整形
+pnpm run format:check  # 差分チェックのみ
 ```
 
 > GitHub Pages のサブパス配信に合わせ `astro.config.mjs` で `base: /code-tactics-lp` を
@@ -83,8 +83,8 @@ npm run format:check  # 差分チェックのみ
 SVG テンプレートを変更したときは必ず再生成してコミットする。
 
 ```sh
-npm run og      # public/og.png (1200x630) を再生成
-npm run icons   # public/apple-touch-icon.png (180x180) を再生成
+pnpm run og      # public/og.png (1200x630) を再生成
+pnpm run icons   # public/apple-touch-icon.png (180x180) を再生成
 ```
 
 CI (`.github/workflows/ci.yml` / `deploy.yml` / `lighthouse.yml`) は各ワークフロー内で

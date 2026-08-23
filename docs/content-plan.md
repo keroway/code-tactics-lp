@@ -15,7 +15,7 @@
    - キャッチコピー + 一言説明
    - 「今すぐプレイ」ボタン (web 版へ) / 「GitHub を見る」ボタン
    - ゲーム画面のスクリーンショット、または `public/hero-battle.{webm,mp4}` +
-     `hero-poster.png` が揃った場合は短い自動再生動画 (実アセット差し込みは #94/#95)
+     `hero-poster.jpg` が揃った場合は短い自動再生動画 (実アセット差し込みは #94/#95)
 
 2. **コンセプト** — `ConceptSection`
    - 「直接操作しない。AI ルールを組んで戦わせる」という核を説明
@@ -28,17 +28,21 @@
    - 行動ルール式 + 簡易プログラム UI / 複数ユニット・障害物・武器などの戦術要素 /
      ログとリプレイによる分析
 
-5. **どう動くか (HowItWorks)** — `HowItWorksSection`
+5. **プログラム言語** — `ProgramSection`
+   - 行動ルール UI とテキストの簡易プログラム言語が相互変換できることを紹介
+   - 構文は本体 `docs/program-language.md` を正典とし、実在する語のみ使用する
+
+6. **どう動くか (HowItWorks)** — `HowItWorksSection`
    - ルール → シミュレーション → ログ → 改善の流れを図解的に補足し、
      コンセプト/遊び方の説明を実装イメージに落とし込む
 
-6. **到達点とロードマップ** — `RoadmapSection`
+7. **到達点とロードマップ** — `RoadmapSection`
    - MVP から v0.5・戦闘刷新・v1.0 一部実装までの到達点と、残タスク (本体 SPEC に連動)
 
-7. **FAQ** — `FaqSection`
+8. **FAQ** — `FaqSection`
    - 「プログラミング知識は必要？」「無料？」など、プレイ前の心理障壁を下げる Q&A
 
-8. **フッター / CTA** — `Layout.astro` (Footer)
+9. **フッター / CTA** — `Layout.astro` (Footer)
    - プレイ導線・GitHub・ライセンス・クレジット
 
 > 当初ドラフトの「スクリーンショット or デモ」専用セクションは独立せず、
@@ -48,7 +52,7 @@
 
 - ゲーム画面のスクリーンショット数点 (本体 web 版から取得) — #94
 - 5〜10 秒のプレイ動画 (`public/hero-battle.webm`, `public/hero-battle.mp4`) と
-  poster (`public/hero-poster.png`) — #95
+  poster (`public/hero-poster.jpg`) — #95
 - 実ゲーム画面ベースの OGP 画像 (SNS シェア用) — #44
 
 ## コピーの素材
