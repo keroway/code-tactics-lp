@@ -78,19 +78,19 @@ pnpm run format:check  # 差分チェックのみ
 
 ### 生成アセットの再生成
 
-`public/og.png` と `public/apple-touch-icon.png` はリポジトリにコミットされているが、
-実体は `scripts/generate-og.mjs` / `scripts/generate-icons.mjs` の生成物。配色やコピー、
-SVG テンプレートを変更したときは必ず再生成してコミットする。
+`public/og.png` と `public/apple-touch-icon.png` は `.gitignore` されており Git 非管理。
+実体は `scripts/generate-og.mjs` / `scripts/generate-icons.mjs` の生成物で、ローカルと CI で
+バイナリが異なるためコミットせず、都度生成する運用にしている。
 
 ```sh
-pnpm run og      # public/og.png (1200x630) を再生成
-pnpm run icons   # public/apple-touch-icon.png (180x180) を再生成
+pnpm run og      # public/og.png (1200x630) を生成
+pnpm run icons   # public/apple-touch-icon.png (180x180) を生成
 ```
 
 CI (`.github/workflows/ci.yml` / `deploy.yml` / `lighthouse.yml`) は各ワークフロー内で
-同じコマンドを実行してビルド用にアセットを都度再生成するが、コミット済みファイルとの
-差分検証 (`git diff --exit-code`) は行っていない。再生成漏れは CI では検知されないため、
-テンプレートを変更したら必ずローカルで上記コマンドを実行し、生成物をコミットすること。
+同じコマンドを実行してビルド用にアセットを都度生成する。コミット不要のため、配色や
+コピー、SVG テンプレートを変更した場合もローカルでの再生成・コミットは不要
+(ビルド確認したい場合のみ上記コマンドを実行すればよい)。
 
 ## Deploy
 
