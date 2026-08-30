@@ -2,6 +2,11 @@
 // プログラム言語訴求セクション。
 // 行動ルール UI とテキスト構文の相互変換を紹介し、「プログラマブル」の核を見せる。
 // 構文は本体 docs/program-language.md を正典とし、実在する語のみ使用する。
+//
+// 運用ルール: この整合性を検証する CI・lint は存在しない(本体が private のため
+// cross-repo diff には PAT secret の追加が必要で、コストに見合わないと判断・見送り済み。
+// keroway/code-tactics-lp#166 参照)。本体側で docs/program-language.md の構文が
+// 変わった場合は、この下のサンプルを手動で見直すこと。
 ---
 
 <section id="program" data-animate class="scroll-mt-20">
