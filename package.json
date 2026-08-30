@@ -18,7 +18,8 @@
     "icons": "node scripts/generate-icons.mjs",
     "lhci": "lhci autorun",
     "smoke:a11y": "node scripts/smoke-a11y.mjs",
-    "check:repo-gate": "node scripts/check-repo-gate.mjs"
+    "check:repo-gate": "node scripts/check-repo-gate.mjs",
+    "check:hero-video": "node scripts/check-hero-video.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",

@@ -10,12 +10,22 @@ import {
 } from "../consts";
 import { Image } from "astro:assets";
 import { existsSync } from "node:fs";
+import { pathToFileURL } from "node:url";
 import gameScreenshot from "../assets/game-screenshot.png";
 
 // プレイ動画 (#95)。WebM を優先し、未対応ブラウザ向けに MP4 も配信する。
 // アセットが欠けたビルドでは、404 や空の video 要素を避けるため静止画へフォールバックする。
+//
+// `import.meta.url` は使わない (#170)。静的ビルド時、Astro はこのコンポーネントを
+// `dist/` 配下へバンドルしてから実行するため、`import.meta.url` の解決基点が
+// `src/components/` ではなく `dist/` になり、`../../public/` が
+// プロジェクトルート外を指してしまう。結果として `public/` に3ファイルが
+// すべて揃っていても常に静止画へフォールバックしていた
+// (`pnpm run build` して `dist/index.html` を見れば再現する)。
+// `astro build` / `astro dev` の実行時カレントディレクトリは常にプロジェクトルート
+// なので、`process.cwd()` を基点にする方が安定する。
 const base = import.meta.env.BASE_URL;
-const publicDir = new URL("../../public/", import.meta.url);
+const publicDir = pathToFileURL(`${process.cwd()}/public/`);
 const hasHeroVideo =
   existsSync(new URL("hero-battle.webm", publicDir)) &&
   existsSync(new URL("hero-battle.mp4", publicDir)) &&
