@@ -31,6 +31,10 @@
 5. **プログラム言語** — `ProgramSection`
    - 行動ルール UI とテキストの簡易プログラム言語が相互変換できることを紹介
    - 構文は本体 `docs/program-language.md` を正典とし、実在する語のみ使用する
+   - この整合性を自動検証する CI は無い(本体が private のため cross-repo diff には
+     PAT secret の追加が必要でコストに見合わないと判断・見送り済み。
+     keroway/code-tactics-lp#166 参照)。本体側で構文が変わった場合は
+     `ProgramSection.astro` のサンプルを手動で見直すこと
 
 6. **どう動くか (HowItWorks)** — `HowItWorksSection`
    - ルール → シミュレーション → ログ → 改善の流れを図解的に補足し、
