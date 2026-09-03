@@ -93,9 +93,9 @@ Cloudflare Web Analytics (JavaScript Snippet 版) にはカスタムクリック
 - **遷移先サイトでのみ計測可能**: UTM パラメータは遷移先（code-tactics 本体の
   Cloudflare Analytics 等）でリファラ/URL として記録される。LP 側では CTA クリックを
   直接集計できない。
-- **GitHub.com は計測対象外**: `github.com/keroway/code-tactics` への CTA には
-  UTM を付与するが、GitHub は UTM パラメータを解析に反映しない。best-effort 対応
-  （計測不可）と割り切り、プレイ用 URL（code-tactics 本体 web 版）への流入を主指標とする。
+- **GitHub.com は計測対象外**: `github.com/keroway/code-tactics` への CTA は、GitHub
+  側が UTM パラメータを解析に反映しないため付与対象外（付与しない）とし、
+  プレイ用 URL（code-tactics 本体 web 版）への流入を主指標とする。
 
 #### UTM 命名規約
 

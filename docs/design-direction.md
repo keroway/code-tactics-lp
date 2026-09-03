@@ -81,6 +81,6 @@
 
 ## 必要アセット
 
-[content-plan.md](./content-plan.md#用意したいアセット) と共通:
+[content-plan.md](./content-plan.md#用意したアセット-差し込み済み) と共通:
 ゲーム画面のスクリーンショット数点 / 5〜10 秒のプレイ GIF・動画 / OGP 画像。
 本体 web 版から取得する。
