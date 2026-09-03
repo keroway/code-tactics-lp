@@ -24,7 +24,10 @@ overrides:
   # osv-scanner 検出分（2026-08-09、#139）。
   # GHSA-7p8r-x3mc-p8w7 (fast-uri <3.1.5) — backslash authority introducer による host confusion。
   #   ajv > yaml-language-server > @astrojs/language-server > @astrojs/check 経由（型チェック時のみ）。
-  fast-uri: ">=3.1.5 <4"
+  # 2026-09-03: 新規 High advisory 4 件 (IDN canonicalization / IPv6 normalization /
+  #   percent-decoding SSRF / percent-encoded scheme。vuln <3.1.6、patched >=3.1.6) に
+  #   対応し下限を引き上げ。
+  fast-uri: ">=3.1.6 <4"
   # GHSA-22jq-vg5j-6vgg / GHSA-4xrf-jv44-h6hh / GHSA-mwp4-54f8-5fhr (ip-address)
   #   — @lhci/cli / lighthouse > puppeteer-core > proxy-agent > socks 経由。
   ip-address: ">=10.3.1 <11"
