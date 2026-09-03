@@ -56,7 +56,7 @@ body {
   }
   /* 本体未公開時の GitHub CTA (issue #97)。リンクではなく無効状態として表示する。 */
   .btn-ghost-disabled {
-    @apply cursor-not-allowed rounded-md border border-slate-800 px-6 py-3 font-semibold text-slate-500;
+    @apply cursor-not-allowed rounded-md border border-slate-800 px-6 py-3 font-semibold text-slate-400;
   }
   .eyebrow {
     @apply font-mono text-sm tracking-widest text-emerald-400 uppercase;
