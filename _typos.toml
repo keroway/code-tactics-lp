@@ -1,0 +1,11 @@
+# typos (https://github.com/crate-ci/typos) の誤検知除外。
+
+[default]
+extend-ignore-re = [
+  # git コミットハッシュ断片（例: `61a60ba`）は英単語ではない。
+  '`[0-9a-f]{7,40}`',
+  # `git diff --stat 61a60ba..HEAD` のような range 記法内のハッシュ断片。
+  '\b[0-9a-f]{7,40}\.\.',
+  # "mis-locates" のようなハイフン結合語の "mis" 断片。
+  '\bmis-',
+]
