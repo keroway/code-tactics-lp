@@ -1,5 +1,5 @@
-import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readFile } from "node:fs/promises";
+import { walkHtml } from "./lib/walk-html.mjs";
 
 /**
  * `REPO_IS_PUBLIC` ゲート（src/consts.ts）が効いているかをビルド成果物で検証する。
@@ -36,17 +36,6 @@ const REPO_URL_PATTERN =
 
 // ビルド時と同じ判定（src/consts.ts の REPO_IS_PUBLIC と揃える）。
 const repoIsPublic = process.env.PUBLIC_REPO_PUBLIC === "true";
-
-async function* walkHtml(dir) {
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      yield* walkHtml(path);
-    } else if (entry.name.endsWith(".html")) {
-      yield path;
-    }
-  }
-}
 
 const hits = [];
 let htmlCount = 0;
