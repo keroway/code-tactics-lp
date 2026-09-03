@@ -49,6 +49,57 @@ try {
     }
   }
 
+  // Mobile viewport pass: verify the hamburger menu opens and is axe-clean (#004).
+  const mobileUrl = new URL("", BASE_URL).href;
+  const mobileContext = await browser.newContext({
+    viewport: { width: 375, height: 667 },
+  });
+  const mobilePage = await mobileContext.newPage();
+  try {
+    await mobilePage.goto(mobileUrl);
+    await mobilePage.click("#menu-toggle");
+
+    const expanded = await mobilePage.getAttribute(
+      "#menu-toggle",
+      "aria-expanded"
+    );
+    if (expanded !== "true") {
+      throw new Error("mobile menu did not open (aria-expanded != true)");
+    }
+    const menuVisible = await mobilePage.isVisible("#mobile-menu");
+    if (!menuVisible) {
+      throw new Error("mobile menu not visible after click");
+    }
+
+    await mobilePage.keyboard.press("Tab");
+
+    const results = await new AxeBuilder({ page: mobilePage }).analyze();
+    if (results.violations.length > 0) {
+      violationCount += results.violations.length;
+      console.error(
+        `axe-core (mobile menu, ${mobileUrl}): ${results.violations.length} violation(s) found\n`
+      );
+      for (const v of results.violations) {
+        console.error(`[${v.impact}] ${v.id}: ${v.description}`);
+        for (const node of v.nodes) {
+          console.error(`  - ${node.target.join(", ")}`);
+          if (node.failureSummary) {
+            console.error(
+              `    ${node.failureSummary.replace(/\n/g, "\n    ")}`
+            );
+          }
+        }
+      }
+    } else {
+      console.log(
+        `axe-core (mobile menu, ${mobileUrl}): no violations found (${results.passes.length} rules passed)`
+      );
+    }
+  } finally {
+    await mobilePage.close();
+    await mobileContext.close();
+  }
+
   if (violationCount > 0) {
     process.exit(1);
   }
