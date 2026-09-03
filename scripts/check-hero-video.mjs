@@ -1,5 +1,6 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { walkHtml } from "./lib/walk-html.mjs";
 
 /**
  * Hero 動画アセットの静止画フォールバックが誤って発火していないかを
@@ -25,17 +26,6 @@ const REQUIRED_ASSET_PATTERNS = [
   /hero-battle\.mp4/,
   /hero-poster\.jpg/,
 ];
-
-async function* walkHtml(dir) {
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
-    const path = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      yield* walkHtml(path);
-    } else if (entry.name.endsWith(".html")) {
-      yield path;
-    }
-  }
-}
 
 let indexHtml;
 let htmlCount = 0;
