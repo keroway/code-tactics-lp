@@ -42,3 +42,6 @@ overrides:
   #   系統ごとに範囲を分ける（片方だけ広く指定すると他方を非互換な major へ飛ばすため）。
   "js-yaml@>=3.0.0 <4": ">=3.15.1 <4"
   "js-yaml@>=4.0.0 <5": ">=4.3.1 <5"
+  # GHSA-4mjr-xmp4-gh2g / GHSA-x5fp-wj9c-mxmx (qs <6.16.0) — @lhci/cli > lighthouse >
+  #   ... > express > body-parser 経由（devDependency、実行時未到達だが osv-scanner 検出、#182）。
+  qs: ">=6.16.0 <7"
