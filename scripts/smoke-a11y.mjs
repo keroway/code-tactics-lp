@@ -95,6 +95,76 @@ try {
         `axe-core (mobile menu, ${mobileUrl}): no violations found (${results.passes.length} rules passed)`
       );
     }
+
+    // Escape closes the menu and returns focus to the toggle (#192).
+    await mobilePage.keyboard.press("Escape");
+    const expandedAfterEscape = await mobilePage.getAttribute(
+      "#menu-toggle",
+      "aria-expanded"
+    );
+    if (expandedAfterEscape !== "false") {
+      throw new Error("Escape did not close the mobile menu");
+    }
+    if (await mobilePage.isVisible("#mobile-menu")) {
+      throw new Error("mobile menu still visible after Escape");
+    }
+    const activeAfterEscape = await mobilePage.evaluate(
+      () => document.activeElement?.id
+    );
+    if (activeAfterEscape !== "menu-toggle") {
+      throw new Error(
+        `focus did not return to #menu-toggle after Escape (got #${activeAfterEscape})`
+      );
+    }
+    console.log("keyboard (mobile menu): Escape closes and restores focus");
+
+    // Focus trap: Tab from the last item wraps to the toggle, and
+    // Shift+Tab from the toggle wraps to the last item (#192).
+    await mobilePage.click("#menu-toggle");
+    await mobilePage.evaluate(() => {
+      const items = document.querySelectorAll(
+        "#mobile-menu a[href], #mobile-menu button:not([disabled])"
+      );
+      items[items.length - 1]?.focus();
+    });
+    await mobilePage.keyboard.press("Tab");
+    const activeAfterForwardWrap = await mobilePage.evaluate(
+      () => document.activeElement?.id
+    );
+    if (activeAfterForwardWrap !== "menu-toggle") {
+      throw new Error(
+        `Tab from last item did not wrap to #menu-toggle (got #${activeAfterForwardWrap})`
+      );
+    }
+
+    await mobilePage.keyboard.press("Shift+Tab");
+    const activeAfterBackwardWrap = await mobilePage.evaluate(() => {
+      const items = document.querySelectorAll(
+        "#mobile-menu a[href], #mobile-menu button:not([disabled])"
+      );
+      return document.activeElement === items[items.length - 1];
+    });
+    if (!activeAfterBackwardWrap) {
+      throw new Error(
+        "Shift+Tab from #menu-toggle did not wrap to the last focusable item"
+      );
+    }
+    console.log("keyboard (mobile menu): Tab focus trap wraps both ways");
+
+    // Resizing past the sm breakpoint (40rem) closes the still-open menu (#192).
+    await mobilePage.setViewportSize({ width: 700, height: 667 });
+    await mobilePage.waitForFunction(() => {
+      const expanded = document
+        .getElementById("menu-toggle")
+        ?.getAttribute("aria-expanded");
+      return expanded === "false";
+    });
+    if (await mobilePage.isVisible("#mobile-menu")) {
+      throw new Error("mobile menu still visible after resizing past sm");
+    }
+    console.log(
+      "keyboard (mobile menu): resize past sm breakpoint closes menu"
+    );
   } finally {
     await mobilePage.close();
     await mobileContext.close();
