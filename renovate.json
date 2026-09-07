@@ -4,6 +4,7 @@
   "schedule": ["before 4am on monday"],
   "labels": ["dependencies"],
   "prConcurrentLimit": 5,
+  "minimumReleaseAge": "3 days",
   "packageRules": [
     {
       "matchManagers": ["npm"],
