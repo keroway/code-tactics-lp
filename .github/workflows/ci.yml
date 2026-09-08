@@ -196,6 +196,6 @@ jobs:
       - name: Link check (lychee)
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
-          args: "--no-progress --include-fragments http://localhost:4321/code-tactics-lp/"
+          args: "--no-progress --include-fragments http://localhost:4321/code-tactics-lp/ http://localhost:4321/code-tactics-lp/privacy/ http://localhost:4321/code-tactics-lp/404.html"
           token: ${{ secrets.GITHUB_TOKEN }}
           fail: true
