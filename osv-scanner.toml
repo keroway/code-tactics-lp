@@ -14,3 +14,15 @@ extract-zip@2.0.1 (npm) — CVSS 8.6 High。修正版は未リリース (npm 上
 このエントリを外し、可能なら pnpm-workspace.yaml の overrides に切り替える。
 keroway/code-tactics-lp#149
 """
+
+[[IgnoredVulns]]
+id = "GHSA-7pqw-9j4j-h8q3"
+reason = """
+extract-zip@2.0.1 (npm) — CVSS 8.1 High。修正版は未リリース (npm 上の最新も 2.0.1、
+GHSA-jmr9-qjv8-65gv と同一パッケージ・同一バージョンの別 advisory)。依存経路も同じ:
+@lhci/cli(devDependency) > lighthouse > puppeteer-core > @puppeteer/browsers > extract-zip。
+lhci autorun (CI のみ) が Chrome バイナリ展開に使うだけで、ビルド成果物・ブラウザ実行コードには
+含まれない。upstream で修正版が出たらこのエントリを外し、可能なら pnpm-workspace.yaml の
+overrides に切り替える。
+keroway/code-tactics-lp#203
+"""

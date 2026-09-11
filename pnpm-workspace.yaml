@@ -40,8 +40,13 @@ overrides:
   # GHSA-5p4m-2wfm-xmqj (js-yaml <4.3.1 / <3.15.1) — !!omap 解決の二次計算量 DoS。
   #   3.x 系は @lhci/cli 系、4.x 系は @astrojs/internal-helpers > astro 経由。
   #   系統ごとに範囲を分ける（片方だけ広く指定すると他方を非互換な major へ飛ばすため）。
-  "js-yaml@>=3.0.0 <4": ">=3.15.1 <4"
-  "js-yaml@>=4.0.0 <5": ">=4.3.1 <5"
+  # GHSA-2883-xcg3-v3hh (js-yaml、同じ 3.x/4.x 系統) で下限を再度引き上げ (#203)。
+  "js-yaml@>=3.0.0 <4": ">=3.15.2 <4"
+  "js-yaml@>=4.0.0 <5": ">=4.3.2 <5"
   # GHSA-4mjr-xmp4-gh2g / GHSA-x5fp-wj9c-mxmx (qs <6.16.0) — @lhci/cli > lighthouse >
   #   ... > express > body-parser 経由（devDependency、実行時未到達だが osv-scanner 検出、#182）。
   qs: ">=6.16.0 <7"
+  # GHSA-7w5x-hrqm-74c2 (smol-toml <1.7.1) — @astrojs/check > yaml-language-server 系経由（型チェック時のみ）。#203
+  smol-toml: ">=1.7.1"
+  # GHSA-4vpr-x523-8j87 / GHSA-w27v-7q3p-w38r (svgo <4.1.0) — astro のビルドパイプライン経由。#203
+  svgo: ">=4.1.0"
