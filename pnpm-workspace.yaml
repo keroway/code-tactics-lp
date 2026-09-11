@@ -45,3 +45,6 @@ overrides:
   # GHSA-4mjr-xmp4-gh2g / GHSA-x5fp-wj9c-mxmx (qs <6.16.0) — @lhci/cli > lighthouse >
   #   ... > express > body-parser 経由（devDependency、実行時未到達だが osv-scanner 検出、#182）。
   qs: ">=6.16.0 <7"
+minimumReleaseAgeExclude:
+  # Renovate security update: sharp@0.35.4
+  - sharp@0.35.4
