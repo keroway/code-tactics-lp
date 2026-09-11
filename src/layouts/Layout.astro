@@ -6,12 +6,17 @@ interface Props {
   description?: string;
   // 検索エンジンにインデックスさせないページ (例: 404) で true にする
   noindex?: boolean;
+  // ゲーム本体の構造化データ (JSON-LD) を出力するか。LP の主題であるトップページのみ
+  // true にする。privacy・404 などページ固有の description を持つページで出力すると、
+  // そのページの説明がゲームの description として誤って紐づく (#201)。
+  gameJsonLd?: boolean;
 }
 
 const {
   title = "code-tactics — 行動ルール＆プログラムで AI 部隊を戦わせる 2D オートバトル",
   description = "戦車・ドローン・ミサイルなど複数ユニットの AI を行動ルール UI またはテキストの簡易プログラム言語で設計し、自動戦闘を観察・分析・改善するプログラマブル・オートバトルゲーム。Web ブラウザで無料プレイ。",
   noindex = false,
+  gameJsonLd = false,
 } = Astro.props;
 
 const cfBeaconToken = import.meta.env.PUBLIC_CF_BEACON_TOKEN;
@@ -112,11 +117,15 @@ const jsonLd = {
     }
     <meta name="twitter:card" content="summary_large_image" />
 
-    <script
-      is:inline
-      type="application/ld+json"
-      set:html={JSON.stringify(jsonLd)}
-    />
+    {
+      gameJsonLd && (
+        <script
+          is:inline
+          type="application/ld+json"
+          set:html={JSON.stringify(jsonLd)}
+        />
+      )
+    }
     {
       import.meta.env.PROD && cfBeaconToken && (
         <script
