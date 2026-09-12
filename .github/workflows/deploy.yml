@@ -57,6 +57,15 @@ jobs:
         env:
           PUBLIC_CF_BEACON_TOKEN: ${{ secrets.PUBLIC_CF_BEACON_TOKEN }}
 
+      # PUBLIC_CF_BEACON_TOKEN の secret が空文字列にリセットされる、
+      # Layout.astro の分岐が壊れるなどの事故が起きても、ビルドは成功し続け
+      # ビーコンが黙って出なくなる (#205)。ci.yml はこのトークンを渡さない
+      # ため、本番ビルドを行うこのジョブでのみ検証する。
+      - name: Check beacon output gate
+        run: pnpm run check:beacon-gate
+        env:
+          PUBLIC_CF_BEACON_TOKEN: ${{ secrets.PUBLIC_CF_BEACON_TOKEN }}
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
