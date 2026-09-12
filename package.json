@@ -19,7 +19,8 @@
     "lhci": "lhci autorun",
     "smoke:a11y": "node scripts/smoke-a11y.mjs",
     "check:repo-gate": "node scripts/check-repo-gate.mjs",
-    "check:hero-video": "node scripts/check-hero-video.mjs"
+    "check:hero-video": "node scripts/check-hero-video.mjs",
+    "check:beacon-gate": "node scripts/check-beacon-gate.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
