@@ -56,6 +56,9 @@ jobs:
         # base/site は astro.config.mjs で設定済みのため引数指定は不要
         env:
           PUBLIC_CF_BEACON_TOKEN: ${{ secrets.PUBLIC_CF_BEACON_TOKEN }}
+          # 本体リポジトリ (code-tactics) の公開後、この repository variable を
+          # true にするだけで通常リンクへ戻す「ワンステップ復帰」の配線 (#209)。
+          PUBLIC_REPO_PUBLIC: ${{ vars.PUBLIC_REPO_PUBLIC }}
 
       # PUBLIC_CF_BEACON_TOKEN の secret が空文字列にリセットされる、
       # Layout.astro の分岐が壊れるなどの事故が起きても、ビルドは成功し続け
@@ -65,6 +68,13 @@ jobs:
         run: pnpm run check:beacon-gate
         env:
           PUBLIC_CF_BEACON_TOKEN: ${{ secrets.PUBLIC_CF_BEACON_TOKEN }}
+
+      # ci.yml の repo-gate 検証は PUBLIC_REPO_PUBLIC を実際には設定せず
+      # 未公開/公開の両分岐をハードコードで再現しているだけで、本番ビルドの
+      # 実配線 (vars.PUBLIC_REPO_PUBLIC) は検証していない (#209)。ここで
+      # 実際のビルド成果物に対して同じゲートを走らせる。
+      - name: Check repo visibility gate
+        run: pnpm run check:repo-gate
 
   deploy:
     needs: build

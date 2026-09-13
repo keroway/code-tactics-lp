@@ -8,9 +8,11 @@ export const REPO_URL = "https://github.com/keroway/code-tactics";
 // code-tactics 本体は現在 private のため、未ログイン訪問者が GitHub CTA を
 // 押すと 404 になる。本体が public 化されるまで GitHub リンクを「準備中」表示に
 // 切り替えて 404 を防ぐ。
-// 公開後は deploy ワークフロー (または .env) に PUBLIC_REPO_PUBLIC=true を
-// 設定するだけで通常リンクへ戻る。コード側の文言・ハードコードを消し忘れる
-// 心配がなく、ワンステップで復帰できる。
+// 公開後は GitHub repository variable PUBLIC_REPO_PUBLIC を true に設定する
+// だけで通常リンクへ戻る (deploy.yml の Build with Astro ステップが
+// vars.PUBLIC_REPO_PUBLIC をビルドへ渡す配線済み、#209)。ローカル確認は
+// .env に PUBLIC_REPO_PUBLIC=true を置けばよい (本番ビルドには影響しない)。
+// コード側の文言・ハードコードを消し忘れる心配がなく、ワンステップで復帰できる。
 // 公開状況の確認: gh repo view keroway/code-tactics --json visibility
 //   または curl -s -o /dev/null -w "%{http_code}" https://github.com/keroway/code-tactics
 export const REPO_IS_PUBLIC = import.meta.env.PUBLIC_REPO_PUBLIC === "true";
