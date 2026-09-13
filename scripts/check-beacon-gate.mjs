@@ -1,5 +1,4 @@
 import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { walkHtml } from "./lib/walk-html.mjs";
 
 /**
@@ -29,14 +28,13 @@ if (!beaconTokenExpected) {
   process.exit(0);
 }
 
-let indexHtml;
+const misses = [];
 let htmlCount = 0;
 
 for await (const file of walkHtml(DIST_DIR)) {
   htmlCount++;
-  if (file === join(DIST_DIR, "index.html")) {
-    indexHtml = await readFile(file, "utf8");
-  }
+  const html = await readFile(file, "utf8");
+  if (!BEACON_TAG_PATTERN.test(html)) misses.push(file);
 }
 
 // 走査対象が 0 件だと、判定が素通りしてしまう。
@@ -48,21 +46,17 @@ if (htmlCount === 0) {
   process.exit(1);
 }
 
-if (indexHtml === undefined) {
-  console.error(`${DIST_DIR}/index.html が見つかりません。`);
-  process.exit(1);
-}
-
-if (!BEACON_TAG_PATTERN.test(indexHtml)) {
+if (misses.length > 0) {
   console.error(
-    "PUBLIC_CF_BEACON_TOKEN が設定されているにもかかわらず、Cloudflare Web Analytics のビーコンタグが出力されていません。"
+    "PUBLIC_CF_BEACON_TOKEN が設定されているにもかかわらず、Cloudflare Web Analytics のビーコンタグが出力されていないページがあります。"
   );
   console.error(
     "secret の値が空文字列にリセットされていないか、Layout.astro の分岐が壊れていないか確認してください。"
   );
+  for (const file of misses) console.error(`  ${file}`);
   process.exit(1);
 }
 
 console.log(
-  "check-beacon-gate: OK (Cloudflare Web Analytics ビーコンが出力されています)"
+  `check-beacon-gate: OK (Cloudflare Web Analytics ビーコンが ${htmlCount} 件全ページで出力されています)`
 );
