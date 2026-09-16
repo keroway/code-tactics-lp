@@ -19,9 +19,9 @@ Closes #
 <!-- レビュアーが動作確認できる手順。例: -->
 
 ```sh
-npm install
-npm run astro check
-npm run build
+pnpm install
+pnpm run astro check
+pnpm run build
 ```
 
 ## スクリーンショット
@@ -30,7 +30,7 @@ npm run build
 
 ## チェックリスト
 
-- [ ] `npm run build` が通る
-- [ ] `npm run astro check` でエラーがない
+- [ ] `pnpm run build` が通る
+- [ ] `pnpm run astro check` でエラーがない
 - [ ] Lint / 整形を通している（導入済みの場合）
 - [ ] GitHub Pages のサブパス配信でリンク・アセットが壊れていない
