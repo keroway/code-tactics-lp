@@ -75,6 +75,8 @@ jobs:
       # 実際のビルド成果物に対して同じゲートを走らせる。
       - name: Check repo visibility gate
         run: pnpm run check:repo-gate
+        env:
+          PUBLIC_REPO_PUBLIC: ${{ vars.PUBLIC_REPO_PUBLIC }}
 
   deploy:
     needs: build
