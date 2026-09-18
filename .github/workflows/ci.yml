@@ -70,6 +70,10 @@ jobs:
         run: pnpm run lint
       - name: Format check (Prettier for .astro / .md)
         run: pnpm run format:check
+      # CI ゲートスクリプト (check-*.mjs) 自体のフィクスチャテスト (#217)。
+      # ビルド不要でフィクスチャのみを使うため、build ジョブより先に実行できる。
+      - name: Unit tests (CI gate scripts)
+        run: pnpm run test
 
   build:
     name: Build and type check
