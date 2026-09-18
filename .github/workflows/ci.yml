@@ -108,6 +108,11 @@ jobs:
       # 静止画へ静かにフォールバックされても他のジョブでは気づけない。
       - name: Check hero video asset gate
         run: pnpm run check:hero-video
+      # sitemap-index.xml / sitemap-0.xml と robots.txt の Sitemap: 行の整合を
+      # 検証する (#215)。site / base の変更漏れや収録ページの過不足が
+      # 誰にも気づかれず出荷されるのを防ぐ。
+      - name: Check sitemap gate
+        run: pnpm run check:sitemap
       - name: Upload site artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
