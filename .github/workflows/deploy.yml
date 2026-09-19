@@ -64,10 +64,13 @@ jobs:
       # Layout.astro の分岐が壊れるなどの事故が起きても、ビルドは成功し続け
       # ビーコンが黙って出なくなる (#205)。ci.yml はこのトークンを渡さない
       # ため、本番ビルドを行うこのジョブでのみ検証する。
+      # BEACON_GATE_REQUIRE_TOKEN=true でトークンの値とは独立に必須化し、
+      # secret 消失（未設定・空文字列）自体を検出できるようにする (#224)。
       - name: Check beacon output gate
         run: pnpm run check:beacon-gate
         env:
           PUBLIC_CF_BEACON_TOKEN: ${{ secrets.PUBLIC_CF_BEACON_TOKEN }}
+          BEACON_GATE_REQUIRE_TOKEN: "true"
 
       # ci.yml の repo-gate 検証は PUBLIC_REPO_PUBLIC を実際には設定せず
       # 未公開/公開の両分岐をハードコードで再現しているだけで、本番ビルドの

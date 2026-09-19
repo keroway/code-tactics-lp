@@ -30,6 +30,46 @@ test("トークン未設定なら SKIP して成功する", async () => {
   });
 });
 
+test("BEACON_GATE_REQUIRE_TOKEN=true でトークン未設定なら失敗する", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    mkdirSync(join(tmp, "dist"), { recursive: true });
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      unset: ["PUBLIC_CF_BEACON_TOKEN"],
+      env: { BEACON_GATE_REQUIRE_TOKEN: "true" },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /BEACON_GATE_REQUIRE_TOKEN/);
+  });
+});
+
+test("BEACON_GATE_REQUIRE_TOKEN=true でトークンが空文字列なら失敗する", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    mkdirSync(join(tmp, "dist"), { recursive: true });
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_CF_BEACON_TOKEN: "", BEACON_GATE_REQUIRE_TOKEN: "true" },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /BEACON_GATE_REQUIRE_TOKEN/);
+  });
+});
+
+test("BEACON_GATE_REQUIRE_TOKEN=true でもトークン設定済みなら通常どおり検査する", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", BEACON_TAG);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: {
+        PUBLIC_CF_BEACON_TOKEN: "dummy",
+        BEACON_GATE_REQUIRE_TOKEN: "true",
+      },
+    });
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /OK/);
+  });
+});
+
 test("トークン設定時に dist/ が空なら失敗する", async () => {
   await withTmpDir("check-beacon-gate-", async (tmp) => {
     mkdirSync(join(tmp, "dist"), { recursive: true });
