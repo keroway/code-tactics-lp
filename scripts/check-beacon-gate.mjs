@@ -11,15 +11,34 @@ import { walkHtml } from "./lib/walk-html.mjs";
  * が空・未設定・キー名変更などで欠落してもビルドは正常終了し、`<script>` タグが
  * 黙って出力されないだけになる。CI (`ci.yml`) はこのトークンを意図的に渡さない
  * ため、検査対象は本番ビルドを行う `deploy.yml` に限る。
+ *
+ * ## BEACON_GATE_REQUIRE_TOKEN（#224）
+ *
+ * トークンの有無だけで SKIP を判定すると、secret がリセットされて空文字列に
+ * なった事故そのものを検出できない（ビルドもゲートも「未設定として正常」と
+ * 判定してしまう）。本番デプロイ（deploy.yml）ではこの変数を "true" にして、
+ * `PUBLIC_CF_BEACON_TOKEN` の値とは独立に「トークンは必須」と明示する。
+ * ローカルでの任意実行（workflow_dispatch を手元で試す、`ci.yml` 相当の
+ * トークンなし実行など）では未設定のまま SKIP させたいので、この変数を
+ * 立てない限り従来どおりトークンの有無で判定する。
  */
 
 const DIST_DIR = "dist";
 const BEACON_TAG_PATTERN = /static\.cloudflareinsights\.com\/beacon\.min\.js/;
 
-// deploy.yml の build job のみがこのトークンを持つ。未設定のまま実行された
-// 場合（例: workflow_dispatch を手元で試すなど）はビーコンが出ないのが正しい
-// 挙動なので、このゲートは何もチェックせずに成功させる。
-const beaconTokenExpected = Boolean(process.env.PUBLIC_CF_BEACON_TOKEN);
+const beaconTokenRequired = process.env.BEACON_GATE_REQUIRE_TOKEN === "true";
+const beaconTokenExpected =
+  beaconTokenRequired || Boolean(process.env.PUBLIC_CF_BEACON_TOKEN);
+
+if (beaconTokenRequired && !process.env.PUBLIC_CF_BEACON_TOKEN) {
+  console.error(
+    "check-beacon-gate: FAIL (BEACON_GATE_REQUIRE_TOKEN=true だが PUBLIC_CF_BEACON_TOKEN が未設定・空文字列)"
+  );
+  console.error(
+    "secret PUBLIC_CF_BEACON_TOKEN がリセットされていないか確認してください。"
+  );
+  process.exit(1);
+}
 
 if (!beaconTokenExpected) {
   console.log(
