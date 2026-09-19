@@ -18,7 +18,7 @@
     "icons": "node scripts/generate-icons.mjs",
     "lhci": "lhci autorun",
     "smoke:a11y": "node scripts/smoke-a11y.mjs",
-    "test": "node --test scripts/",
+    "test": "node --test scripts/*.test.mjs",
     "check:repo-gate": "node scripts/check-repo-gate.mjs",
     "check:hero-video": "node scripts/check-hero-video.mjs",
     "check:sitemap": "node scripts/check-sitemap.mjs",
