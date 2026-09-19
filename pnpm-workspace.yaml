@@ -19,8 +19,8 @@ overrides:
   # GHSA-rgw5-rvv9-x895 で 5.0.8 も脆弱になったため下限を引き上げた（旧: ">=1.1.17"）。
   # この override により minimatch@3 系が引く 1.x も 5.x に統一される。
   brace-expansion: ">=5.0.9 <6"
-  tmp: ">=0.2.4"
-  uuid: ">=9"
+  tmp: ">=0.2.4 <1"
+  uuid: ">=9 <15"
   # osv-scanner 検出分（2026-08-09、#139）。
   # GHSA-7p8r-x3mc-p8w7 (fast-uri <3.1.5) — backslash authority introducer による host confusion。
   #   ajv > yaml-language-server > @astrojs/language-server > @astrojs/check 経由（型チェック時のみ）。
@@ -47,6 +47,6 @@ overrides:
   #   ... > express > body-parser 経由（devDependency、実行時未到達だが osv-scanner 検出、#182）。
   qs: ">=6.16.0 <7"
   # GHSA-7w5x-hrqm-74c2 (smol-toml <1.7.1) — @astrojs/check > yaml-language-server 系経由（型チェック時のみ）。#203
-  smol-toml: ">=1.7.1"
+  smol-toml: ">=1.7.1 <2"
   # GHSA-4vpr-x523-8j87 / GHSA-w27v-7q3p-w38r (svgo <4.1.0) — astro のビルドパイプライン経由。#203
-  svgo: ">=4.1.0"
+  svgo: ">=4.1.0 <5"

@@ -6,8 +6,8 @@ settings:
 
 overrides:
   brace-expansion: '>=5.0.9 <6'
-  tmp: '>=0.2.4'
-  uuid: '>=9'
+  tmp: '>=0.2.4 <1'
+  uuid: '>=9 <15'
   fast-uri: '>=3.1.6 <4'
   ip-address: '>=10.3.1 <11'
   nanoid: '>=3.3.17 <4'
@@ -15,8 +15,8 @@ overrides:
   js-yaml@>=3.0.0 <4: '>=3.15.2 <4'
   js-yaml@>=4.0.0 <5: '>=4.3.2 <5'
   qs: '>=6.16.0 <7'
-  smol-toml: '>=1.7.1'
-  svgo: '>=4.1.0'
+  smol-toml: '>=1.7.1 <2'
+  svgo: '>=4.1.0 <5'
 
 importers:
 
@@ -702,12 +702,6 @@ packages:
 
   '@lhci/utils@0.15.1':
     resolution: {integrity: sha512-WclJnUQJeOMY271JSuaOjCv/aA0pgvuHZS29NFNdIeI14id8eiFsjith85EGKYhljgoQhJ2SiW4PsVfFiakNNw==}
-
-  '@napi-rs/wasm-runtime@1.1.6':
-    resolution: {integrity: sha512-ZLv/JdUfkvOy9eCnnBaGfiO+XimbjebAeO+MRQqD/B+FR1tnRN0tpKSJHRbE8sFfS6aqsXZ67TQjfwfsxULVbg==}
-    peerDependencies:
-      '@emnapi/core': ^1.7.1
-      '@emnapi/runtime': ^1.7.1
 
   '@napi-rs/wasm-runtime@1.2.3':
     resolution: {integrity: sha512-UMduMbqO5s5zF2NkNacMT/yK5Y5QiKvWr2+50bzIIxFDwVJ2h49b+oyjaCGPhJxd2/gC2x39EHv/gHVuu36x2Q==}
@@ -3727,13 +3721,6 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@napi-rs/wasm-runtime@1.1.6(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)':
-    dependencies:
-      '@emnapi/core': 1.11.1
-      '@emnapi/runtime': 1.11.1
-      '@tybys/wasm-util': 0.10.3
-    optional: true
-
   '@napi-rs/wasm-runtime@1.2.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)':
     dependencies:
       '@emnapi/core': 1.11.1
@@ -3812,7 +3799,7 @@ snapshots:
     dependencies:
       '@emnapi/core': 1.11.1
       '@emnapi/runtime': 1.11.1
-      '@napi-rs/wasm-runtime': 1.1.6(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)
+      '@napi-rs/wasm-runtime': 1.2.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)
     optional: true
 
   '@rolldown/binding-win32-arm64-msvc@1.1.5':
