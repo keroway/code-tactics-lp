@@ -32,6 +32,25 @@ const BEACON_SRC_PATTERN =
 const CF_BEACON_ATTR_PATTERN = /\bdata-cf-beacon\s*=\s*(["'])([\s\S]*?)\1/i;
 const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
 
+// Astro の属性レンダラー(html-escaper の escape)が生成しうる 5 種類の実体参照。
+// data-cf-beacon={JSON.stringify(...)} はここでエスケープされてから出力されるため、
+// JSON.parse の前に同じ対応表で復号する必要がある(#229)。
+const HTML_ENTITY_PATTERN = /&(?:amp|#38|lt|#60|gt|#62|apos|#39|quot|#34);/g;
+const HTML_ENTITIES = {
+  "&amp;": "&",
+  "&#38;": "&",
+  "&lt;": "<",
+  "&#60;": "<",
+  "&gt;": ">",
+  "&#62;": ">",
+  "&apos;": "'",
+  "&#39;": "'",
+  "&quot;": '"',
+  "&#34;": '"',
+};
+const decodeHtmlEntities = (value) =>
+  value.replace(HTML_ENTITY_PATTERN, (entity) => HTML_ENTITIES[entity]);
+
 const beaconTokenRequired = process.env.BEACON_GATE_REQUIRE_TOKEN === "true";
 const beaconTokenExpected =
   beaconTokenRequired || Boolean(process.env.PUBLIC_CF_BEACON_TOKEN);
@@ -70,7 +89,7 @@ function findBeaconIssue(html) {
 
   let parsed;
   try {
-    parsed = JSON.parse(attrMatch[2]);
+    parsed = JSON.parse(decodeHtmlEntities(attrMatch[2]));
   } catch {
     return "data-cf-beacon の JSON が不正";
   }
