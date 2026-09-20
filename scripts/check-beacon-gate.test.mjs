@@ -19,6 +19,9 @@ const BEACON_TAG_INVALID_JSON =
   "<script defer src=\"https://static.cloudflareinsights.com/beacon.min.js\" data-cf-beacon='not-json'></script>";
 const BEACON_URL_IN_COMMENT =
   "<!-- https://static.cloudflareinsights.com/beacon.min.js -->";
+// Astro の addAttribute(html-escaper の escape)が実際に出力する形式(#229)。
+// `"` は `&quot;` にエスケープされ、属性値自体はダブルクォートで囲まれる。
+const BEACON_TAG_ESCAPED_ATTR = `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon="{&quot;token&quot;:&quot;${EXPECTED_TOKEN}&quot;}"></script>`;
 
 function writeDistHtml(tmp, name, content) {
   const full = join(tmp, "dist", name);
@@ -160,6 +163,21 @@ test("data-cf-beacon の JSON が不正なら失敗する(#227)", async () => {
       },
     });
     assert.equal(result.status, 1);
+  });
+});
+
+test("Astro が出力するエンティティエスケープ済み属性は正常判定される(#229)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", BEACON_TAG_ESCAPED_ATTR);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: {
+        PUBLIC_CF_BEACON_TOKEN: "dummy",
+        BEACON_GATE_REQUIRE_TOKEN: "true",
+      },
+    });
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /OK/);
   });
 });
 
