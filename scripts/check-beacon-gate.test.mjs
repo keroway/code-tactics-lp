@@ -9,8 +9,16 @@ const SCRIPT = join(
   dirname(fileURLToPath(import.meta.url)),
   "check-beacon-gate.mjs"
 );
-const BEACON_TAG =
-  '<script src="https://static.cloudflareinsights.com/beacon.min.js"></script>';
+const EXPECTED_TOKEN = "dummy";
+const BEACON_TAG = `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${EXPECTED_TOKEN}"}'></script>`;
+const BEACON_TAG_NO_TOKEN =
+  '<script defer src="https://static.cloudflareinsights.com/beacon.min.js"></script>';
+const BEACON_TAG_WRONG_TOKEN =
+  '<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon=\'{"token":"wrong-token"}\'></script>';
+const BEACON_TAG_INVALID_JSON =
+  "<script defer src=\"https://static.cloudflareinsights.com/beacon.min.js\" data-cf-beacon='not-json'></script>";
+const BEACON_URL_IN_COMMENT =
+  "<!-- https://static.cloudflareinsights.com/beacon.min.js -->";
 
 function writeDistHtml(tmp, name, content) {
   const full = join(tmp, "dist", name);
@@ -108,5 +116,63 @@ test("トークン設定時に全ページでビーコンタグがあれば成�
     });
     assert.equal(result.status, 0);
     assert.match(result.stdout, /OK/);
+  });
+});
+
+test("script に data-cf-beacon が無ければ失敗する(#227)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", BEACON_TAG_NO_TOKEN);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: {
+        PUBLIC_CF_BEACON_TOKEN: "dummy",
+        BEACON_GATE_REQUIRE_TOKEN: "true",
+      },
+    });
+    assert.equal(result.status, 1);
+    assert.doesNotMatch(result.stderr, /dummy/);
+  });
+});
+
+test("data-cf-beacon の token が期待値と異なれば失敗する(#227)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", BEACON_TAG_WRONG_TOKEN);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: {
+        PUBLIC_CF_BEACON_TOKEN: "dummy",
+        BEACON_GATE_REQUIRE_TOKEN: "true",
+      },
+    });
+    assert.equal(result.status, 1);
+    assert.doesNotMatch(result.stderr, /dummy/);
+  });
+});
+
+test("data-cf-beacon の JSON が不正なら失敗する(#227)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", BEACON_TAG_INVALID_JSON);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: {
+        PUBLIC_CF_BEACON_TOKEN: "dummy",
+        BEACON_GATE_REQUIRE_TOKEN: "true",
+      },
+    });
+    assert.equal(result.status, 1);
+  });
+});
+
+test("HTML コメント内の URL だけでは成功しない(#227)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", BEACON_URL_IN_COMMENT);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: {
+        PUBLIC_CF_BEACON_TOKEN: "dummy",
+        BEACON_GATE_REQUIRE_TOKEN: "true",
+      },
+    });
+    assert.equal(result.status, 1);
   });
 });

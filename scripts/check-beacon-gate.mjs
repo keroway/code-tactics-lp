@@ -24,7 +24,13 @@ import { walkHtml } from "./lib/walk-html.mjs";
  */
 
 const DIST_DIR = "dist";
-const BEACON_TAG_PATTERN = /static\.cloudflareinsights\.com\/beacon\.min\.js/;
+// HTML コメントを除去した後の生 HTML から <script ...> の開始タグだけを拾う。
+// コメント内に URL 文字列だけが残っているケースを実タグと誤認しないための前提。
+const SCRIPT_TAG_PATTERN = /<script\b[^>]*>/gi;
+const BEACON_SRC_PATTERN =
+  /\bsrc\s*=\s*["']https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js["']/i;
+const CF_BEACON_ATTR_PATTERN = /\bdata-cf-beacon\s*=\s*(["'])([\s\S]*?)\1/i;
+const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
 
 const beaconTokenRequired = process.env.BEACON_GATE_REQUIRE_TOKEN === "true";
 const beaconTokenExpected =
@@ -47,13 +53,41 @@ if (!beaconTokenExpected) {
   process.exit(0);
 }
 
+const expectedToken = process.env.PUBLIC_CF_BEACON_TOKEN;
+
+// 実際に出力された <script> 要素の src と data-cf-beacon の token を検査する。
+// HTML 全体に URL 文字列があるかだけを見ると、コメント内の URL や
+// token 欠落・不一致の script も「出力されている」と誤判定してしまう(#227)。
+function findBeaconIssue(html) {
+  const withoutComments = html.replace(HTML_COMMENT_PATTERN, "");
+  const scriptTags = withoutComments.match(SCRIPT_TAG_PATTERN) ?? [];
+  const beaconTag = scriptTags.find((tag) => BEACON_SRC_PATTERN.test(tag));
+
+  if (!beaconTag) return "missing script";
+
+  const attrMatch = beaconTag.match(CF_BEACON_ATTR_PATTERN);
+  if (!attrMatch) return "data-cf-beacon 属性が無い";
+
+  let parsed;
+  try {
+    parsed = JSON.parse(attrMatch[2]);
+  } catch {
+    return "data-cf-beacon の JSON が不正";
+  }
+
+  if (parsed?.token !== expectedToken) return "token が不一致";
+
+  return null;
+}
+
 const misses = [];
 let htmlCount = 0;
 
 for await (const file of walkHtml(DIST_DIR)) {
   htmlCount++;
   const html = await readFile(file, "utf8");
-  if (!BEACON_TAG_PATTERN.test(html)) misses.push(file);
+  const issue = findBeaconIssue(html);
+  if (issue) misses.push({ file, issue });
 }
 
 // 走査対象が 0 件だと、判定が素通りしてしまう。
@@ -72,7 +106,7 @@ if (misses.length > 0) {
   console.error(
     "secret の値が空文字列にリセットされていないか、Layout.astro の分岐が壊れていないか確認してください。"
   );
-  for (const file of misses) console.error(`  ${file}`);
+  for (const { file, issue } of misses) console.error(`  ${file}: ${issue}`);
   process.exit(1);
 }
 
