@@ -30,6 +30,7 @@ function extractLocs(xml) {
 let indexXml;
 let sitemapXml;
 let robotsTxt;
+let distRobotsTxt;
 
 try {
   indexXml = await readFile(`${DIST_DIR}/sitemap-index.xml`, "utf8");
@@ -54,6 +55,15 @@ try {
   process.exit(1);
 }
 
+try {
+  distRobotsTxt = await readFile(`${DIST_DIR}/robots.txt`, "utf8");
+} catch {
+  console.error(
+    `${DIST_DIR}/robots.txt が見つかりません。public/robots.txt がビルド成果物にコピーされていません。`
+  );
+  process.exit(1);
+}
+
 const indexLocs = extractLocs(indexXml);
 if (indexLocs.length !== 1 || indexLocs[0] !== EXPECTED_SITEMAP_URL) {
   console.error(
@@ -74,16 +84,31 @@ if (missing.length > 0 || unexpected.length > 0) {
   process.exit(1);
 }
 
-const robotsSitemapLine = robotsTxt
-  .split("\n")
-  .find((line) => line.startsWith("Sitemap:"));
-const robotsSitemapUrl = robotsSitemapLine?.slice("Sitemap:".length).trim();
+function extractSitemapUrl(txt) {
+  const line = txt.split("\n").find((l) => l.startsWith("Sitemap:"));
+  return line?.slice("Sitemap:".length).trim();
+}
+
+const robotsSitemapUrl = extractSitemapUrl(robotsTxt);
 
 if (robotsSitemapUrl !== EXPECTED_INDEX_URL) {
   console.error(
     `robots.txt の Sitemap: 行が sitemap-index.xml の URL と一致しません。`
   );
   console.error(`  robots.txt: ${robotsSitemapUrl ?? "(見つかりません)"}`);
+  console.error(`  期待値: ${EXPECTED_INDEX_URL}`);
+  process.exit(1);
+}
+
+const distRobotsSitemapUrl = extractSitemapUrl(distRobotsTxt);
+
+if (distRobotsSitemapUrl !== EXPECTED_INDEX_URL) {
+  console.error(
+    `${DIST_DIR}/robots.txt の Sitemap: 行が sitemap-index.xml の URL と一致しません。`
+  );
+  console.error(
+    `  ${DIST_DIR}/robots.txt: ${distRobotsSitemapUrl ?? "(見つかりません)"}`
+  );
   console.error(`  期待値: ${EXPECTED_INDEX_URL}`);
   process.exit(1);
 }

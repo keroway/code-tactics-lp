@@ -34,9 +34,11 @@ function setupFixture(tmp, overrides = {}) {
     indexXml = VALID_INDEX_XML,
     sitemapXml = VALID_SITEMAP_XML,
     robotsTxt = VALID_ROBOTS_TXT,
+    distRobotsTxt = VALID_ROBOTS_TXT,
     skipIndexXml = false,
     skipSitemapXml = false,
     skipRobotsTxt = false,
+    skipDistRobotsTxt = false,
   } = overrides;
   if (!skipIndexXml) {
     writeFileSync(join(tmp, "dist", "sitemap-index.xml"), indexXml);
@@ -46,6 +48,9 @@ function setupFixture(tmp, overrides = {}) {
   }
   if (!skipRobotsTxt) {
     writeFileSync(join(tmp, "public", "robots.txt"), robotsTxt);
+  }
+  if (!skipDistRobotsTxt) {
+    writeFileSync(join(tmp, "dist", "robots.txt"), distRobotsTxt);
   }
 }
 
@@ -130,6 +135,29 @@ test("robots.txt の Sitemap: 行が一致しなければ失敗する", async ()
     assert.match(
       result.stderr,
       /Sitemap: 行が sitemap-index\.xml の URL と一致しません/
+    );
+  });
+});
+
+test("dist/robots.txt が無ければ失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, { skipDistRobotsTxt: true });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /dist\/robots\.txt が見つかりません/);
+  });
+});
+
+test("dist/robots.txt の Sitemap: 行が一致しなければ失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      distRobotsTxt: `User-agent: *\nAllow: /\nSitemap: ${SITE_URL}/wrong-index.xml\n`,
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /dist\/robots\.txt の Sitemap: 行が sitemap-index\.xml の URL と一致しません/
     );
   });
 });
