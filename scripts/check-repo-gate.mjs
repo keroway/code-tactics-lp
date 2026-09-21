@@ -32,19 +32,56 @@ const DIST_DIR = "dist";
 // 拾ってしまい、無関係な URL で CI が落ちる。
 // `/issues` や末尾の `"` は文字クラス外なので、意図どおり一致する。
 const REPO_URL_PATTERN =
-  /https:\/\/github\.com\/keroway\/code-tactics(?![A-Za-z0-9._-])/g;
+  /https:\/\/github\.com\/keroway\/code-tactics(?![A-Za-z0-9._-])/;
+
+// HTML コメントやプレーンテキストの URL 出現は成功/失敗の判定に数えない
+// （#231）。実際にクリックできる <a href> だけを本体リンクとして扱う。
+const ANCHOR_PATTERN = /<a\b[^>]*>/gi;
+const HREF_PATTERN = /\shref\s*=\s*(["'])(.*?)\1/i;
+
+// 公開時に本体リンクを持つべきページ（dist/ 相対）。
+// SiteFooter / FooterCta は全ページ共通だが、トップページと 404 は
+// astro.config.mjs の base 設定に関わらずこのパスに出力される
+// （check-sitemap.mjs の EXPECTED_PAGES と同じ前提）。
+const REQUIRED_PUBLIC_FILES = ["index.html", "404.html"];
+
+function stripComments(html) {
+  return html.replace(/<!--[\s\S]*?-->/g, "");
+}
+
+// dist/ のファイルパスは走査元 DIST_DIR からの相対パスなので、
+// REQUIRED_PUBLIC_FILES と比較できるよう DIST_DIR プレフィックスを剥がす。
+function relativeToDist(file) {
+  return file.startsWith(`${DIST_DIR}/`)
+    ? file.slice(DIST_DIR.length + 1)
+    : file;
+}
+
+function countRepoAnchors(html) {
+  let count = 0;
+  for (const anchor of stripComments(html).matchAll(ANCHOR_PATTERN)) {
+    const hrefMatch = anchor[0].match(HREF_PATTERN);
+    if (hrefMatch && REPO_URL_PATTERN.test(hrefMatch[2])) count++;
+  }
+  return count;
+}
 
 // ビルド時と同じ判定（src/consts.ts の REPO_IS_PUBLIC と揃える）。
 const repoIsPublic = process.env.PUBLIC_REPO_PUBLIC === "true";
 
 const hits = [];
+const requiredFileHits = new Map(
+  REQUIRED_PUBLIC_FILES.map((name) => [name, 0])
+);
 let htmlCount = 0;
 
 for await (const file of walkHtml(DIST_DIR)) {
   htmlCount++;
   const html = await readFile(file, "utf8");
-  const matches = html.match(REPO_URL_PATTERN);
-  if (matches) hits.push({ file, count: matches.length });
+  const count = countRepoAnchors(html);
+  if (count > 0) hits.push({ file, count });
+  const relPath = relativeToDist(file);
+  if (requiredFileHits.has(relPath)) requiredFileHits.set(relPath, count);
 }
 
 // 走査対象が 0 件だと、どちらの判定も素通りしてしまう。
@@ -75,6 +112,21 @@ if (repoIsPublic && hits.length === 0) {
     "ゲートの分岐か env の設定漏れが疑われます（公開したのに「準備中」表示のまま）。"
   );
   process.exit(1);
+}
+
+// 全体では 1 件以上あっても、特定ページ（トップ / 404）だけ CTA が
+// 欠落している部分欠落を見逃さないための個別チェック（#231）。
+if (repoIsPublic) {
+  const missingFiles = REQUIRED_PUBLIC_FILES.filter(
+    (name) => requiredFileHits.get(name) === 0
+  );
+  if (missingFiles.length > 0) {
+    console.error(
+      "PUBLIC_REPO_PUBLIC=true ですが、次のページに本体リンクがありません。"
+    );
+    for (const name of missingFiles) console.error(`  ${DIST_DIR}/${name}`);
+    process.exit(1);
+  }
 }
 
 const state = repoIsPublic ? "public" : "private";

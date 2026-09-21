@@ -68,6 +68,7 @@ test("公開想定なのにリンクが無ければ失敗する", async () => {
 test("公開想定でリンクがあれば成功する", async () => {
   await withTmpDir("check-repo-gate-", async (tmp) => {
     writeDistHtml(tmp, "index.html", REPO_LINK);
+    writeDistHtml(tmp, "404.html", REPO_LINK);
     const result = runScript(SCRIPT, {
       cwd: tmp,
       env: { PUBLIC_REPO_PUBLIC: "true" },
@@ -89,5 +90,58 @@ test("否定先読みは別リポジトリの URL を誤検出しない", async 
       unset: ["PUBLIC_REPO_PUBLIC"],
     });
     assert.equal(result.status, 0);
+  });
+});
+
+test("公開想定でコメント内の URL しかなければ失敗する（#231）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      "<!-- https://github.com/keroway/code-tactics -->"
+    );
+    writeDistHtml(tmp, "404.html", "<p>GitHub（準備中）</p>");
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /本体リポジトリへのリンクが 1 件もありません/);
+  });
+});
+
+test("公開想定でプレーンテキストの URL しかなければ失敗する（#231）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      "<p>https://github.com/keroway/code-tactics</p>"
+    );
+    writeDistHtml(tmp, "404.html", REPO_LINK);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /次のページに本体リンクがありません[\s\S]*index\.html/
+    );
+  });
+});
+
+test("公開想定で 404 ページだけリンクが欠落していれば失敗する（部分欠落, #231）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", REPO_LINK);
+    writeDistHtml(tmp, "404.html", "<p>GitHub（準備中）</p>");
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /次のページに本体リンクがありません[\s\S]*404\.html/
+    );
   });
 });
