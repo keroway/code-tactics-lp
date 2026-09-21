@@ -17,15 +17,49 @@ import { walkHtml } from "./lib/walk-html.mjs";
  * `pnpm run check` / `smoke:a11y` / `lhci` はいずれもフォールバックを
  * 正常系として扱うため検出できない。`check-repo-gate.mjs`（#143）と
  * 同じ「意図の分岐が壊れても CI で気づけない」パターン。
+ *
+ * ## なぜ実要素を検査するか（#235）
+ *
+ * HTML 全体に対する正規表現だけで判定すると、コメントアウトされた
+ * video 要素やテキスト中のアセット名の言及だけで成功してしまう
+ * （実際にフォールバック中でも検出できない）。HTML コメントを除去した上で
+ * 実際の `<video data-motion-optional>` 要素を取り出し、その `poster` 属性と
+ * 配下の `<source>` の `src` を個別に検査する。
  */
 
 const DIST_DIR = "dist";
-const VIDEO_TAG_PATTERN = /<video[^>]*data-motion-optional/;
-const REQUIRED_ASSET_PATTERNS = [
-  /hero-battle\.webm/,
-  /hero-battle\.mp4/,
-  /hero-poster\.jpg/,
-];
+const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
+const VIDEO_ELEMENT_PATTERN =
+  /<video\b([^>]*\bdata-motion-optional\b[^>]*)>([\s\S]*?)<\/video>/i;
+const POSTER_ATTR_PATTERN = /\bposter\s*=\s*(["'])([\s\S]*?)\1/i;
+const SOURCE_SRC_PATTERN = /<source\b[^>]*\bsrc\s*=\s*(["'])([\s\S]*?)\1/gi;
+
+function findHeroVideoIssue(html) {
+  const withoutComments = html.replace(HTML_COMMENT_PATTERN, "");
+  const videoMatch = withoutComments.match(VIDEO_ELEMENT_PATTERN);
+  if (!videoMatch) return "静止画フォールバックで出力されています";
+
+  const [, openingAttrs, innerHtml] = videoMatch;
+
+  const posterMatch = openingAttrs.match(POSTER_ATTR_PATTERN);
+  if (!posterMatch || !/hero-poster\.jpg/.test(posterMatch[2])) {
+    return "video の poster 属性に hero-poster.jpg が指定されていません";
+  }
+
+  const sourceSrcs = [...innerHtml.matchAll(SOURCE_SRC_PATTERN)].map(
+    (m) => m[2]
+  );
+  const missing = [
+    ["hero-battle.webm", /hero-battle\.webm/],
+    ["hero-battle.mp4", /hero-battle\.mp4/],
+  ].filter(([, pattern]) => !sourceSrcs.some((src) => pattern.test(src)));
+
+  if (missing.length > 0) {
+    return `source の src に ${missing.map(([name]) => name).join(", ")} がありません`;
+  }
+
+  return null;
+}
 
 let indexHtml;
 let htmlCount = 0;
@@ -51,25 +85,13 @@ if (indexHtml === undefined) {
   process.exit(1);
 }
 
-if (!VIDEO_TAG_PATTERN.test(indexHtml)) {
-  console.error(
-    "Hero セクションが動画版ではなく静止画フォールバックで出力されています。"
-  );
+const issue = findHeroVideoIssue(indexHtml);
+
+if (issue) {
+  console.error(`Hero 動画セクションの検査に失敗しました: ${issue}`);
   console.error(
     "public/hero-battle.webm / hero-battle.mp4 / hero-poster.jpg の欠落が疑われます。"
   );
-  process.exit(1);
-}
-
-const missingAssets = REQUIRED_ASSET_PATTERNS.filter(
-  (pattern) => !pattern.test(indexHtml)
-);
-
-if (missingAssets.length > 0) {
-  console.error(
-    "動画要素は出力されていますが、参照先アセットの一部が見つかりません。"
-  );
-  for (const pattern of missingAssets) console.error(`  ${pattern}`);
   process.exit(1);
 }
 
