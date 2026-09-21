@@ -124,6 +124,7 @@ const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
 
     const observer = new IntersectionObserver(
       function (entries) {
+        if (mediaQuery.matches) return;
         entries.forEach(function (entry) {
           if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
             video.play().catch(function () {
@@ -137,5 +138,13 @@ const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
       { threshold: 0.5 },
     );
     observer.observe(video);
+
+    // 再生開始後に OS/ブラウザ設定が reduce へ切り替わった場合、自動再生を止めて
+    // 静止表示へフォールバックする (docs/design-direction.md)。
+    mediaQuery.addEventListener("change", function (event) {
+      if (!event.matches) return;
+      observer.disconnect();
+      video.pause();
+    });
   })();
 </script>
