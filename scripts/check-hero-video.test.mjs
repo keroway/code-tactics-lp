@@ -10,11 +10,10 @@ const SCRIPT = join(
   "check-hero-video.mjs"
 );
 const FULL_VIDEO_HTML = `
-<video data-motion-optional>
+<video data-motion-optional poster="/hero-poster.jpg">
   <source src="/hero-battle.webm" type="video/webm" />
   <source src="/hero-battle.mp4" type="video/mp4" />
 </video>
-<img src="/hero-poster.jpg" />
 `;
 
 function writeDistHtml(tmp, name, content) {
@@ -50,16 +49,64 @@ test("静止画フォールバックになっていれば失敗する", async ()
   });
 });
 
+test("動画タグはあるが poster 属性が欠けていれば失敗する", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<video data-motion-optional><source src="/hero-battle.webm" /><source src="/hero-battle.mp4" /></video>'
+    );
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /poster 属性に hero-poster\.jpg が指定されていません/
+    );
+  });
+});
+
 test("動画タグはあるが参照アセットが欠けていれば失敗する", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     writeDistHtml(
       tmp,
       "index.html",
-      '<video data-motion-optional><source src="/hero-battle.webm" /></video>'
+      '<video data-motion-optional poster="/hero-poster.jpg"><source src="/hero-battle.webm" /></video>'
     );
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /参照先アセットの一部が見つかりません/);
+    assert.match(
+      result.stderr,
+      /source の src に hero-battle\.mp4 がありません/
+    );
+  });
+});
+
+test("video 要素がコメントアウトされ本文にアセット名があるだけなら失敗する（#235）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<!-- <video data-motion-optional poster="/hero-poster.jpg"><source src="/hero-battle.webm" /><source src="/hero-battle.mp4" /></video> --><img src="/screenshot.png" />'
+    );
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /静止画フォールバックで出力されています/);
+  });
+});
+
+test("video タグはあるがアセット名が本文テキストにあるだけなら失敗する（#235）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      "<video data-motion-optional></video><p>hero-battle.webm hero-battle.mp4 hero-poster.jpg</p>"
+    );
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /poster 属性に hero-poster\.jpg が指定されていません/
+    );
   });
 });
 
