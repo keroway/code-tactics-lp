@@ -126,10 +126,9 @@
   // #program が画面内にある間、左右の対応するルール行を順にハイライトする。
   // 非対応・ JS 無効時は何もしない (静的表示のまま)。
   (function () {
-    const reduceMotion =
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion || !("IntersectionObserver" in window)) return;
+    if (!window.matchMedia || !("IntersectionObserver" in window)) return;
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mediaQuery.matches) return;
 
     const section = document.getElementById("program");
     if (!section) return;
@@ -172,6 +171,7 @@
 
     const io = new IntersectionObserver(
       function (entries) {
+        if (mediaQuery.matches) return;
         entries.forEach(function (entry) {
           if (entry.isIntersecting) {
             start();
@@ -183,5 +183,13 @@
       { threshold: 0.3 },
     );
     io.observe(section);
+
+    // 再生開始後に OS/ブラウザ設定が reduce へ切り替わった場合、演出を止める
+    // (issue 236 / PR 238 と同じパターン)。
+    mediaQuery.addEventListener("change", function (event) {
+      if (!event.matches) return;
+      io.disconnect();
+      stop();
+    });
   })();
 </script>
