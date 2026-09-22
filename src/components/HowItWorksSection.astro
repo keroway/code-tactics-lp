@@ -145,9 +145,9 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
     const container = document.getElementById("log-stream");
     if (!container) return;
 
-    const reduceMotion =
+    const mediaQuery =
       window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const cursor = container.querySelector(".log-stream-cursor");
 
@@ -159,7 +159,12 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
       });
     }
 
-    if (reduceMotion || !("IntersectionObserver" in window)) {
+    if (!mediaQuery || !("IntersectionObserver" in window)) {
+      renderStatic();
+      return;
+    }
+
+    if (mediaQuery.matches) {
       renderStatic();
       return;
     }
@@ -201,6 +206,7 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
 
     const io = new IntersectionObserver(
       function (entries) {
+        if (mediaQuery.matches) return;
         entries.forEach(function (entry) {
           if (entry.isIntersecting) {
             start();
@@ -212,5 +218,13 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
       { threshold: 0.3 },
     );
     io.observe(container);
+
+    // 再生開始後に OS/ブラウザ設定が reduce へ切り替わった場合、擬似ストリームを止める
+    // (issue 236 / PR 238 と同じパターン)。
+    mediaQuery.addEventListener("change", function (event) {
+      if (!event.matches) return;
+      io.disconnect();
+      stop();
+    });
   })();
 </script>
