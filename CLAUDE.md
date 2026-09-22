@@ -77,3 +77,9 @@ main にマージすると GitHub Actions が自動でビルド・デプロイ�
 - `docs/tech-stack.md` — スタック選定理由と代替案比較の資料
 - `docs/content-plan.md` — LP に載せるセクション構成・必要アセット
 - `docs/design-direction.md` — デザイン検討のたたき台 (トーン/配色/タイポ/a11y)
+
+## Codex 向け運用ルール
+
+Codex 向けの横断運用ルールは `keroway/CLAUDE.md` ではなく
+[agent-assets `docs/codex-common-instructions.md`](https://github.com/keroway/agent-assets/blob/main/docs/codex-common-instructions.md)
+を正典とする（Codex は git ルートより上の AGENTS.md を読まないため）。
