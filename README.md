@@ -76,6 +76,16 @@ pnpm run format:check  # 差分チェックのみ
 > GitHub Pages のサブパス配信に合わせ `astro.config.mjs` で `base: /code-tactics-lp` を
 > 設定済み。開発サーバーも `/code-tactics-lp/` 配下で配信される。
 
+### Environment variables
+
+ローカル開発では基本的に `.env` の設定は不要。以下の2つは本番ビルド・CI 専用の値で、
+未設定のままで問題なく動く。
+
+| 変数名                   | 用途                                                                                                                                                                                       | ローカルでの扱い                                                                                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PUBLIC_REPO_PUBLIC`     | 本体リポジトリ (code-tactics) の公開状態フラグ (`src/consts.ts` の `REPO_IS_PUBLIC`)。本体が private の間は GitHub リンクを「準備中」表示に切り替えて 404 を防ぐ (#97, #209)。             | 公開後の表示をローカルで確認したいときだけ `.env` に `PUBLIC_REPO_PUBLIC=true` を置く。本番ビルドは GitHub repository variable を参照するため影響しない。                  |
+| `PUBLIC_CF_BEACON_TOKEN` | Cloudflare Web Analytics のビーコントークン (`src/layouts/Layout.astro`)。採用理由は [docs/decisions.md 決定4](./docs/decisions.md#決定-4-アクセス解析--cloudflare-web-analytics) を参照。 | 未設定のままでよい (`scripts/check-beacon-gate.mjs` も未設定時はビーコン非出力を正しい挙動として扱う)。本番デプロイは `.github/workflows/deploy.yml` が secrets から渡す。 |
+
 ### 生成アセットの再生成
 
 `public/og.png` と `public/apple-touch-icon.png` は `.gitignore` されており Git 非管理。
