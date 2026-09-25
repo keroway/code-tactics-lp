@@ -6,8 +6,16 @@ default:
 build:
     pnpm run build
 
-# ユニットテストはなし。a11y スモークは build + `pnpm run preview` 起動後に実行する
+# ユニットテスト(CI ゲートスクリプト)に加え、build + `pnpm run preview` 起動後に a11y スモークを実行する
 test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pnpm run test
+    pnpm run build
+    pnpm run preview > preview.log 2>&1 &
+    preview_pid=$!
+    trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+    bash scripts/wait-for-preview.sh
     pnpm run smoke:a11y
 
 lint:
