@@ -60,6 +60,16 @@ jobs:
           # true にするだけで通常リンクへ戻す「ワンステップ復帰」の配線 (#209)。
           PUBLIC_REPO_PUBLIC: ${{ vars.PUBLIC_REPO_PUBLIC }}
 
+      # withastro/action@v6 は ci.yml とは別のビルド経路のため、ci.yml が
+      # 検証した成果物と本番でデプロイされる成果物は厳密には別物 (#255)。
+      # check-repo-gate / check-beacon-gate と同じ理由で、この本番ビルド
+      # 経路自体を検証する。
+      - name: Check hero video asset gate
+        run: pnpm run check:hero-video
+
+      - name: Check sitemap gate
+        run: pnpm run check:sitemap
+
       # PUBLIC_CF_BEACON_TOKEN の secret が空文字列にリセットされる、
       # Layout.astro の分岐が壊れるなどの事故が起きても、ビルドは成功し続け
       # ビーコンが黙って出なくなる (#205)。ci.yml はこのトークンを渡さない
