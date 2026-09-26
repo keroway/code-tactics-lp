@@ -42,7 +42,7 @@ jobs:
 
           changed_files="$(git diff --name-only "$BASE_SHA" HEAD)"
           printf '%s\n' "$changed_files"
-          if grep -Eq '^(src/|public/|scripts/|astro\.config\.mjs$|tsconfig\.json$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|lighthouserc\.json$|lychee\.toml$|\.github/workflows/ci\.yml$)' <<<"$changed_files"; then
+          if grep -Eq '^(src/|public/|scripts/|astro\.config\.mjs$|tsconfig\.json$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|lighthouserc\.json$|lychee\.toml$|\.github/workflows/ci\.yml$|\.github/workflows/deploy\.yml$)' <<<"$changed_files"; then
             echo "site=true" >> "$GITHUB_OUTPUT"
           else
             echo "site=false" >> "$GITHUB_OUTPUT"
