@@ -3,6 +3,9 @@ import Layout from "../layouts/Layout.astro";
 
 const base = import.meta.env.BASE_URL;
 const home = `${base}/`.replace(/\/+/g, "/");
+// Layout.astro のビーコン出力条件と同じ。食い違うと説明と実出力がずれる (#261)。
+const analyticsEnabled =
+  import.meta.env.PROD && Boolean(import.meta.env.PUBLIC_CF_BEACON_TOKEN);
 ---
 
 <Layout
@@ -17,36 +20,53 @@ const home = `${base}/`.replace(/\/+/g, "/");
 
     <section class="flex flex-col gap-4 text-slate-300">
       <h2 class="text-xl font-semibold text-slate-100">アクセス解析について</h2>
-      <p>
-        このサイトでは <strong class="text-slate-100"
-          >Cloudflare Web Analytics</strong
-        > を使ってページビューを計測しています。
-      </p>
-      <ul class="list-disc list-inside flex flex-col gap-2">
-        <li>
-          <strong class="text-slate-100">クッキーレス</strong>:
-          Cookie・localStorage を一切使用しません。Cookie バナーは不要です。
-        </li>
-        <li>
-          <strong class="text-slate-100">GDPR / CCPA 準拠</strong>:
-          個人を特定する情報は収集・保存しません。
-        </li>
-        <li>
-          計測するデータはページビュー数・リファラー・ブラウザ種別・国など、
-          統計的な集計値のみです。
-        </li>
-        <li>
-          収集したデータは Cloudflare が管理するサーバーに保存されます。詳細は
-          <a
-            href="https://www.cloudflare.com/privacypolicy/"
-            class="text-emerald-400 hover:underline"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Cloudflare プライバシーポリシー（新しいタブで開く）"
-            >Cloudflare プライバシーポリシー</a
-          > をご参照ください。
-        </li>
-      </ul>
+      {
+        !analyticsEnabled && (
+          <p>
+            現在このサイトではアクセス解析を実施しておらず、訪問者の情報を計測・収集していません。
+          </p>
+        )
+      }
+      {
+        analyticsEnabled && (
+          <>
+            <p>
+              このサイトでは{" "}
+              <strong class="text-slate-100">Cloudflare Web Analytics</strong>{" "}
+              を使ってページビューを計測しています。
+            </p>
+            <ul class="list-disc list-inside flex flex-col gap-2">
+              <li>
+                <strong class="text-slate-100">クッキーレス</strong>:
+                Cookie・localStorage を一切使用しません。Cookie
+                バナーは不要です。
+              </li>
+              <li>
+                <strong class="text-slate-100">GDPR / CCPA 準拠</strong>:
+                個人を特定する情報は収集・保存しません。
+              </li>
+              <li>
+                計測するデータはページビュー数・リファラー・ブラウザ種別・国など、
+                統計的な集計値のみです。
+              </li>
+              <li>
+                収集したデータは Cloudflare
+                が管理するサーバーに保存されます。詳細は
+                <a
+                  href="https://www.cloudflare.com/privacypolicy/"
+                  class="text-emerald-400 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Cloudflare プライバシーポリシー（新しいタブで開く）"
+                >
+                  Cloudflare プライバシーポリシー
+                </a>{" "}
+                をご参照ください。
+              </li>
+            </ul>
+          </>
+        )
+      }
     </section>
 
     <div class="mt-4">
