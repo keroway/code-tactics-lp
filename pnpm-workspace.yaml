@@ -27,10 +27,12 @@ overrides:
   # 2026-09-03: 新規 High advisory 4 件 (IDN canonicalization / IPv6 normalization /
   #   percent-decoding SSRF / percent-encoded scheme。vuln <3.1.6、patched >=3.1.6) に
   #   対応し下限を引き上げ。
-  fast-uri: ">=3.1.6 <4"
+  # 2026-10-02: GHSA-58mr-gqgx-xq4g / GHSA-qw65-cvwx-89v3 (vuln <3.1.7) に対応し下限を引き上げ (#263)。
+  fast-uri: ">=3.1.7 <4"
   # GHSA-22jq-vg5j-6vgg / GHSA-4xrf-jv44-h6hh / GHSA-mwp4-54f8-5fhr (ip-address)
   #   — @lhci/cli / lighthouse > puppeteer-core > proxy-agent > socks 経由。
-  ip-address: ">=10.3.1 <11"
+  # 2026-10-02: GHSA-2vr4-cq9g-pvrc / GHSA-rpw4-54j3-4h4q (vuln <10.5.1) に対応し下限を引き上げ (#263)。
+  ip-address: ">=10.5.1 <11"
   # GHSA-2v37-7h3g-55p8 (nanoid <3.3.17) — size=0 で customAlphabet / customRandom が無限ループする。
   #   postcss（ソースマップ用 ID 生成、size は固定）経由。advisory の影響範囲が
   #   2026-08-08 に 3.3.16 まで拡大されたため追加。
