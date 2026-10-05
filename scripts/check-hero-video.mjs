@@ -31,8 +31,11 @@ const DIST_DIR = "dist";
 const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
 const VIDEO_ELEMENT_PATTERN =
   /<video\b([^>]*\bdata-motion-optional\b[^>]*)>([\s\S]*?)<\/video>/i;
-const POSTER_ATTR_PATTERN = /\bposter\s*=\s*(["'])([\s\S]*?)\1/i;
-const SOURCE_SRC_PATTERN = /<source\b[^>]*\bsrc\s*=\s*(["'])([\s\S]*?)\1/gi;
+// 属性名の直前は空白に限る。`\b` だと data-poster / data-src の `poster` / `src` にも
+// 一致してしまう(#267)。
+const POSTER_ATTR_PATTERN = /(?<=\s)poster\s*=\s*(["'])([\s\S]*?)\1/i;
+const SOURCE_SRC_PATTERN =
+  /<source\b[^>]*?(?<=\s)src\s*=\s*(["'])([\s\S]*?)\1/gi;
 
 function findHeroVideoIssue(html) {
   const withoutComments = html.replace(HTML_COMMENT_PATTERN, "");

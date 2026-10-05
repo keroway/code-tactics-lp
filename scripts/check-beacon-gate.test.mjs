@@ -181,6 +181,24 @@ test("Astro が出力するエンティティエスケープ済み属性は正�
   });
 });
 
+test("src ではなく data-src だけなら失敗する(#267)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      `<script defer data-src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${EXPECTED_TOKEN}"}'></script>`
+    );
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: {
+        PUBLIC_CF_BEACON_TOKEN: "dummy",
+        BEACON_GATE_REQUIRE_TOKEN: "true",
+      },
+    });
+    assert.equal(result.status, 1);
+  });
+});
+
 test("HTML コメント内の URL だけでは成功しない(#227)", async () => {
   await withTmpDir("check-beacon-gate-", async (tmp) => {
     writeDistHtml(tmp, "index.html", BEACON_URL_IN_COMMENT);
