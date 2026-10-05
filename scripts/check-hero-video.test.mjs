@@ -139,6 +139,50 @@ test("data-src だけで src 属性が無ければ失敗する（#267）", async
   });
 });
 
+test("poster が別ファイル名(末尾に文字列付き)なら失敗する（#269）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<video data-motion-optional poster="/hero-poster.jpg.missing"><source src="/hero-battle.webm" /><source src="/hero-battle.mp4" /></video>'
+    );
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /poster 属性に hero-poster\.jpg が指定されていません/
+    );
+  });
+});
+
+test("source が別ファイル名(末尾に文字列付き)なら失敗する（#269）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<video data-motion-optional poster="/hero-poster.jpg"><source src="/hero-battle.webm.missing" /><source src="/hero-battle.mp4.missing" /></video>'
+    );
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /source の src に hero-battle\.webm, hero-battle\.mp4 がありません/
+    );
+  });
+});
+
+test("base パス前置とクエリ付きの参照は成功する（#269）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg?v=1"><source src="/code-tactics-lp/hero-battle.webm" /><source src="/code-tactics-lp/hero-battle.mp4#t=0" /></video>'
+    );
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0);
+  });
+});
+
 test("動画タグと必要アセットが揃っていれば成功する", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     writeDistHtml(tmp, "index.html", FULL_VIDEO_HTML);

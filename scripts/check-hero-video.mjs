@@ -37,6 +37,13 @@ const POSTER_ATTR_PATTERN = /(?<=\s)poster\s*=\s*(["'])([\s\S]*?)\1/i;
 const SOURCE_SRC_PATTERN =
   /<source\b[^>]*?(?<=\s)src\s*=\s*(["'])([\s\S]*?)\1/gi;
 
+// 部分一致だと `hero-poster.jpg.missing` のような別ファイルも通ってしまう(#269)。
+// クエリ・フラグメントを除いたパスの末尾セグメントが、アセット名と完全一致するかで判定する。
+function refersToAsset(url, name) {
+  const path = url.trim().split(/[?#]/, 1)[0];
+  return path.split("/").pop() === name;
+}
+
 function findHeroVideoIssue(html) {
   const withoutComments = html.replace(HTML_COMMENT_PATTERN, "");
   const videoMatch = withoutComments.match(VIDEO_ELEMENT_PATTERN);
@@ -45,20 +52,19 @@ function findHeroVideoIssue(html) {
   const [, openingAttrs, innerHtml] = videoMatch;
 
   const posterMatch = openingAttrs.match(POSTER_ATTR_PATTERN);
-  if (!posterMatch || !/hero-poster\.jpg/.test(posterMatch[2])) {
+  if (!posterMatch || !refersToAsset(posterMatch[2], "hero-poster.jpg")) {
     return "video の poster 属性に hero-poster.jpg が指定されていません";
   }
 
   const sourceSrcs = [...innerHtml.matchAll(SOURCE_SRC_PATTERN)].map(
     (m) => m[2]
   );
-  const missing = [
-    ["hero-battle.webm", /hero-battle\.webm/],
-    ["hero-battle.mp4", /hero-battle\.mp4/],
-  ].filter(([, pattern]) => !sourceSrcs.some((src) => pattern.test(src)));
+  const missing = ["hero-battle.webm", "hero-battle.mp4"].filter(
+    (name) => !sourceSrcs.some((src) => refersToAsset(src, name))
+  );
 
   if (missing.length > 0) {
-    return `source の src に ${missing.map(([name]) => name).join(", ")} がありません`;
+    return `source の src に ${missing.join(", ")} がありません`;
   }
 
   return null;
