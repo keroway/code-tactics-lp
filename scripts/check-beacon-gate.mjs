@@ -27,9 +27,11 @@ const DIST_DIR = "dist";
 // HTML コメントを除去した後の生 HTML から <script ...> の開始タグだけを拾う。
 // コメント内に URL 文字列だけが残っているケースを実タグと誤認しないための前提。
 const SCRIPT_TAG_PATTERN = /<script\b[^>]*>/gi;
+// 属性名の直前は空白に限る。`\b` だと data-src にも一致してしまう(#267)。
 const BEACON_SRC_PATTERN =
-  /\bsrc\s*=\s*["']https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js["']/i;
-const CF_BEACON_ATTR_PATTERN = /\bdata-cf-beacon\s*=\s*(["'])([\s\S]*?)\1/i;
+  /(?<=\s)src\s*=\s*["']https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js["']/i;
+const CF_BEACON_ATTR_PATTERN =
+  /(?<=\s)data-cf-beacon\s*=\s*(["'])([\s\S]*?)\1/i;
 const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
 
 // Astro の属性レンダラー(html-escaper の escape)が生成しうる 5 種類の実体参照。

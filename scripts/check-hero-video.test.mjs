@@ -110,6 +110,35 @@ test("video タグはあるがアセット名が本文テキストにあるだ�
   });
 });
 
+test("data-poster だけで poster 属性が無ければ失敗する（#267）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<video data-motion-optional data-poster="/hero-poster.jpg"><source src="/hero-battle.webm" /><source src="/hero-battle.mp4" /></video>'
+    );
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /poster 属性に hero-poster\.jpg が指定されていません/
+    );
+  });
+});
+
+test("data-src だけで src 属性が無ければ失敗する（#267）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<video data-motion-optional poster="/hero-poster.jpg"><source data-src="/hero-battle.webm" /><source data-src="/hero-battle.mp4" /></video>'
+    );
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /source の src に hero-battle\.webm/);
+  });
+});
+
 test("動画タグと必要アセットが揃っていれば成功する", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     writeDistHtml(tmp, "index.html", FULL_VIDEO_HTML);
