@@ -93,6 +93,36 @@ test("否定先読みは別リポジトリの URL を誤検出しない", async 
   });
 });
 
+const FOREIGN_LINK =
+  '<a href="https://example.invalid/?next=https://github.com/keroway/code-tactics">x</a>';
+
+test("非公開想定で別サイトのクエリ内の本体 URL は流出と見なさない（#271）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", FOREIGN_LINK);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      unset: ["PUBLIC_REPO_PUBLIC"],
+    });
+    assert.equal(result.status, 0);
+  });
+});
+
+test("公開想定で別サイトのクエリ内の本体 URL は本体リンクに数えない（#271）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", FOREIGN_LINK);
+    writeDistHtml(tmp, "404.html", REPO_LINK);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /次のページに本体リンクがありません[\s\S]*index\.html/
+    );
+  });
+});
+
 test("公開想定でコメント内の URL しかなければ失敗する（#231）", async () => {
   await withTmpDir("check-repo-gate-", async (tmp) => {
     writeDistHtml(
