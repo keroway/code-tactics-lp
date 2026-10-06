@@ -10,9 +10,9 @@ const SCRIPT = join(
   "check-hero-video.mjs"
 );
 const FULL_VIDEO_HTML = `
-<video data-motion-optional poster="/hero-poster.jpg">
-  <source src="/hero-battle.webm" type="video/webm" />
-  <source src="/hero-battle.mp4" type="video/mp4" />
+<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg">
+  <source src="/code-tactics-lp/hero-battle.webm" type="video/webm" />
+  <source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" />
 </video>
 `;
 
@@ -42,7 +42,11 @@ test("index.html が無ければ失敗する", async () => {
 
 test("静止画フォールバックになっていれば失敗する", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
-    writeDistHtml(tmp, "index.html", '<img src="/hero-poster.jpg" />');
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<img src="/code-tactics-lp/hero-poster.jpg" />'
+    );
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 1);
     assert.match(result.stderr, /静止画フォールバックで出力されています/);
@@ -54,7 +58,7 @@ test("動画タグはあるが poster 属性が欠けていれば失敗する", 
     writeDistHtml(
       tmp,
       "index.html",
-      '<video data-motion-optional><source src="/hero-battle.webm" /><source src="/hero-battle.mp4" /></video>'
+      '<video data-motion-optional><source src="/code-tactics-lp/hero-battle.webm" /><source src="/code-tactics-lp/hero-battle.mp4" /></video>'
     );
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 1);
@@ -70,7 +74,7 @@ test("動画タグはあるが参照アセットが欠けていれば失敗す�
     writeDistHtml(
       tmp,
       "index.html",
-      '<video data-motion-optional poster="/hero-poster.jpg"><source src="/hero-battle.webm" /></video>'
+      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" /></video>'
     );
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 1);
@@ -86,7 +90,7 @@ test("video 要素がコメントアウトされ本文にアセット名があ�
     writeDistHtml(
       tmp,
       "index.html",
-      '<!-- <video data-motion-optional poster="/hero-poster.jpg"><source src="/hero-battle.webm" /><source src="/hero-battle.mp4" /></video> --><img src="/screenshot.png" />'
+      '<!-- <video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" /><source src="/code-tactics-lp/hero-battle.mp4" /></video> --><img src="/screenshot.png" />'
     );
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 1);
@@ -115,7 +119,7 @@ test("data-poster だけで poster 属性が無ければ失敗する（#267）",
     writeDistHtml(
       tmp,
       "index.html",
-      '<video data-motion-optional data-poster="/hero-poster.jpg"><source src="/hero-battle.webm" /><source src="/hero-battle.mp4" /></video>'
+      '<video data-motion-optional data-poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" /><source src="/code-tactics-lp/hero-battle.mp4" /></video>'
     );
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 1);
@@ -131,7 +135,7 @@ test("data-src だけで src 属性が無ければ失敗する（#267）", async
     writeDistHtml(
       tmp,
       "index.html",
-      '<video data-motion-optional poster="/hero-poster.jpg"><source data-src="/hero-battle.webm" /><source data-src="/hero-battle.mp4" /></video>'
+      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source data-src="/code-tactics-lp/hero-battle.webm" /><source data-src="/code-tactics-lp/hero-battle.mp4" /></video>'
     );
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 1);
@@ -144,7 +148,7 @@ test("poster が別ファイル名(末尾に文字列付き)なら失敗する�
     writeDistHtml(
       tmp,
       "index.html",
-      '<video data-motion-optional poster="/hero-poster.jpg.missing"><source src="/hero-battle.webm" /><source src="/hero-battle.mp4" /></video>'
+      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg.missing"><source src="/code-tactics-lp/hero-battle.webm" /><source src="/code-tactics-lp/hero-battle.mp4" /></video>'
     );
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 1);
@@ -160,7 +164,7 @@ test("source が別ファイル名(末尾に文字列付き)なら失敗する�
     writeDistHtml(
       tmp,
       "index.html",
-      '<video data-motion-optional poster="/hero-poster.jpg"><source src="/hero-battle.webm.missing" /><source src="/hero-battle.mp4.missing" /></video>'
+      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm.missing" /><source src="/code-tactics-lp/hero-battle.mp4.missing" /></video>'
     );
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 1);
@@ -180,6 +184,44 @@ test("base パス前置とクエリ付きの参照は成功する（#269）", as
     );
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 0);
+  });
+});
+
+for (const [label, prefix] of [
+  ["base が欠落している", ""],
+  ["誤ったディレクトリ配下である", "/wrong-directory"],
+  ["別 origin を指している", "https://cdn.example.com/code-tactics-lp"],
+]) {
+  test(`参照パスが ${label}なら失敗する（#273）`, async () => {
+    await withTmpDir("check-hero-video-", async (tmp) => {
+      writeDistHtml(
+        tmp,
+        "index.html",
+        `<video data-motion-optional poster="${prefix}/hero-poster.jpg"><source src="${prefix}/hero-battle.webm" /><source src="${prefix}/hero-battle.mp4" /></video>`
+      );
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(
+        result.stderr,
+        /poster 属性に hero-poster\.jpg が指定されていません/
+      );
+    });
+  });
+}
+
+test("poster だけ base が正しく source の base が欠落していれば失敗する（#273）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source src="/hero-battle.webm" /><source src="/hero-battle.mp4" /></video>'
+    );
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /source の src に hero-battle\.webm, hero-battle\.mp4 がありません/
+    );
   });
 });
 
