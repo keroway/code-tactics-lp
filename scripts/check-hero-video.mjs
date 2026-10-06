@@ -37,11 +37,25 @@ const POSTER_ATTR_PATTERN = /(?<=\s)poster\s*=\s*(["'])([\s\S]*?)\1/i;
 const SOURCE_SRC_PATTERN =
   /<source\b[^>]*?(?<=\s)src\s*=\s*(["'])([\s\S]*?)\1/gi;
 
+// astro.config.mjs の base と一致させること。末尾セグメントだけの比較だと、
+// base 欠落や誤ったディレクトリ配下の参照も通ってしまう(#273)。
+const BASE_PATH = "/code-tactics-lp";
+const PAGE_URL = new URL(`https://gate.invalid${BASE_PATH}/`);
+
 // 部分一致だと `hero-poster.jpg.missing` のような別ファイルも通ってしまう(#269)。
-// クエリ・フラグメントを除いたパスの末尾セグメントが、アセット名と完全一致するかで判定する。
+// トップページの配信 URL を基準に解決し、クエリ・フラグメントを除いたパスが
+// `${BASE_PATH}/${name}` と完全一致するかで判定する。
 function refersToAsset(url, name) {
-  const path = url.trim().split(/[?#]/, 1)[0];
-  return path.split("/").pop() === name;
+  let resolved;
+  try {
+    resolved = new URL(url.trim(), PAGE_URL);
+  } catch {
+    return false;
+  }
+  return (
+    resolved.origin === PAGE_URL.origin &&
+    resolved.pathname === `${BASE_PATH}/${name}`
+  );
 }
 
 function findHeroVideoIssue(html) {
