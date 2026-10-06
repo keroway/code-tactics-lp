@@ -1,5 +1,6 @@
 import { AxeBuilder } from "@axe-core/playwright";
 import { chromium } from "playwright";
+import { verifyPage } from "./lib/verify-page.mjs";
 
 const BASE_URL =
   process.env.BASE_URL ?? "http://localhost:4321/code-tactics-lp/";
@@ -8,7 +9,27 @@ const BASE_URL =
 // 併せて検査する (#151)。404 ページは存在しないパスへのアクセスだと HTTP 404 応答になり
 // Lighthouse (別ツール) 側が ERRORED_DOCUMENT_REQUEST で落ちるため、両ツールで挙動を
 // 揃えるべく実ファイル 404.html への直接アクセス (200 応答) で検証する。
-const PATHS = ["", "privacy/", "404.html"];
+const PATHS = [
+  { path: "", titleIncludes: "code-tactics —" },
+  { path: "privacy/", titleIncludes: "プライバシー" },
+  { path: "404.html", titleIncludes: "404" },
+];
+
+// axe の前に、HTTP 200・最終 URL・タイトルで「狙ったページに着いたか」を確認する (#275)。
+async function gotoAndVerify(page, url, titleIncludes) {
+  const response = await page.goto(url);
+  const problems = verifyPage(
+    {
+      status: response?.status() ?? null,
+      finalUrl: page.url(),
+      title: await page.title(),
+    },
+    { url, titleIncludes }
+  );
+  if (problems.length > 0) {
+    throw new Error(`unexpected page (${url}): ${problems.join("; ")}`);
+  }
+}
 
 const browser = await chromium.launch();
 const context = await browser.newContext();
@@ -16,11 +37,11 @@ const context = await browser.newContext();
 let violationCount = 0;
 
 try {
-  for (const path of PATHS) {
+  for (const { path, titleIncludes } of PATHS) {
     const url = new URL(path, BASE_URL).href;
     const page = await context.newPage();
     try {
-      await page.goto(url);
+      await gotoAndVerify(page, url, titleIncludes);
       const results = await new AxeBuilder({ page }).analyze();
 
       if (results.violations.length > 0) {
@@ -56,7 +77,7 @@ try {
   });
   const mobilePage = await mobileContext.newPage();
   try {
-    await mobilePage.goto(mobileUrl);
+    await gotoAndVerify(mobilePage, mobileUrl, PATHS[0].titleIncludes);
     await mobilePage.click("#menu-toggle");
 
     const expanded = await mobilePage.getAttribute(
