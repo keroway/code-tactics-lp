@@ -34,8 +34,12 @@ const DIST_DIR = "dist";
 // `(?!-lp)` だと `code-tactics-docs` や `code-tactics2` のような別リポジトリまで
 // 拾ってしまい、無関係な URL で CI が落ちる。
 // `/issues` や末尾の `"` は文字クラス外なので、意図どおり一致する。
+// 先頭を `^` で固定する（#271）。固定しないと
+// `https://example.invalid/?next=https://github.com/keroway/code-tactics` のように
+// 別サイトのクエリに本体 URL を含む href まで本体リンクとして数えてしまう。
+// scheme / host は大文字小文字を区別しないので `i` を付ける。
 const REPO_URL_PATTERN =
-  /https:\/\/github\.com\/keroway\/code-tactics(?![A-Za-z0-9._-])/;
+  /^https:\/\/github\.com\/keroway\/code-tactics(?![A-Za-z0-9._-])/i;
 
 // HTML コメントやプレーンテキストの URL 出現は成功/失敗の判定に数えない
 // （#231）。実際にクリックできる <a href> だけを本体リンクとして扱う。
@@ -64,7 +68,7 @@ function countRepoAnchors(html) {
   let count = 0;
   for (const anchor of stripComments(html).matchAll(ANCHOR_PATTERN)) {
     const hrefMatch = anchor[0].match(HREF_PATTERN);
-    if (hrefMatch && REPO_URL_PATTERN.test(hrefMatch[2])) count++;
+    if (hrefMatch && REPO_URL_PATTERN.test(hrefMatch[2].trim())) count++;
   }
   return count;
 }
