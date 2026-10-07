@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { walkHtml } from "./lib/walk-html.mjs";
 
@@ -28,6 +28,7 @@ import { walkHtml } from "./lib/walk-html.mjs";
  */
 
 const DIST_DIR = "dist";
+const HERO_ASSETS = ["hero-poster.jpg", "hero-battle.webm", "hero-battle.mp4"];
 const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
 const VIDEO_ELEMENT_PATTERN =
   /<video\b([^>]*\bdata-motion-optional\b[^>]*)>([\s\S]*?)<\/video>/i;
@@ -108,7 +109,23 @@ if (indexHtml === undefined) {
   process.exit(1);
 }
 
-const issue = findHeroVideoIssue(indexHtml);
+// HTML の参照が正しくても、配布する実ファイルが欠けていれば動画は再生できない(#280)。
+async function findMissingAsset(names) {
+  for (const name of names) {
+    try {
+      const info = await stat(join(DIST_DIR, name));
+      if (!info.isFile())
+        return `${DIST_DIR}/${name} が通常ファイルではありません`;
+      if (info.size === 0) return `${DIST_DIR}/${name} が空ファイルです`;
+    } catch {
+      return `${DIST_DIR}/${name} が存在しません`;
+    }
+  }
+  return null;
+}
+
+const issue =
+  findHeroVideoIssue(indexHtml) ?? (await findMissingAsset(HERO_ASSETS));
 
 if (issue) {
   console.error(`Hero 動画セクションの検査に失敗しました: ${issue}`);

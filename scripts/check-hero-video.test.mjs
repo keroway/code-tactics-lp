@@ -22,6 +22,12 @@ function writeDistHtml(tmp, name, content) {
   writeFileSync(full, content);
 }
 
+const HERO_ASSETS = ["hero-poster.jpg", "hero-battle.webm", "hero-battle.mp4"];
+
+function writeHeroAssets(tmp, names = HERO_ASSETS, content = "x") {
+  for (const name of names) writeDistHtml(tmp, name, content);
+}
+
 test("dist/ に HTML が無ければ失敗する", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     mkdirSync(join(tmp, "dist"), { recursive: true });
@@ -182,6 +188,7 @@ test("base パス前置とクエリ付きの参照は成功する（#269）", as
       "index.html",
       '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg?v=1"><source src="/code-tactics-lp/hero-battle.webm" /><source src="/code-tactics-lp/hero-battle.mp4#t=0" /></video>'
     );
+    writeHeroAssets(tmp);
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 0);
   });
@@ -228,8 +235,35 @@ test("poster だけ base が正しく source の base が欠落していれば�
 test("動画タグと必要アセットが揃っていれば成功する", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     writeDistHtml(tmp, "index.html", FULL_VIDEO_HTML);
+    writeHeroAssets(tmp);
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 0);
     assert.match(result.stdout, /OK/);
   });
 });
+
+for (const name of HERO_ASSETS) {
+  test(`dist/${name} の実体が無ければ失敗する（#280）`, async () => {
+    await withTmpDir("check-hero-video-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", FULL_VIDEO_HTML);
+      writeHeroAssets(
+        tmp,
+        HERO_ASSETS.filter((n) => n !== name)
+      );
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, new RegExp(`dist/${name} が存在しません`));
+    });
+  });
+
+  test(`dist/${name} が空ファイルなら失敗する（#280）`, async () => {
+    await withTmpDir("check-hero-video-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", FULL_VIDEO_HTML);
+      writeHeroAssets(tmp);
+      writeDistHtml(tmp, name, "");
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, new RegExp(`dist/${name} が空ファイルです`));
+    });
+  });
+}
