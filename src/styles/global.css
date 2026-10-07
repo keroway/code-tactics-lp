@@ -200,7 +200,8 @@ pre .rule-row {
       opacity 0.25s ease-out;
   }
   .mobile-menu.is-open {
-    max-height: 20rem;
+    /* 全項目 (現状 22.25rem) が収まる上限。項目追加時はスモークの収まり検査が検知する */
+    max-height: 40rem;
     opacity: 1;
   }
 }

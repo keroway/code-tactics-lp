@@ -92,6 +92,17 @@ try {
       throw new Error("mobile menu not visible after click");
     }
 
+    // All links must fit inside the panel once the open transition settles (#278).
+    await mobilePage.waitForFunction(
+      () => {
+        const menu = document.getElementById("mobile-menu");
+        return menu && menu.scrollHeight <= menu.clientHeight + 1;
+      },
+      undefined,
+      { timeout: 3000 }
+    );
+    console.log("mobile menu: all links fit inside the panel");
+
     await mobilePage.keyboard.press("Tab");
 
     const results = await new AxeBuilder({ page: mobilePage }).analyze();
