@@ -197,6 +197,29 @@ try {
     console.log(
       "keyboard (mobile menu): resize past sm breakpoint closes menu"
     );
+
+    // Focus must not be stranded on the now-hidden menu/toggle (#283).
+    const focusAfterResize = await mobilePage.evaluate(() => {
+      const el = document.activeElement;
+      if (!el || el === document.body) return { ok: false, id: "body" };
+      const rect = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
+      const visible =
+        rect.width > 0 &&
+        rect.height > 0 &&
+        style.visibility !== "hidden" &&
+        style.display !== "none" &&
+        !el.closest("[hidden]");
+      return { ok: visible, id: el.id || el.tagName };
+    });
+    if (!focusAfterResize.ok) {
+      throw new Error(
+        `focus not on a visible element after resizing past sm (got ${focusAfterResize.id})`
+      );
+    }
+    console.log(
+      "keyboard (mobile menu): resize moves focus to a visible element"
+    );
   } finally {
     await mobilePage.close();
     await mobileContext.close();

@@ -18,6 +18,7 @@ import {
     aria-label="メインナビゲーション"
   >
     <a
+      id="site-logo"
       href="#top"
       class="font-mono font-bold tracking-tight text-slate-100 transition hover:text-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
       >code-tactics</a
@@ -168,10 +169,15 @@ import {
       }
     });
 
-    // sm 以上へリサイズしたらデスクトップナビに切り替わるので状態をリセット
+    // sm 以上へリサイズしたらデスクトップナビに切り替わるので状態をリセット。
+    // パネルもトグルも非表示になるため、フォーカスがそこにあれば常時表示のロゴへ退避する
     const mq = window.matchMedia("(min-width: 40rem)");
     mq.addEventListener("change", (e) => {
-      if (e.matches && isOpen()) close({ restoreFocus: false });
+      if (!e.matches || !isOpen()) return;
+      const active = document.activeElement;
+      const hadFocus = active === toggle || menu.contains(active);
+      close({ restoreFocus: false });
+      if (hadFocus) document.getElementById("site-logo")?.focus();
     });
   })();
 </script>
