@@ -44,7 +44,44 @@ const REPO_URL_PATTERN =
 // HTML コメントやプレーンテキストの URL 出現は成功/失敗の判定に数えない
 // （#231）。実際にクリックできる <a href> だけを本体リンクとして扱う。
 const ANCHOR_PATTERN = /<a\b[^>]*>/gi;
-const HREF_PATTERN = /\shref\s*=\s*(["'])(.*?)\1/i;
+// 属性値は二重引用符・単一引用符・引用符なしの 3 表記を受ける（#285）。
+// 引用符なしは HTML の定義どおり空白・引用符・`=<>` と backtick を含まない値。
+const HREF_PATTERN = /\shref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i;
+
+// URL 判定に影響しうる最小限の HTML 文字参照（#285）。
+// 数値参照（10 進・16 進）は全て復号し、名前付きは URL 内で使われうるものに限る。
+const NAMED_ENTITIES = {
+  amp: "&",
+  colon: ":",
+  sol: "/",
+  period: ".",
+  hyphen: "-",
+  quot: '"',
+  apos: "'",
+  lt: "<",
+  gt: ">",
+  Tab: "\t",
+  NewLine: "\n",
+};
+
+function decodeCharRef(match, hex, dec, name) {
+  if (name !== undefined) return NAMED_ENTITIES[name] ?? match;
+  const code = hex !== undefined ? Number.parseInt(hex, 16) : Number(dec);
+  if (!Number.isInteger(code) || code > 0x10ffff) return match;
+  return String.fromCodePoint(code);
+}
+
+// ブラウザの href 解釈に合わせ、文字参照を復号してから前後の空白と
+// 途中の tab / 改行を取り除く（URL パーサが除去する文字）。
+function normalizeHref(raw) {
+  return raw
+    .replace(
+      /&(?:#[xX]([0-9a-fA-F]+);?|#([0-9]+);?|([A-Za-z]+);)/g,
+      decodeCharRef
+    )
+    .replace(/[\t\n\r]/g, "")
+    .trim();
+}
 
 // 公開時に本体リンクを持つべきページ（dist/ 相対）。
 // SiteFooter / FooterCta は全ページ共通だが、トップページと 404 は
@@ -68,7 +105,9 @@ function countRepoAnchors(html) {
   let count = 0;
   for (const anchor of stripComments(html).matchAll(ANCHOR_PATTERN)) {
     const hrefMatch = anchor[0].match(HREF_PATTERN);
-    if (hrefMatch && REPO_URL_PATTERN.test(hrefMatch[2].trim())) count++;
+    if (!hrefMatch) continue;
+    const raw = hrefMatch[1] ?? hrefMatch[2] ?? hrefMatch[3];
+    if (REPO_URL_PATTERN.test(normalizeHref(raw))) count++;
   }
   return count;
 }
