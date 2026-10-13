@@ -220,6 +220,67 @@ try {
     console.log(
       "keyboard (mobile menu): resize moves focus to a visible element"
     );
+
+    // Selecting an in-page anchor closes the menu and navigates (#287).
+    // Covers both pointer (click) and keyboard (Enter) activation.
+    await mobilePage.setViewportSize({ width: 375, height: 667 });
+    const selectionCases = [
+      { name: "click", index: 1, activate: (link) => link.click() },
+      {
+        name: "Enter",
+        index: 2,
+        activate: async (link) => {
+          await link.focus();
+          await mobilePage.keyboard.press("Enter");
+        },
+      },
+    ];
+    for (const { name, index, activate } of selectionCases) {
+      await mobilePage.click("#menu-toggle");
+      await mobilePage.waitForSelector("#mobile-menu", { state: "visible" });
+      const link = mobilePage.locator("#mobile-menu a[href]").nth(index);
+      const href = await link.getAttribute("href");
+      await activate(link);
+
+      await mobilePage.waitForFunction((h) => location.hash === h, href, {
+        timeout: 3000,
+      });
+      const expandedAfterSelect = await mobilePage.getAttribute(
+        "#menu-toggle",
+        "aria-expanded"
+      );
+      if (expandedAfterSelect !== "false") {
+        throw new Error(
+          `anchor selection (${name}) did not close the mobile menu`
+        );
+      }
+      if (await mobilePage.isVisible("#mobile-menu")) {
+        throw new Error(
+          `mobile menu still visible after anchor selection (${name})`
+        );
+      }
+      const focusAfterSelect = await mobilePage.evaluate(() => {
+        const el = document.activeElement;
+        if (!el || el === document.body) return { ok: false, id: "body" };
+        const rect = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
+        const visible =
+          rect.width > 0 &&
+          rect.height > 0 &&
+          style.visibility !== "hidden" &&
+          style.display !== "none" &&
+          !el.closest("[hidden]");
+        return { ok: visible, id: el.id || el.tagName };
+      });
+      if (!focusAfterSelect.ok) {
+        throw new Error(
+          `focus not on a visible element after anchor selection (${name}; got ${focusAfterSelect.id})`
+        );
+      }
+      console.log(
+        `keyboard (mobile menu): anchor selection by ${name} closes menu and navigates to ${href}`
+      );
+    }
   } finally {
     await mobilePage.close();
     await mobileContext.close();
