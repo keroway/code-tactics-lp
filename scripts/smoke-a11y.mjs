@@ -125,6 +125,27 @@ async function checkFaq(browserContext, label) {
     for (let i = 0; i < count; i++) {
       await items.nth(i).locator("summary").click();
     }
+    // 展開でレイアウトが伸び、下のセクションがビューポートに入ってフェードインを
+    // 始める。遷移の途中色を axe が拾って誤検知するため、IntersectionObserver の
+    // 反応と有限アニメーション/遷移の完了を待ってから検査する。
+    await page.evaluate(
+      () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve))
+        )
+    );
+    await page.evaluate(() =>
+      Promise.all(
+        document
+          .getAnimations()
+          .filter(
+            (a) =>
+              a.effect?.getComputedTiming().iterations !==
+              Number.POSITIVE_INFINITY
+          )
+          .map((a) => a.finished.catch(() => undefined))
+      )
+    );
     const results = await new AxeBuilder({ page }).analyze();
     if (results.violations.length > 0) {
       violations += results.violations.length;
