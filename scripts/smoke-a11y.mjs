@@ -31,6 +31,128 @@ async function gotoAndVerify(page, url, titleIncludes) {
   }
 }
 
+// FAQ (details/summary) の展開・折り畳みと、展開状態での axe を検査する (#291)。
+// ポインター (click) とキーボード (Enter / Space) の両方で summary を操作する。
+async function checkFaq(browserContext, label) {
+  const url = new URL("", BASE_URL).href;
+  const page = await browserContext.newPage();
+  let violations = 0;
+  try {
+    await gotoAndVerify(page, url, PATHS[0].titleIncludes);
+    await page.locator("#faq").scrollIntoViewIfNeeded();
+    // data-animate のフェードインが終わるまで待ってから検査する。
+    await page.waitForFunction(
+      () => {
+        const faq = document.getElementById("faq");
+        return faq && getComputedStyle(faq).opacity === "1";
+      },
+      undefined,
+      { timeout: 5000 }
+    );
+
+    const items = page.locator("#faq details");
+    const count = await items.count();
+    if (count === 0) {
+      throw new Error(`FAQ (${label}): no details elements found`);
+    }
+
+    const operations = [
+      {
+        name: "click",
+        run: (summary) => summary.click(),
+      },
+      {
+        name: "Enter",
+        run: async (summary) => {
+          await summary.focus();
+          await page.keyboard.press("Enter");
+        },
+      },
+      {
+        name: "Space",
+        run: async (summary) => {
+          await summary.focus();
+          await page.keyboard.press("Space");
+        },
+      },
+    ];
+
+    for (let i = 0; i < count; i++) {
+      const item = items.nth(i);
+      const summary = item.locator("summary");
+      const answer = item.locator("p");
+      const op = operations[i % operations.length];
+
+      if (await item.evaluate((el) => el.open)) {
+        throw new Error(`FAQ (${label}) #${i + 1}: open before interaction`);
+      }
+      if (await answer.isVisible()) {
+        throw new Error(
+          `FAQ (${label}) #${i + 1}: answer visible while collapsed`
+        );
+      }
+
+      await op.run(summary);
+      if (!(await item.evaluate((el) => el.open))) {
+        throw new Error(`FAQ (${label}) #${i + 1}: did not open by ${op.name}`);
+      }
+      if (!(await answer.isVisible())) {
+        throw new Error(
+          `FAQ (${label}) #${i + 1}: answer not visible after ${op.name}`
+        );
+      }
+      if (((await answer.innerText()) ?? "").trim() === "") {
+        throw new Error(`FAQ (${label}) #${i + 1}: answer text is empty`);
+      }
+
+      await op.run(summary);
+      if (await item.evaluate((el) => el.open)) {
+        throw new Error(
+          `FAQ (${label}) #${i + 1}: did not close by ${op.name}`
+        );
+      }
+      if (await answer.isVisible()) {
+        throw new Error(
+          `FAQ (${label}) #${i + 1}: answer still visible after collapse`
+        );
+      }
+    }
+    console.log(
+      `faq (${label}): ${count} items open/close by click, Enter, Space`
+    );
+
+    // すべて展開した状態で axe を実行する (回答本文の配色・マークアップ)。
+    for (let i = 0; i < count; i++) {
+      await items.nth(i).locator("summary").click();
+    }
+    const results = await new AxeBuilder({ page }).analyze();
+    if (results.violations.length > 0) {
+      violations += results.violations.length;
+      console.error(
+        `axe-core (FAQ expanded, ${label}, ${url}): ${results.violations.length} violation(s) found\n`
+      );
+      for (const v of results.violations) {
+        console.error(`[${v.impact}] ${v.id}: ${v.description}`);
+        for (const node of v.nodes) {
+          console.error(`  - ${node.target.join(", ")}`);
+          if (node.failureSummary) {
+            console.error(
+              `    ${node.failureSummary.replace(/\n/g, "\n    ")}`
+            );
+          }
+        }
+      }
+    } else {
+      console.log(
+        `axe-core (FAQ expanded, ${label}, ${url}): no violations found (${results.passes.length} rules passed)`
+      );
+    }
+  } finally {
+    await page.close();
+  }
+  return violations;
+}
+
 const browser = await chromium.launch();
 const context = await browser.newContext();
 
@@ -68,6 +190,16 @@ try {
     } finally {
       await page.close();
     }
+  }
+
+  violationCount += await checkFaq(context, "desktop");
+  const faqMobileContext = await browser.newContext({
+    viewport: { width: 375, height: 667 },
+  });
+  try {
+    violationCount += await checkFaq(faqMobileContext, "mobile");
+  } finally {
+    await faqMobileContext.close();
   }
 
   // Mobile viewport pass: verify the hamburger menu opens and is axe-clean (#004).
