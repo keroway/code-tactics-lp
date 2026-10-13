@@ -144,9 +144,19 @@ import {
       }
     });
 
-    // アンカーをタップしたら遷移先へスクロールしつつ閉じる (フォーカスは戻さない)
+    // アンカーをタップしたら遷移先へスクロールしつつ閉じる (フォーカスは戻さない)。
+    // 押下したリンクはパネルごと非表示になりフォーカスが body へ落ちるため、
+    // 遷移先セクションへフォーカスを移す (スクロールは既定のハッシュ遷移に任せる)
     menu.addEventListener("click", (e) => {
-      if (e.target.closest("a")) close({ restoreFocus: false });
+      const link = e.target.closest("a");
+      if (!link) return;
+      close({ restoreFocus: false });
+      const id = decodeURIComponent((link.hash || "").slice(1));
+      const target = id ? document.getElementById(id) : null;
+      if (!target) return;
+      if (!target.hasAttribute("tabindex"))
+        target.setAttribute("tabindex", "-1");
+      target.focus({ preventScroll: true });
     });
 
     // Esc で閉じる / Tab はパネル内 (とトグル) でフォーカストラップ
