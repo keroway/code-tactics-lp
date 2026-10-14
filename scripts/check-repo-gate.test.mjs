@@ -143,6 +143,12 @@ const NOTATION_VARIANTS = [
     "引用符なしと文字参照の併用",
     "<a href=https&colon;//github.com/keroway/code-tactics>x</a>",
   ],
+  // URL として解決すれば本体リポジトリになる表記（#295）。
+  ["プロトコル相対", '<a href="//github.com/keroway/code-tactics">x</a>'],
+  [
+    "明示ポート 443",
+    '<a href="https://github.com:443/keroway/code-tactics">x</a>',
+  ],
 ];
 
 for (const [label, link] of NOTATION_VARIANTS) {
@@ -181,6 +187,9 @@ test("引用符なし・文字参照でも別リポジトリと別サイトの�
         "<a href=https://github.com/keroway/code-tactics-docs>a</a>",
         '<a href="https&colon;//github.com/keroway/code-tactics2">b</a>',
         "<a href=https://example.invalid/?next=https://github.com/keroway/code-tactics>c</a>",
+        '<a href="//github.com/keroway/code-tactics-docs">d</a>',
+        '<a href="https://github.com:8443/other/code-tactics">e</a>',
+        '<a href="//example.invalid/github.com/keroway/code-tactics">f</a>',
       ].join("\n")
     );
     const result = runScript(SCRIPT, {
