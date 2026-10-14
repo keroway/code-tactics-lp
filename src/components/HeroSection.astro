@@ -122,15 +122,30 @@ const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (mediaQuery.matches || !("IntersectionObserver" in window)) return;
 
+    // 利用者が controls で止めた状態を保持する。pause イベントは非同期に届くため、
+    // 「表示中に起きた pause = 手動停止」「画面外へ出た後の pause = 自動停止」と区別する。
+    // 手動停止後は viewport 再入場だけでは再開せず、利用者が再生した時点で解除する。
+    let visible = false;
+    let userPaused = false;
+    video.addEventListener("pause", function () {
+      if (visible) userPaused = true;
+    });
+    video.addEventListener("play", function () {
+      userPaused = false;
+    });
+
     const observer = new IntersectionObserver(
       function (entries) {
         if (mediaQuery.matches) return;
         entries.forEach(function (entry) {
           if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            visible = true;
+            if (userPaused) return;
             video.play().catch(function () {
               // ブラウザの自動再生ポリシーで拒否されても controls から再生できる。
             });
           } else {
+            visible = false;
             video.pause();
           }
         });

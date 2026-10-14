@@ -27,7 +27,11 @@ function setupHarness() {
   let ioCallback;
   let changeHandler;
 
+  const videoHandlers = { pause: [], play: [] };
   class Video {
+    addEventListener(type, cb) {
+      videoHandlers[type].push(cb);
+    }
     play() {
       state.plays++;
       return Promise.resolve();
@@ -75,6 +79,10 @@ function setupHarness() {
     leave() {
       ioCallback([{ isIntersecting: false, intersectionRatio: 0 }]);
     },
+    // 実ブラウザの pause / play イベント (利用者の controls 操作または自動停止・再生の結果)
+    fire(type) {
+      for (const cb of videoHandlers[type]) cb({ type });
+    },
     toggleReduceMotion(matches) {
       mediaQuery.matches = matches;
       assert.ok(changeHandler, "change リスナーが登録されていない");
@@ -104,4 +112,34 @@ test("reduced-motion へ切り替わった後は viewport 再入場でも再生�
   h.leave();
   h.enter();
   assert.equal(h.state.plays, 1);
+});
+
+test("手動停止後は viewport 再入場でも再生しない", () => {
+  const h = setupHarness();
+  h.enter();
+  h.fire("pause"); // 表示中に利用者が controls で停止
+  h.leave();
+  h.fire("pause"); // 画面外移動による自動停止の pause イベント
+  h.enter();
+  assert.equal(h.state.plays, 1);
+});
+
+test("自動停止後の再入場では再生する", () => {
+  const h = setupHarness();
+  h.enter();
+  h.leave();
+  h.fire("pause");
+  h.enter();
+  assert.equal(h.state.plays, 2);
+});
+
+test("手動停止後に利用者が再生し直すと、再入場で再び自動再生する", () => {
+  const h = setupHarness();
+  h.enter();
+  h.fire("pause");
+  h.fire("play"); // 利用者が controls で再生
+  h.leave();
+  h.fire("pause");
+  h.enter();
+  assert.equal(h.state.plays, 2);
 });
