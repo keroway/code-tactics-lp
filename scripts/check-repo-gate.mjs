@@ -38,8 +38,26 @@ const DIST_DIR = "dist";
 // `https://example.invalid/?next=https://github.com/keroway/code-tactics` のように
 // 別サイトのクエリに本体 URL を含む href まで本体リンクとして数えてしまう。
 // scheme / host は大文字小文字を区別しないので `i` を付ける。
-const REPO_URL_PATTERN =
-  /^https:\/\/github\.com\/keroway\/code-tactics(?![A-Za-z0-9._-])/i;
+// URL 全体ではなく、ページ URL 基準で解決した後の pathname に適用する（#295）。
+const REPO_PATH_PATTERN = /^\/keroway\/code-tactics(?![A-Za-z0-9._-])/i;
+
+// href の解決基準。プロトコル相対 `//github.com/...` は https のページ上で
+// https に解決されるため、基準は LP の HTTPS URL とする。
+const PAGE_URL = "https://keroway.github.io/code-tactics-lp/";
+
+// ブラウザと同じ URL 解決で、プロトコル相対表記や明示ポート（`:443`）も
+// 正規化してから origin と pathname を比べる（#295）。
+function isRepoHref(href) {
+  let url;
+  try {
+    url = new URL(href, PAGE_URL);
+  } catch {
+    return false;
+  }
+  return (
+    url.origin === "https://github.com" && REPO_PATH_PATTERN.test(url.pathname)
+  );
+}
 
 // HTML コメントやプレーンテキストの URL 出現は成功/失敗の判定に数えない
 // （#231）。実際にクリックできる <a href> だけを本体リンクとして扱う。
@@ -107,7 +125,7 @@ function countRepoAnchors(html) {
     const hrefMatch = anchor[0].match(HREF_PATTERN);
     if (!hrefMatch) continue;
     const raw = hrefMatch[1] ?? hrefMatch[2] ?? hrefMatch[3];
-    if (REPO_URL_PATTERN.test(normalizeHref(raw))) count++;
+    if (isRepoHref(normalizeHref(raw))) count++;
   }
   return count;
 }
