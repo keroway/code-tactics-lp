@@ -33,6 +33,13 @@ const BEACON_SRC_PATTERN =
 const CF_BEACON_ATTR_PATTERN =
   /(?<=\s)data-cf-beacon\s*=\s*(["'])([\s\S]*?)\1/i;
 const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
+// 属性名の直前は空白に限る(data-type を拾わない)。値はクォート無しも許す。
+const TYPE_ATTR_PATTERN =
+  /(?<=\s)type\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i;
+// ブラウザが外部 script として実行する type(WHATWG HTML の JavaScript MIME type
+// と module)。application/json や text/plain はデータブロック扱いで実行されない。
+const EXECUTABLE_TYPE_PATTERN =
+  /^(?:module|(?:text|application)\/(?:x-)?(?:java|ecma|jscript|live)script)$/i;
 
 // Astro の属性レンダラー(html-escaper の escape)が生成しうる 5 種類の実体参照。
 // data-cf-beacon={JSON.stringify(...)} はここでエスケープされてから出力されるため、
@@ -85,6 +92,19 @@ function findBeaconIssue(html) {
   const beaconTag = scriptTags.find((tag) => BEACON_SRC_PATTERN.test(tag));
 
   if (!beaconTag) return "missing script";
+
+  // type 無し・空文字列は classic script として実行される。それ以外は
+  // JavaScript の MIME type か module のときだけ実行対象とみなす(#297)。
+  const typeMatch = beaconTag.match(TYPE_ATTR_PATTERN);
+  const scriptType = (
+    typeMatch?.[1] ??
+    typeMatch?.[2] ??
+    typeMatch?.[3] ??
+    ""
+  ).trim();
+  if (scriptType !== "" && !EXECUTABLE_TYPE_PATTERN.test(scriptType)) {
+    return "script の type が実行対象外";
+  }
 
   const attrMatch = beaconTag.match(CF_BEACON_ATTR_PATTERN);
   if (!attrMatch) return "data-cf-beacon 属性が無い";

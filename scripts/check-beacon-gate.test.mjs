@@ -199,6 +199,45 @@ test("src ではなく data-src だけなら失敗する(#267)", async () => {
   });
 });
 
+const GATE_ENV = {
+  PUBLIC_CF_BEACON_TOKEN: "dummy",
+  BEACON_GATE_REQUIRE_TOKEN: "true",
+};
+const beaconTagWithType = (type) =>
+  `<script defer ${type} src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${EXPECTED_TOKEN}"}'></script>`;
+
+for (const type of [
+  'type="application/json"',
+  'type="text/plain"',
+  "type=text/plain",
+  "type='application/json'",
+]) {
+  test(`実行対象外の script ${type} なら失敗する(#297)`, async () => {
+    await withTmpDir("check-beacon-gate-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", beaconTagWithType(type));
+      const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /type が実行対象外/);
+    });
+  });
+}
+
+for (const type of [
+  'type="text/javascript"',
+  'type="application/javascript"',
+  'type="module"',
+  'type=""',
+]) {
+  test(`実行対象の script ${type} は成功する(#297)`, async () => {
+    await withTmpDir("check-beacon-gate-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", beaconTagWithType(type));
+      const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+      assert.equal(result.status, 0);
+      assert.match(result.stdout, /OK/);
+    });
+  });
+}
+
 test("HTML コメント内の URL だけでは成功しない(#227)", async () => {
   await withTmpDir("check-beacon-gate-", async (tmp) => {
     writeDistHtml(tmp, "index.html", BEACON_URL_IN_COMMENT);
