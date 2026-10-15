@@ -174,6 +174,72 @@ async function checkFaq(browserContext, label) {
   return violations;
 }
 
+// 全セクション (data-animate) と stagger の子要素を表示完了にしてから axe を実行する (#299)。
+// 通常検査は遷移直後に走るため、フェード前 (opacity 0) の本文は検査から外れうる。
+// 全要素が opacity 1 になったことを確認した上で検査する。reduced-motion 側では
+// フェード自体が無効で、最初から表示されていることを検査する。
+async function checkAllSectionsVisible(browserContext, label) {
+  const url = new URL("", BASE_URL).href;
+  const page = await browserContext.newPage();
+  let violations = 0;
+  try {
+    await gotoAndVerify(page, url, PATHS[0].titleIncludes);
+    const sections = page.locator("[data-animate]");
+    const sectionCount = await sections.count();
+    if (sectionCount === 0) {
+      throw new Error(`all sections (${label}): no [data-animate] elements`);
+    }
+    for (let i = 0; i < sectionCount; i++) {
+      await sections.nth(i).scrollIntoViewIfNeeded();
+    }
+    await page.waitForFunction(
+      () =>
+        [
+          ...document.querySelectorAll("[data-animate], [data-stagger] > *"),
+        ].every((el) => getComputedStyle(el).opacity === "1"),
+      undefined,
+      { timeout: 10000 }
+    );
+    await page.evaluate(() =>
+      Promise.all(
+        document
+          .getAnimations()
+          .filter(
+            (a) =>
+              a.effect?.getComputedTiming().iterations !==
+              Number.POSITIVE_INFINITY
+          )
+          .map((a) => a.finished.catch(() => undefined))
+      )
+    );
+    const results = await new AxeBuilder({ page }).analyze();
+    if (results.violations.length > 0) {
+      violations += results.violations.length;
+      console.error(
+        `axe-core (all sections visible, ${label}, ${url}): ${results.violations.length} violation(s) found\n`
+      );
+      for (const v of results.violations) {
+        console.error(`[${v.impact}] ${v.id}: ${v.description}`);
+        for (const node of v.nodes) {
+          console.error(`  - ${node.target.join(", ")}`);
+          if (node.failureSummary) {
+            console.error(
+              `    ${node.failureSummary.replace(/\n/g, "\n    ")}`
+            );
+          }
+        }
+      }
+    } else {
+      console.log(
+        `axe-core (all sections visible, ${label}, ${url}): no violations found (${results.passes.length} rules passed; ${sectionCount} sections)`
+      );
+    }
+  } finally {
+    await page.close();
+  }
+  return violations;
+}
+
 const browser = await chromium.launch();
 const context = await browser.newContext();
 
@@ -221,6 +287,19 @@ try {
     violationCount += await checkFaq(faqMobileContext, "mobile");
   } finally {
     await faqMobileContext.close();
+  }
+
+  violationCount += await checkAllSectionsVisible(context, "motion");
+  const reducedContext = await browser.newContext({
+    reducedMotion: "reduce",
+  });
+  try {
+    violationCount += await checkAllSectionsVisible(
+      reducedContext,
+      "reduced-motion"
+    );
+  } finally {
+    await reducedContext.close();
   }
 
   // Mobile viewport pass: verify the hamburger menu opens and is axe-clean (#004).
