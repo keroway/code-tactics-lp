@@ -1,0 +1,37 @@
+// 表示・操作の対象にならない HTML 領域を取り除く(#301)。ビルド成果物ゲートが
+// 正規表現でタグを探す前に通す。対象は次の 3 つ。
+//   - HTML コメント
+//   - <script> の中身(文字列中の疑似タグ)
+//   - <template> の中身(未展開で DOM に描画されない要素。入れ子も 1 つとして扱う)
+const TOKEN_PATTERN =
+  /<!--[\s\S]*?-->|<script\b[^>]*>[\s\S]*?<\/script\s*>|<(\/?)template\b[^>]*>/gi;
+
+export function stripInertHtml(html) {
+  let out = "";
+  let last = 0;
+  let depth = 0;
+  for (const m of html.matchAll(TOKEN_PATTERN)) {
+    const token = m[0];
+    const isTemplateTag = m[1] !== undefined;
+    if (depth === 0) {
+      if (isTemplateTag) {
+        if (m[1] === "") {
+          out += html.slice(last, m.index);
+          depth = 1;
+        }
+        // 対応する開始の無い </template> はそのまま残す
+        continue;
+      }
+      // コメント・script は丸ごと除去する
+      out += html.slice(last, m.index);
+      last = m.index + token.length;
+    } else if (isTemplateTag) {
+      depth += m[1] === "" ? 1 : -1;
+      if (depth === 0) last = m.index + token.length;
+    }
+    // template 内のコメント・script は template ごと捨てるので何もしない
+  }
+  // 閉じ忘れの <template> 以降は描画されないので捨てる
+  if (depth > 0) return out;
+  return out + html.slice(last);
+}

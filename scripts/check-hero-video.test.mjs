@@ -267,3 +267,31 @@ for (const name of HERO_ASSETS) {
     });
   });
 }
+
+for (const [label, wrap] of [
+  ["template", (h) => `<template>${h}</template>`],
+  ["script", (h) => `<script type="text/plain">${h}</script>`],
+]) {
+  test(`${label} 内だけの video は実要素として数えず失敗する（#301）`, async () => {
+    await withTmpDir("check-hero-video-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", wrap(FULL_VIDEO_HTML));
+      writeHeroAssets(tmp);
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /静止画フォールバックで出力されています/);
+    });
+  });
+}
+
+test("template や script の外にある実 video は検出して成功する（#301）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      `<template>x</template><script>var a = 1;</script>${FULL_VIDEO_HTML}`
+    );
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0);
+  });
+});

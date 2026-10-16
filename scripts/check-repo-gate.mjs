@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { stripInertHtml } from "./lib/strip-inert-html.mjs";
 import { walkHtml } from "./lib/walk-html.mjs";
 
 /**
@@ -59,8 +60,8 @@ function isRepoHref(href) {
   );
 }
 
-// HTML コメントやプレーンテキストの URL 出現は成功/失敗の判定に数えない
-// （#231）。実際にクリックできる <a href> だけを本体リンクとして扱う。
+// HTML コメント・script 内の文字列・未展開 template の URL 出現や、
+// プレーンテキストの URL 出現は成功/失敗の判定に数えない（#231, #301）。実際にクリックできる <a href> だけを本体リンクとして扱う。
 const ANCHOR_PATTERN = /<a\b[^>]*>/gi;
 // 属性値は二重引用符・単一引用符・引用符なしの 3 表記を受ける（#285）。
 // 引用符なしは HTML の定義どおり空白・引用符・`=<>` と backtick を含まない値。
@@ -107,10 +108,6 @@ function normalizeHref(raw) {
 // （check-sitemap.mjs の EXPECTED_PAGES と同じ前提）。
 const REQUIRED_PUBLIC_FILES = ["index.html", "404.html"];
 
-function stripComments(html) {
-  return html.replace(/<!--[\s\S]*?-->/g, "");
-}
-
 // dist/ のファイルパスは走査元 DIST_DIR からの相対パスなので、
 // REQUIRED_PUBLIC_FILES と比較できるよう DIST_DIR プレフィックスを剥がす。
 function relativeToDist(file) {
@@ -121,7 +118,7 @@ function relativeToDist(file) {
 
 function countRepoAnchors(html) {
   let count = 0;
-  for (const anchor of stripComments(html).matchAll(ANCHOR_PATTERN)) {
+  for (const anchor of stripInertHtml(html).matchAll(ANCHOR_PATTERN)) {
     const hrefMatch = anchor[0].match(HREF_PATTERN);
     if (!hrefMatch) continue;
     const raw = hrefMatch[1] ?? hrefMatch[2] ?? hrefMatch[3];

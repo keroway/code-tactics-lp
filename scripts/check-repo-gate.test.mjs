@@ -252,3 +252,52 @@ test("公開想定で 404 ページだけリンクが欠落していれば失敗
     );
   });
 });
+
+for (const [label, wrap] of [
+  ["template", (h) => `<template>${h}</template>`],
+  ["script", (h) => `<script type="text/plain">${h}</script>`],
+  [
+    "入れ子の template",
+    (h) => `<template><template>x</template>${h}</template>`,
+  ],
+]) {
+  test(`公開想定で ${label} 内だけの本体リンクは数えず失敗する（#301）`, async () => {
+    await withTmpDir("check-repo-gate-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", wrap(REPO_LINK));
+      writeDistHtml(tmp, "404.html", wrap(REPO_LINK));
+      const result = runScript(SCRIPT, {
+        cwd: tmp,
+        env: { PUBLIC_REPO_PUBLIC: "true" },
+      });
+      assert.equal(result.status, 1);
+      assert.match(
+        result.stderr,
+        /本体リポジトリへのリンクが 1 件もありません/
+      );
+    });
+  });
+
+  test(`非公開想定で ${label} 内の本体リンクは流出と見なさない（#301）`, async () => {
+    await withTmpDir("check-repo-gate-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", wrap(REPO_LINK));
+      const result = runScript(SCRIPT, {
+        cwd: tmp,
+        unset: ["PUBLIC_REPO_PUBLIC"],
+      });
+      assert.equal(result.status, 0);
+    });
+  });
+}
+
+test("template や script の外にある実リンクは数える（#301）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    const html = `<template>x</template>${REPO_LINK}<script>var a = 1;</script>`;
+    writeDistHtml(tmp, "index.html", html);
+    writeDistHtml(tmp, "404.html", html);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 0);
+  });
+});
