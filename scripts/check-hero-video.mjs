@@ -1,5 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
+import { stripInertHtml } from "./lib/strip-inert-html.mjs";
 import { walkHtml } from "./lib/walk-html.mjs";
 
 /**
@@ -22,14 +23,14 @@ import { walkHtml } from "./lib/walk-html.mjs";
  *
  * HTML 全体に対する正規表現だけで判定すると、コメントアウトされた
  * video 要素やテキスト中のアセット名の言及だけで成功してしまう
- * （実際にフォールバック中でも検出できない）。HTML コメントを除去した上で
+ * （実際にフォールバック中でも検出できない）。HTML コメント・script 内の文字列・
+ * 未展開 template を除去した上で（#301）
  * 実際の `<video data-motion-optional>` 要素を取り出し、その `poster` 属性と
  * 配下の `<source>` の `src` を個別に検査する。
  */
 
 const DIST_DIR = "dist";
 const HERO_ASSETS = ["hero-poster.jpg", "hero-battle.webm", "hero-battle.mp4"];
-const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
 const VIDEO_ELEMENT_PATTERN =
   /<video\b([^>]*\bdata-motion-optional\b[^>]*)>([\s\S]*?)<\/video>/i;
 // 属性名の直前は空白に限る。`\b` だと data-poster / data-src の `poster` / `src` にも
@@ -60,8 +61,7 @@ function refersToAsset(url, name) {
 }
 
 function findHeroVideoIssue(html) {
-  const withoutComments = html.replace(HTML_COMMENT_PATTERN, "");
-  const videoMatch = withoutComments.match(VIDEO_ELEMENT_PATTERN);
+  const videoMatch = stripInertHtml(html).match(VIDEO_ELEMENT_PATTERN);
   if (!videoMatch) return "静止画フォールバックで出力されています";
 
   const [, openingAttrs, innerHtml] = videoMatch;
