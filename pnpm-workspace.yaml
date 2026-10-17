@@ -18,7 +18,8 @@ allowBuilds:
 overrides:
   # GHSA-rgw5-rvv9-x895 で 5.0.8 も脆弱になったため下限を引き上げた（旧: ">=1.1.17"）。
   # この override により minimatch@3 系が引く 1.x も 5.x に統一される。
-  brace-expansion: ">=5.0.9 <6"
+  # 2026-10-17: GHSA-6j4f-fj2g-mc7p / GHSA-qhr7-859c-m2p7 / GHSA-q2hr-2g5m-vwhr (vuln <5.0.12) に対応し下限を引き上げ (#305)。
+  brace-expansion: ">=5.0.12 <6"
   tmp: ">=0.2.4 <1"
   uuid: ">=9 <15"
   # osv-scanner 検出分（2026-08-09、#139）。
@@ -49,8 +50,22 @@ overrides:
   #   ... > express > body-parser 経由（devDependency、実行時未到達だが osv-scanner 検出、#182）。
   qs: ">=6.16.0 <7"
   # GHSA-7w5x-hrqm-74c2 (smol-toml <1.7.1) — @astrojs/check > yaml-language-server 系経由（型チェック時のみ）。#203
-  smol-toml: ">=1.7.1 <2"
+  smol-toml: ">=1.9.0 <2"
   # GHSA-4vpr-x523-8j87 / GHSA-w27v-7q3p-w38r (svgo <4.1.0) — astro のビルドパイプライン経由。#203
   svgo: ">=4.1.0 <5"
   # GHSA-9rgm-9g3h-6x36 (devalue <5.9.2) — astro の直接依存経由。#220
-  devalue: ">=5.9.2 <6"
+  # 2026-10-17: 7 件の advisory (vuln <5.9.3) に対応し下限を引き上げ (#305)。
+  devalue: ">=5.9.3 <6"
+  # osv-scanner 検出分（2026-10-17、#305）。いずれも修正版が提示された advisory のみ上限付きで上書きする。
+  # GHSA-vc2v-76pw-4v95 (compression <1.8.2) — @lhci/cli 経由（devDependency）。
+  compression: ">=1.8.2 <2"
+  # GHSA-jqcg-44mw-7w3h (proxy-addr <2.0.8) — @lhci/cli > express 経由（devDependency）。
+  proxy-addr: ">=2.0.8 <3"
+  # GHSA-c475-qrg2-pj4r (basic-ftp <6.2.1、major 更新) — @lhci/cli > proxy-agent > pac-proxy-agent >
+  #   get-uri 経由。FTP 取得経路は LP の計測・ビルドで使わない（devDependency のみ）。
+  basic-ftp: ">=6.2.1 <7"
+  # GHSA-wq5f-xc86-pv6w (sharp <0.35.5) — 直接 devDependency と astro の optional 依存。
+  sharp: ">=0.35.5 <1"
+  # GHSA-r4xh-jqrq-34v2 (smol-toml <1.9.0)。既存 override の下限を引き上げ。
+  # GHSA-68fv-2mgg-jv7q (source-map-js <1.2.2) — tailwind / postcss / astro 経由（ビルド時のみ）。
+  source-map-js: ">=1.2.2 <2"
