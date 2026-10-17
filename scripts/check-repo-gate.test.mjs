@@ -256,6 +256,7 @@ test("公開想定で 404 ページだけリンクが欠落していれば失敗
 for (const [label, wrap] of [
   ["template", (h) => `<template>${h}</template>`],
   ["script", (h) => `<script type="text/plain">${h}</script>`],
+  ["textarea", (h) => `<textarea>${h}</textarea>`],
   [
     "入れ子の template",
     (h) => `<template><template>x</template>${h}</template>`,
