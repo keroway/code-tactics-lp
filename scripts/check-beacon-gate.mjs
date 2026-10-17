@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { stripInertHtml } from "./lib/strip-inert-html.mjs";
 import { walkHtml } from "./lib/walk-html.mjs";
 
 /**
@@ -24,15 +25,14 @@ import { walkHtml } from "./lib/walk-html.mjs";
  */
 
 const DIST_DIR = "dist";
-// HTML コメントを除去した後の生 HTML から <script ...> の開始タグだけを拾う。
-// コメント内に URL 文字列だけが残っているケースを実タグと誤認しないための前提。
+// 不活性領域を除去した後の HTML から <script ...> の開始タグだけを拾う。
+// コメント等に URL 文字列だけが残っているケースを実タグと誤認しないための前提。
 const SCRIPT_TAG_PATTERN = /<script\b[^>]*>/gi;
 // 属性名の直前は空白に限る。`\b` だと data-src にも一致してしまう(#267)。
 const BEACON_SRC_PATTERN =
   /(?<=\s)src\s*=\s*["']https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js["']/i;
 const CF_BEACON_ATTR_PATTERN =
   /(?<=\s)data-cf-beacon\s*=\s*(["'])([\s\S]*?)\1/i;
-const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g;
 // 属性名の直前は空白に限る(data-type を拾わない)。値はクォート無しも許す。
 const TYPE_ATTR_PATTERN =
   /(?<=\s)type\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i;
@@ -87,8 +87,9 @@ const expectedToken = process.env.PUBLIC_CF_BEACON_TOKEN;
 // HTML 全体に URL 文字列があるかだけを見ると、コメント内の URL や
 // token 欠落・不一致の script も「出力されている」と誤判定してしまう(#227)。
 function findBeaconIssue(html) {
-  const withoutComments = html.replace(HTML_COMMENT_PATTERN, "");
-  const scriptTags = withoutComments.match(SCRIPT_TAG_PATTERN) ?? [];
+  // コメント・未展開 template・script 本文内の疑似タグは実行されないので除く(#303)。
+  const live = stripInertHtml(html, { keepScriptTags: true });
+  const scriptTags = live.match(SCRIPT_TAG_PATTERN) ?? [];
   const beaconTag = scriptTags.find((tag) => BEACON_SRC_PATTERN.test(tag));
 
   if (!beaconTag) return "missing script";

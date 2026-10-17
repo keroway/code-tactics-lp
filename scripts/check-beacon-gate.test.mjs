@@ -238,6 +238,39 @@ for (const type of [
   });
 }
 
+for (const [name, html] of [
+  ["template 内", `<template>${BEACON_TAG}</template>`],
+  [
+    "text/plain script の本文内",
+    `<script type="text/plain">${BEACON_TAG}</script>`,
+  ],
+  [
+    "application/json script の本文内",
+    `<script type="application/json">${BEACON_TAG}</script>`,
+  ],
+]) {
+  test(`${name}の疑似ビーコンだけなら失敗する(#303)`, async () => {
+    await withTmpDir("check-beacon-gate-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", html);
+      const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+      assert.equal(result.status, 1);
+    });
+  });
+}
+
+test("不活性領域の後ろに実ビーコンがあれば成功する(#303)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      `<template>${BEACON_TAG_NO_TOKEN}</template><script type="text/plain">${BEACON_TAG_NO_TOKEN}</script>${BEACON_TAG}`
+    );
+    const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /OK/);
+  });
+});
+
 test("HTML コメント内の URL だけでは成功しない(#227)", async () => {
   await withTmpDir("check-beacon-gate-", async (tmp) => {
     writeDistHtml(tmp, "index.html", BEACON_URL_IN_COMMENT);
