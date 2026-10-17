@@ -3,30 +3,35 @@
 //   - HTML コメント
 //   - <script> の中身(文字列中の疑似タグ)
 //   - <template> の中身(未展開で DOM に描画されない要素。入れ子も 1 つとして扱う)
+//
+// keepScriptTags: true のときは <script> の開始タグだけ残し、中身と閉じタグを除く
+// (#303)。script 要素の属性を検査するゲート向けで、template 内の script や
+// 外側の script 本文に埋まった疑似タグは従来どおり除去される。
 const TOKEN_PATTERN =
-  /<!--[\s\S]*?-->|<script\b[^>]*>[\s\S]*?<\/script\s*>|<(\/?)template\b[^>]*>/gi;
+  /<!--[\s\S]*?-->|(<script\b[^>]*>)[\s\S]*?<\/script\s*>|<(\/?)template\b[^>]*>/gi;
 
-export function stripInertHtml(html) {
+export function stripInertHtml(html, { keepScriptTags = false } = {}) {
   let out = "";
   let last = 0;
   let depth = 0;
   for (const m of html.matchAll(TOKEN_PATTERN)) {
     const token = m[0];
-    const isTemplateTag = m[1] !== undefined;
+    const isTemplateTag = m[2] !== undefined;
     if (depth === 0) {
       if (isTemplateTag) {
-        if (m[1] === "") {
+        if (m[2] === "") {
           out += html.slice(last, m.index);
           depth = 1;
         }
         // 対応する開始の無い </template> はそのまま残す
         continue;
       }
-      // コメント・script は丸ごと除去する
+      // コメント・script は丸ごと除去する(keepScriptTags なら開始タグは残す)
       out += html.slice(last, m.index);
+      if (keepScriptTags && m[1] !== undefined) out += m[1];
       last = m.index + token.length;
     } else if (isTemplateTag) {
-      depth += m[1] === "" ? 1 : -1;
+      depth += m[2] === "" ? 1 : -1;
       if (depth === 0) last = m.index + token.length;
     }
     // template 内のコメント・script は template ごと捨てるので何もしない
