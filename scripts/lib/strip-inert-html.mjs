@@ -10,8 +10,23 @@
 // keepScriptTags: true のときは <script> の開始タグだけ残し、中身と閉じタグを除く
 // (#303)。script 要素の属性を検査するゲート向けで、template 内の script や
 // 外側の script 本文に埋まった疑似タグは従来どおり除去される。
-const TOKEN_PATTERN =
-  /<!--[\s\S]*?-->|(<script\b[^>]*>)[\s\S]*?<\/script\s*>|<textarea\b[^>]*>[\s\S]*?<\/textarea\s*>|<title\b[^>]*>[\s\S]*?<\/title\s*>|<style\b[^>]*>[\s\S]*?<\/style\s*>|<(\/?)template\b[^>]*>/gi;
+//
+// 開始タグの属性部は引用符付き属性値を 1 かたまりで読む(#316)。属性値内の
+// `>` や疑似 <template> を領域の開始・終了と誤認しない。その他の開始タグも
+// 読み飛ばして残し、属性値の中身を後続トークンとして拾わせない。
+const ATTRS = `(?:"[^"]*"|'[^']*'|[^>"'])*`;
+const TOKEN_PATTERN = new RegExp(
+  [
+    String.raw`<!--[\s\S]*?-->`,
+    String.raw`(<script\b${ATTRS}>)[\s\S]*?<\/script\s*>`,
+    String.raw`<textarea\b${ATTRS}>[\s\S]*?<\/textarea\s*>`,
+    String.raw`<title\b${ATTRS}>[\s\S]*?<\/title\s*>`,
+    String.raw`<style\b${ATTRS}>[\s\S]*?<\/style\s*>`,
+    String.raw`<(\/?)template\b${ATTRS}>`,
+    String.raw`(<[A-Za-z][^\s/>]*${ATTRS}>)`,
+  ].join("|"),
+  "gi"
+);
 
 export function stripInertHtml(html, { keepScriptTags = false } = {}) {
   let out = "";
@@ -19,6 +34,8 @@ export function stripInertHtml(html, { keepScriptTags = false } = {}) {
   let depth = 0;
   for (const m of html.matchAll(TOKEN_PATTERN)) {
     const token = m[0];
+    // 通常の開始タグ。除去対象ではないので位置を進めずに読み飛ばす
+    if (m[3] !== undefined) continue;
     const isTemplateTag = m[2] !== undefined;
     if (depth === 0) {
       if (isTemplateTag) {
