@@ -31,13 +31,26 @@ import { walkHtml } from "./lib/walk-html.mjs";
 
 const DIST_DIR = "dist";
 const HERO_ASSETS = ["hero-poster.jpg", "hero-battle.webm", "hero-battle.mp4"];
+// 開始タグの終端は引用符の外の `>` だけ。引用符付き属性値内の `>` で切らない(#318)。
 const VIDEO_ELEMENT_PATTERN =
-  /<video\b([^>]*\bdata-motion-optional\b[^>]*)>([\s\S]*?)<\/video>/i;
-// 属性名の直前は空白に限る。`\b` だと data-poster / data-src の `poster` / `src` にも
-// 一致してしまう(#267)。
-const POSTER_ATTR_PATTERN = /(?<=\s)poster\s*=\s*(["'])([\s\S]*?)\1/i;
-const SOURCE_SRC_PATTERN =
-  /<source\b[^>]*?(?<=\s)src\s*=\s*(["'])([\s\S]*?)\1/gi;
+  /<video\b((?:"[^"]*"|'[^']*'|[^>"'])*)>([\s\S]*?)<\/video>/gi;
+const SOURCE_TAG_PATTERN = /<source\b((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi;
+// 属性を名前単位で読む。`title="poster='...'"` のような他属性の値の中身を
+// poster / src と誤認しない。data-poster / data-src も名前が一致しないので除外される(#267, #318)。
+const ATTRIBUTE_PATTERN =
+  /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+
+function parseAttributes(attributes) {
+  return [...attributes.matchAll(ATTRIBUTE_PATTERN)].map((m) => ({
+    name: m[1].toLowerCase(),
+    value: m[2] ?? m[3] ?? m[4],
+  }));
+}
+
+// 重複属性はブラウザ同様、最初のものが有効。
+function findAttrValue(attrs, name) {
+  return attrs.find((a) => a.name === name)?.value;
+}
 
 // astro.config.mjs の base と一致させること。末尾セグメントだけの比較だと、
 // base 欠落や誤ったディレクトリ配下の参照も通ってしまう(#273)。
@@ -61,19 +74,24 @@ function refersToAsset(url, name) {
 }
 
 function findHeroVideoIssue(html) {
-  const videoMatch = stripInertHtml(html).match(VIDEO_ELEMENT_PATTERN);
-  if (!videoMatch) return "静止画フォールバックで出力されています";
+  let heroVideo;
+  for (const m of stripInertHtml(html).matchAll(VIDEO_ELEMENT_PATTERN)) {
+    const attrs = parseAttributes(m[1]);
+    if (attrs.some((a) => a.name === "data-motion-optional")) {
+      heroVideo = { attrs, innerHtml: m[2] };
+      break;
+    }
+  }
+  if (!heroVideo) return "静止画フォールバックで出力されています";
 
-  const [, openingAttrs, innerHtml] = videoMatch;
-
-  const posterMatch = openingAttrs.match(POSTER_ATTR_PATTERN);
-  if (!posterMatch || !refersToAsset(posterMatch[2], "hero-poster.jpg")) {
+  const poster = findAttrValue(heroVideo.attrs, "poster");
+  if (poster === undefined || !refersToAsset(poster, "hero-poster.jpg")) {
     return "video の poster 属性に hero-poster.jpg が指定されていません";
   }
 
-  const sourceSrcs = [...innerHtml.matchAll(SOURCE_SRC_PATTERN)].map(
-    (m) => m[2]
-  );
+  const sourceSrcs = [...heroVideo.innerHtml.matchAll(SOURCE_TAG_PATTERN)]
+    .map((m) => findAttrValue(parseAttributes(m[1]), "src"))
+    .filter((src) => src !== undefined);
   const missing = ["hero-battle.webm", "hero-battle.mp4"].filter(
     (name) => !sourceSrcs.some((src) => refersToAsset(src, name))
   );
