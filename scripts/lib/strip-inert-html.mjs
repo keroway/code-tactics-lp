@@ -1,15 +1,17 @@
 // 表示・操作の対象にならない HTML 領域を取り除く(#301)。ビルド成果物ゲートが
-// 正規表現でタグを探す前に通す。対象は次の 4 つ。
+// 正規表現でタグを探す前に通す。対象は次の 6 つ。
 //   - HTML コメント
 //   - <script> の中身(文字列中の疑似タグ)
 //   - <textarea> 全体(本文はタグとして解釈されない RCDATA。#308)
+//   - <title> 全体(RCDATA。#310)
+//   - <style> 全体(生テキスト。#310)
 //   - <template> の中身(未展開で DOM に描画されない要素。入れ子も 1 つとして扱う)
 //
 // keepScriptTags: true のときは <script> の開始タグだけ残し、中身と閉じタグを除く
 // (#303)。script 要素の属性を検査するゲート向けで、template 内の script や
 // 外側の script 本文に埋まった疑似タグは従来どおり除去される。
 const TOKEN_PATTERN =
-  /<!--[\s\S]*?-->|(<script\b[^>]*>)[\s\S]*?<\/script\s*>|<textarea\b[^>]*>[\s\S]*?<\/textarea\s*>|<(\/?)template\b[^>]*>/gi;
+  /<!--[\s\S]*?-->|(<script\b[^>]*>)[\s\S]*?<\/script\s*>|<textarea\b[^>]*>[\s\S]*?<\/textarea\s*>|<title\b[^>]*>[\s\S]*?<\/title\s*>|<style\b[^>]*>[\s\S]*?<\/style\s*>|<(\/?)template\b[^>]*>/gi;
 
 export function stripInertHtml(html, { keepScriptTags = false } = {}) {
   let out = "";

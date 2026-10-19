@@ -257,6 +257,8 @@ for (const [label, wrap] of [
   ["template", (h) => `<template>${h}</template>`],
   ["script", (h) => `<script type="text/plain">${h}</script>`],
   ["textarea", (h) => `<textarea>${h}</textarea>`],
+  ["title", (h) => `<title>${h}</title>`],
+  ["style", (h) => `<style>${h}</style>`],
   [
     "入れ子の template",
     (h) => `<template><template>x</template>${h}</template>`,
