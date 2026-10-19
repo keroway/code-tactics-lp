@@ -62,10 +62,22 @@ function isRepoHref(href) {
 
 // HTML コメント・script 内の文字列・未展開 template の URL 出現や、
 // プレーンテキストの URL 出現は成功/失敗の判定に数えない（#231, #301）。実際にクリックできる <a href> だけを本体リンクとして扱う。
-const ANCHOR_PATTERN = /<a\b[^>]*>/gi;
-// 属性値は二重引用符・単一引用符・引用符なしの 3 表記を受ける（#285）。
+// 開始タグの終端は引用符の外の `>` だけ。引用符付き属性値内の `>` で切らない（#314）。
+const ANCHOR_PATTERN = /<a\b((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi;
+// 属性を名前単位で読む。属性値は二重引用符・単一引用符・引用符なしの 3 表記を受ける（#285）。
 // 引用符なしは HTML の定義どおり空白・引用符・`=<>` と backtick を含まない値。
-const HREF_PATTERN = /\shref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i;
+// `title="href=..."` のような他属性の値の中身を href と誤認しない（#314）。
+const ATTRIBUTE_PATTERN =
+  /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+
+// 先頭の href 属性の値を返す（重複属性はブラウザ同様、最初のものが有効）。
+function findHrefValue(attributes) {
+  for (const attr of attributes.matchAll(ATTRIBUTE_PATTERN)) {
+    if (attr[1].toLowerCase() !== "href") continue;
+    return attr[2] ?? attr[3] ?? attr[4];
+  }
+  return undefined;
+}
 
 // URL 判定に影響しうる最小限の HTML 文字参照（#285）。
 // 数値参照（10 進・16 進）は全て復号し、名前付きは URL 内で使われうるものに限る。
@@ -119,9 +131,8 @@ function relativeToDist(file) {
 function countRepoAnchors(html) {
   let count = 0;
   for (const anchor of stripInertHtml(html).matchAll(ANCHOR_PATTERN)) {
-    const hrefMatch = anchor[0].match(HREF_PATTERN);
-    if (!hrefMatch) continue;
-    const raw = hrefMatch[1] ?? hrefMatch[2] ?? hrefMatch[3];
+    const raw = findHrefValue(anchor[1]);
+    if (raw === undefined) continue;
     if (isRepoHref(normalizeHref(raw))) count++;
   }
   return count;

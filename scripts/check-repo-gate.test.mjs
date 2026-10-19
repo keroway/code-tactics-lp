@@ -292,6 +292,68 @@ for (const [label, wrap] of [
   });
 }
 
+const REPO_URL = "https://github.com/keroway/code-tactics";
+
+// title 属性値内の疑似 href は本体リンクではない（#314）。
+for (const [label, anchor] of [
+  ["空白", `<a title=" href=${REPO_URL} ">x</a>`],
+  ["等号付き", `<a title="href=${REPO_URL}">x</a>`],
+  ["単一引用符", `<a title='x href="${REPO_URL}"'>x</a>`],
+]) {
+  test(`公開想定で属性値内の疑似 href（${label}）は数えず失敗する（#314）`, async () => {
+    await withTmpDir("check-repo-gate-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", anchor);
+      writeDistHtml(tmp, "404.html", anchor);
+      const result = runScript(SCRIPT, {
+        cwd: tmp,
+        env: { PUBLIC_REPO_PUBLIC: "true" },
+      });
+      assert.equal(result.status, 1);
+      assert.match(
+        result.stderr,
+        /本体リポジトリへのリンクが 1 件もありません/
+      );
+    });
+  });
+
+  test(`非公開想定で属性値内の疑似 href（${label}）は流出と見なさない（#314）`, async () => {
+    await withTmpDir("check-repo-gate-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", anchor);
+      const result = runScript(SCRIPT, {
+        cwd: tmp,
+        unset: ["PUBLIC_REPO_PUBLIC"],
+      });
+      assert.equal(result.status, 0);
+    });
+  });
+}
+
+// 引用符内の > でタグ抽出を打ち切らず、後ろの実 href を拾う（#314）。
+const QUOTED_GT_ANCHOR = `<a title="a>b" href="${REPO_URL}">x</a>`;
+
+test("公開想定で引用符内の > の後ろにある実 href も数える（#314）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", QUOTED_GT_ANCHOR);
+    writeDistHtml(tmp, "404.html", QUOTED_GT_ANCHOR);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 0);
+  });
+});
+
+test("非公開想定で引用符内の > の後ろにある実 href も流出として検出する（#314）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", QUOTED_GT_ANCHOR);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      unset: ["PUBLIC_REPO_PUBLIC"],
+    });
+    assert.equal(result.status, 1);
+  });
+});
+
 test("template や script の外にある実リンクは数える（#301）", async () => {
   await withTmpDir("check-repo-gate-", async (tmp) => {
     const html = `<template>x</template>${REPO_LINK}<script>var a = 1;</script>`;
