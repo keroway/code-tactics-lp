@@ -354,6 +354,32 @@ test("非公開想定で引用符内の > の後ろにある実 href も流出�
   });
 });
 
+// 属性値内の疑似 <template> を template 要素と誤認せず、後ろの実リンクを残す（#316）。
+const QUOTED_TEMPLATE_ATTR = `<div data-example="<template>">${REPO_LINK}</div>`;
+
+test("非公開想定で属性値内の <template> の後ろにある実リンクも流出として検出する（#316）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", QUOTED_TEMPLATE_ATTR);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      unset: ["PUBLIC_REPO_PUBLIC"],
+    });
+    assert.equal(result.status, 1);
+  });
+});
+
+test("公開想定で属性値内の <template> の後ろにある実リンクも数える（#316）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", QUOTED_TEMPLATE_ATTR);
+    writeDistHtml(tmp, "404.html", QUOTED_TEMPLATE_ATTR);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 0);
+  });
+});
+
 test("template や script の外にある実リンクは数える（#301）", async () => {
   await withTmpDir("check-repo-gate-", async (tmp) => {
     const html = `<template>x</template>${REPO_LINK}<script>var a = 1;</script>`;
