@@ -130,7 +130,9 @@ function relativeToDist(file) {
 
 function countRepoAnchors(html) {
   let count = 0;
-  for (const anchor of stripInertHtml(html).matchAll(ANCHOR_PATTERN)) {
+  for (const anchor of stripInertHtml(html, { keepTags: ["a"] }).matchAll(
+    ANCHOR_PATTERN
+  )) {
     const raw = findHrefValue(anchor[1]);
     if (raw === undefined) continue;
     if (isRepoHref(normalizeHref(raw))) count++;
