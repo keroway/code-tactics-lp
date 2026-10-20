@@ -300,6 +300,31 @@ test("引用符内の > を含む正常なビーコンタグは成功する(#320
   });
 });
 
+test("別要素の属性値内の疑似ビーコンだけなら失敗する(#322)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      `<div title="${BEACON_TAG.replaceAll('"', "&quot;")}">text</div><div title='${BEACON_TAG.replaceAll("'", "&#39;")}'>text</div>`
+    );
+    const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+    assert.equal(result.status, 1);
+  });
+});
+
+test("別要素の属性値内に疑似タグがあっても後ろの実ビーコンは数える(#322)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      `<div title="<script src=x>">text</div>${BEACON_TAG}`
+    );
+    const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /OK/);
+  });
+});
+
 test("不活性領域の後ろに実ビーコンがあれば成功する(#303)", async () => {
   await withTmpDir("check-beacon-gate-", async (tmp) => {
     writeDistHtml(

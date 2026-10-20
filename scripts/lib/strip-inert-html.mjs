@@ -28,14 +28,29 @@ const TOKEN_PATTERN = new RegExp(
   "gi"
 );
 
-export function stripInertHtml(html, { keepScriptTags = false } = {}) {
+// keepTags: ["a"] のように要素名を渡すと、その要素以外の通常の開始タグを属性ごと
+// 除去する(#322)。別要素の属性値に埋まった疑似 <a>・<script> を実要素として
+// 数えさせないため。省略時は従来どおり通常の開始タグをすべて残す。
+export function stripInertHtml(
+  html,
+  { keepScriptTags = false, keepTags = null } = {}
+) {
   let out = "";
   let last = 0;
   let depth = 0;
   for (const m of html.matchAll(TOKEN_PATTERN)) {
     const token = m[0];
-    // 通常の開始タグ。除去対象ではないので位置を進めずに読み飛ばす
-    if (m[3] !== undefined) continue;
+    // 通常の開始タグ。keepTags 指定時は対象外の要素だけ除去し、それ以外は読み飛ばす
+    if (m[3] !== undefined) {
+      if (keepTags && depth === 0) {
+        const name = /^<([^\s/>]+)/.exec(token)[1].toLowerCase();
+        if (!keepTags.includes(name)) {
+          out += html.slice(last, m.index);
+          last = m.index + token.length;
+        }
+      }
+      continue;
+    }
     const isTemplateTag = m[2] !== undefined;
     if (depth === 0) {
       if (isTemplateTag) {

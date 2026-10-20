@@ -380,6 +380,45 @@ test("公開想定で属性値内の <template> の後ろにある実リンク�
   });
 });
 
+// 別要素の属性値に埋まった疑似 <a> を実リンクと誤認しない（#322）。
+const FAKE_ANCHOR_IN_ATTR = `<div title="<a href=${REPO_URL}>">plain text</div>`;
+
+test("公開想定で別要素の属性値内の疑似リンクは数えず失敗する（#322）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", FAKE_ANCHOR_IN_ATTR);
+    writeDistHtml(tmp, "404.html", FAKE_ANCHOR_IN_ATTR);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 1);
+  });
+});
+
+test("非公開想定で別要素の属性値内の疑似リンクは流出と見なさない（#322）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", FAKE_ANCHOR_IN_ATTR);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      unset: ["PUBLIC_REPO_PUBLIC"],
+    });
+    assert.equal(result.status, 0);
+  });
+});
+
+test("別要素の属性値内に疑似リンクがあっても後ろの実リンクは数える（#322）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    const html = `${FAKE_ANCHOR_IN_ATTR}${REPO_LINK}`;
+    writeDistHtml(tmp, "index.html", html);
+    writeDistHtml(tmp, "404.html", html);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 0);
+  });
+});
+
 test("template や script の外にある実リンクは数える（#301）", async () => {
   await withTmpDir("check-repo-gate-", async (tmp) => {
     const html = `<template>x</template>${REPO_LINK}<script>var a = 1;</script>`;
