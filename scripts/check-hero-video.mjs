@@ -75,7 +75,10 @@ function refersToAsset(url, name) {
 
 function findHeroVideoIssue(html) {
   let heroVideo;
-  for (const m of stripInertHtml(html).matchAll(VIDEO_ELEMENT_PATTERN)) {
+  // video・source 以外の開始タグは属性ごと除去し、別要素の属性値に埋まった
+  // 疑似 video / source を実要素と数えない(#324)。
+  const inertFree = stripInertHtml(html, { keepTags: ["video", "source"] });
+  for (const m of inertFree.matchAll(VIDEO_ELEMENT_PATTERN)) {
     const attrs = parseAttributes(m[1]);
     if (attrs.some((a) => a.name === "data-motion-optional")) {
       heroVideo = { attrs, innerHtml: m[2] };

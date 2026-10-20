@@ -207,6 +207,34 @@ test("data-motion-optional が他属性の値の中だけなら実 video と数�
   });
 });
 
+test("div の title 属性の値に疑似 video があるだけなら実 video と数えず失敗する（#324）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      `<div title="<video data-motion-optional poster=/code-tactics-lp/hero-poster.jpg><source src=/code-tactics-lp/hero-battle.webm><source src=/code-tactics-lp/hero-battle.mp4></video>">静止画のみ</div>`
+    );
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /静止画フォールバックで出力されています/);
+  });
+});
+
+test("実 video 内の別要素の属性値にある疑似 source は数えず失敗する（#324）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      `<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" /><track title="<source src=/code-tactics-lp/hero-battle.mp4>" /></video>`
+    );
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /source の src に hero-battle\.mp4/);
+  });
+});
+
 test("poster が別ファイル名(末尾に文字列付き)なら失敗する（#269）", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     writeDistHtml(
