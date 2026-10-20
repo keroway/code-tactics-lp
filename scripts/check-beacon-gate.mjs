@@ -27,15 +27,25 @@ import { walkHtml } from "./lib/walk-html.mjs";
 const DIST_DIR = "dist";
 // 不活性領域を除去した後の HTML から <script ...> の開始タグだけを拾う。
 // コメント等に URL 文字列だけが残っているケースを実タグと誤認しないための前提。
-const SCRIPT_TAG_PATTERN = /<script\b[^>]*>/gi;
-// 属性名の直前は空白に限る。`\b` だと data-src にも一致してしまう(#267)。
-const BEACON_SRC_PATTERN =
-  /(?<=\s)src\s*=\s*["']https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js["']/i;
-const CF_BEACON_ATTR_PATTERN =
-  /(?<=\s)data-cf-beacon\s*=\s*(["'])([\s\S]*?)\1/i;
-// 属性名の直前は空白に限る(data-type を拾わない)。値はクォート無しも許す。
-const TYPE_ATTR_PATTERN =
-  /(?<=\s)type\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i;
+// 開始タグの終端は引用符の外の `>` だけ。属性値内の `>` で切らない(#320)。
+const SCRIPT_TAG_PATTERN = /<script\b((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi;
+// 属性を名前単位で読む。他属性の値の中身を src / type / data-cf-beacon と
+// 誤認しない。data-src も名前が一致しないので除外される(#267, #320)。
+const ATTRIBUTE_PATTERN =
+  /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+const BEACON_SRC = "https://static.cloudflareinsights.com/beacon.min.js";
+
+function parseAttributes(attributes) {
+  return [...attributes.matchAll(ATTRIBUTE_PATTERN)].map((m) => ({
+    name: m[1].toLowerCase(),
+    value: m[2] ?? m[3] ?? m[4],
+  }));
+}
+
+// 重複属性はブラウザ同様、最初のものが有効。
+function findAttrValue(attrs, name) {
+  return attrs.find((a) => a.name === name)?.value;
+}
 // ブラウザが外部 script として実行する type(WHATWG HTML の JavaScript MIME type
 // と module)。application/json や text/plain はデータブロック扱いで実行されない。
 const EXECUTABLE_TYPE_PATTERN =
@@ -89,30 +99,28 @@ const expectedToken = process.env.PUBLIC_CF_BEACON_TOKEN;
 function findBeaconIssue(html) {
   // コメント・未展開 template・script 本文内の疑似タグは実行されないので除く(#303)。
   const live = stripInertHtml(html, { keepScriptTags: true });
-  const scriptTags = live.match(SCRIPT_TAG_PATTERN) ?? [];
-  const beaconTag = scriptTags.find((tag) => BEACON_SRC_PATTERN.test(tag));
+  const scriptAttrs = [...live.matchAll(SCRIPT_TAG_PATTERN)].map((m) =>
+    parseAttributes(m[1])
+  );
+  const beaconAttrs = scriptAttrs.find(
+    (attrs) => findAttrValue(attrs, "src")?.toLowerCase() === BEACON_SRC
+  );
 
-  if (!beaconTag) return "missing script";
+  if (!beaconAttrs) return "missing script";
 
   // type 無し・空文字列は classic script として実行される。それ以外は
   // JavaScript の MIME type か module のときだけ実行対象とみなす(#297)。
-  const typeMatch = beaconTag.match(TYPE_ATTR_PATTERN);
-  const scriptType = (
-    typeMatch?.[1] ??
-    typeMatch?.[2] ??
-    typeMatch?.[3] ??
-    ""
-  ).trim();
+  const scriptType = (findAttrValue(beaconAttrs, "type") ?? "").trim();
   if (scriptType !== "" && !EXECUTABLE_TYPE_PATTERN.test(scriptType)) {
     return "script の type が実行対象外";
   }
 
-  const attrMatch = beaconTag.match(CF_BEACON_ATTR_PATTERN);
-  if (!attrMatch) return "data-cf-beacon 属性が無い";
+  const beaconAttr = findAttrValue(beaconAttrs, "data-cf-beacon");
+  if (beaconAttr === undefined) return "data-cf-beacon 属性が無い";
 
   let parsed;
   try {
-    parsed = JSON.parse(decodeHtmlEntities(attrMatch[2]));
+    parsed = JSON.parse(decodeHtmlEntities(beaconAttr));
   } catch {
     return "data-cf-beacon の JSON が不正";
   }
