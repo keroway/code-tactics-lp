@@ -258,6 +258,48 @@ for (const [name, html] of [
   });
 }
 
+const BEACON_ATTRS = `src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${EXPECTED_TOKEN}"}'`;
+
+for (const [name, html] of [
+  [
+    "他属性の値内の疑似 src",
+    `<script defer title='x src="https://static.cloudflareinsights.com/beacon.min.js"' data-cf-beacon='{"token":"${EXPECTED_TOKEN}"}'></script>`,
+  ],
+  [
+    "他属性の値内の疑似 data-cf-beacon",
+    `<script defer title='x data-cf-beacon="{&quot;token&quot;:&quot;${EXPECTED_TOKEN}&quot;}"' src="https://static.cloudflareinsights.com/beacon.min.js"></script>`,
+  ],
+  [
+    "他属性の値内の疑似 type があっても実 type が実行対象外の script",
+    `<script defer title='type="module"' type="text/plain" ${BEACON_ATTRS}></script>`,
+  ],
+  [
+    "重複 src の後続側",
+    `<script defer src="/other.js" ${BEACON_ATTRS}></script>`,
+  ],
+]) {
+  test(`${name}では成功しない(#320)`, async () => {
+    await withTmpDir("check-beacon-gate-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", html);
+      const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+      assert.equal(result.status, 1);
+    });
+  });
+}
+
+test("引用符内の > を含む正常なビーコンタグは成功する(#320)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      `<script defer title=">" ${BEACON_ATTRS}></script>`
+    );
+    const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /OK/);
+  });
+});
+
 test("不活性領域の後ろに実ビーコンがあれば成功する(#303)", async () => {
   await withTmpDir("check-beacon-gate-", async (tmp) => {
     writeDistHtml(
