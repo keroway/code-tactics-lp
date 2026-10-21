@@ -115,6 +115,15 @@ function findBeaconIssue(html) {
     return "script の type が実行対象外";
   }
 
+  // nomodule はモジュール対応ブラウザで classic script の実行を抑止する。
+  // 値の有無に関わらず属性の存在で効く。type=module には作用しない(#326)。
+  if (
+    scriptType.toLowerCase() !== "module" &&
+    beaconAttrs.some((a) => a.name === "nomodule")
+  ) {
+    return "script に nomodule が付いている";
+  }
+
   const beaconAttr = findAttrValue(beaconAttrs, "data-cf-beacon");
   if (beaconAttr === undefined) return "data-cf-beacon 属性が無い";
 
