@@ -190,5 +190,11 @@ import {
       if (isOpen()) close({ restoreFocus: false });
       if (hadFocus) document.getElementById("site-logo")?.focus();
     });
+    // ブラウザが非表示化に伴うフォーカス解除をリスナーより先に行うと上の判定を
+    // すり抜けるため、sm 以上でトグルが relatedTarget 無しで blur したら退避する
+    toggle.addEventListener("blur", (e) => {
+      if (mq.matches && !e.relatedTarget)
+        document.getElementById("site-logo")?.focus();
+    });
   })();
 </script>
