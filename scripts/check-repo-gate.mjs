@@ -128,11 +128,13 @@ function relativeToDist(file) {
     : file;
 }
 
-function countRepoAnchors(html) {
+// dropNoscript: JS 有効時の表示を保証したい検査（公開時の必須リンク）では
+// noscript 内を除く。非公開時の流出検出は JS 無効の訪問者にも見えるため含める（#334）。
+function countRepoAnchors(html, { dropNoscript = false } = {}) {
   let count = 0;
   for (const anchor of stripInertHtml(html, {
     keepTags: ["a"],
-    dropNoscript: true,
+    dropNoscript,
   }).matchAll(ANCHOR_PATTERN)) {
     const raw = findHrefValue(anchor[1]);
     if (raw === undefined) continue;
@@ -156,7 +158,12 @@ for await (const file of walkHtml(DIST_DIR)) {
   const count = countRepoAnchors(html);
   if (count > 0) hits.push({ file, count });
   const relPath = relativeToDist(file);
-  if (requiredFileHits.has(relPath)) requiredFileHits.set(relPath, count);
+  if (requiredFileHits.has(relPath)) {
+    requiredFileHits.set(
+      relPath,
+      countRepoAnchors(html, { dropNoscript: true })
+    );
+  }
 }
 
 // 走査対象が 0 件だと、どちらの判定も素通りしてしまう。
