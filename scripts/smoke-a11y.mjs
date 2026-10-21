@@ -453,6 +453,20 @@ try {
       "keyboard (mobile menu): resize moves focus to a visible element"
     );
 
+    // Menu closed but toggle focused: resizing past sm must still move focus
+    // off the now-hidden toggle (#328).
+    await mobilePage.setViewportSize({ width: 375, height: 667 });
+    await mobilePage.focus("#menu-toggle");
+    await mobilePage.setViewportSize({ width: 700, height: 667 });
+    await mobilePage.waitForFunction(
+      () => document.activeElement?.id === "site-logo",
+      undefined,
+      { timeout: 3000 }
+    );
+    console.log(
+      "keyboard (mobile menu): closed-menu resize moves focus off hidden toggle"
+    );
+
     // Selecting an in-page anchor closes the menu and navigates (#287).
     // Covers both pointer (click) and keyboard (Enter) activation.
     await mobilePage.setViewportSize({ width: 375, height: 667 });

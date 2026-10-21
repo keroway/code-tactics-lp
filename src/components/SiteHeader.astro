@@ -183,11 +183,18 @@ import {
     // パネルもトグルも非表示になるため、フォーカスがそこにあれば常時表示のロゴへ退避する
     const mq = window.matchMedia("(min-width: 40rem)");
     mq.addEventListener("change", (e) => {
-      if (!e.matches || !isOpen()) return;
+      if (!e.matches) return;
       const active = document.activeElement;
       const hadFocus = active === toggle || menu.contains(active);
-      close({ restoreFocus: false });
+      // 閉じていてもトグルにフォーカスが残りうる (非表示ボタンに残さない)
+      if (isOpen()) close({ restoreFocus: false });
       if (hadFocus) document.getElementById("site-logo")?.focus();
+    });
+    // ブラウザが非表示化に伴うフォーカス解除をリスナーより先に行うと上の判定を
+    // すり抜けるため、sm 以上でトグルが relatedTarget 無しで blur したら退避する
+    toggle.addEventListener("blur", (e) => {
+      if (mq.matches && !e.relatedTarget)
+        document.getElementById("site-logo")?.focus();
     });
   })();
 </script>
