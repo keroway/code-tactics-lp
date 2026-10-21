@@ -287,6 +287,30 @@ for (const [name, html] of [
   });
 }
 
+for (const attr of ["nomodule", 'nomodule=""', 'nomodule="nomodule"']) {
+  test(`classic script に ${attr} が付いていれば失敗する(#326)`, async () => {
+    await withTmpDir("check-beacon-gate-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", beaconTagWithType(attr));
+      const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /nomodule/);
+    });
+  });
+}
+
+test("type=module に nomodule が付いていても実行されるので成功する(#326)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      beaconTagWithType('type="module" nomodule')
+    );
+    const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /OK/);
+  });
+});
+
 test("引用符内の > を含む正常なビーコンタグは成功する(#320)", async () => {
   await withTmpDir("check-beacon-gate-", async (tmp) => {
     writeDistHtml(
