@@ -311,6 +311,27 @@ test("type=module に nomodule が付いていても実行されるので成功�
   });
 });
 
+test("noscript 内だけにビーコンがあれば失敗する(#329)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", `<noscript>${BEACON_TAG}</noscript>`);
+    const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+    assert.equal(result.status, 1);
+  });
+});
+
+test("noscript の外に実ビーコンがあれば noscript があっても成功する(#329)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      `<noscript><p>JS off</p></noscript>${BEACON_TAG}`
+    );
+    const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /OK/);
+  });
+});
+
 test("引用符内の > を含む正常なビーコンタグは成功する(#320)", async () => {
   await withTmpDir("check-beacon-gate-", async (tmp) => {
     writeDistHtml(

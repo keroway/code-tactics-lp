@@ -98,7 +98,12 @@ const expectedToken = process.env.PUBLIC_CF_BEACON_TOKEN;
 // token 欠落・不一致の script も「出力されている」と誤判定してしまう(#227)。
 function findBeaconIssue(html) {
   // コメント・未展開 template・script 本文内の疑似タグは実行されないので除く(#303)。
-  const live = stripInertHtml(html, { keepScriptTags: true, keepTags: [] });
+  // noscript は JavaScript 無効時の代替で、有効時にビーコンは実行されない(#329)。
+  const live = stripInertHtml(html, {
+    keepScriptTags: true,
+    keepTags: [],
+    dropNoscript: true,
+  });
   const scriptAttrs = [...live.matchAll(SCRIPT_TAG_PATTERN)].map((m) =>
     parseAttributes(m[1])
   );
