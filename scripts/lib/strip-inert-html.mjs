@@ -15,30 +15,40 @@
 // `>` や疑似 <template> を領域の開始・終了と誤認しない。その他の開始タグも
 // 読み飛ばして残し、属性値の中身を後続トークンとして拾わせない。
 const ATTRS = `(?:"[^"]*"|'[^']*'|[^>"'])*`;
-const TOKEN_PATTERN = new RegExp(
-  [
-    String.raw`<!--[\s\S]*?-->`,
-    String.raw`(<script\b${ATTRS}>)[\s\S]*?<\/script\s*>`,
-    String.raw`<textarea\b${ATTRS}>[\s\S]*?<\/textarea\s*>`,
-    String.raw`<title\b${ATTRS}>[\s\S]*?<\/title\s*>`,
-    String.raw`<style\b${ATTRS}>[\s\S]*?<\/style\s*>`,
-    String.raw`<(\/?)template\b${ATTRS}>`,
-    String.raw`(<[A-Za-z][^\s/>]*${ATTRS}>)`,
-  ].join("|"),
-  "gi"
-);
+const NOSCRIPT = String.raw`<noscript\b${ATTRS}>[\s\S]*?<\/noscript\s*>`;
+function buildTokenPattern(dropNoscript) {
+  return new RegExp(
+    [
+      String.raw`<!--[\s\S]*?-->`,
+      String.raw`(<script\b${ATTRS}>)[\s\S]*?<\/script\s*>`,
+      String.raw`<textarea\b${ATTRS}>[\s\S]*?<\/textarea\s*>`,
+      String.raw`<title\b${ATTRS}>[\s\S]*?<\/title\s*>`,
+      String.raw`<style\b${ATTRS}>[\s\S]*?<\/style\s*>`,
+      String.raw`<(\/?)template\b${ATTRS}>`,
+      // dropNoscript 時だけ <noscript> 全体を領域として除く(#329)。
+      // 無効側はグループ番号を保つため、決して一致しない枝にする
+      dropNoscript ? NOSCRIPT : "(?!)",
+      String.raw`(<[A-Za-z][^\s/>]*${ATTRS}>)`,
+    ].join("|"),
+    "gi"
+  );
+}
+const TOKEN_PATTERN = buildTokenPattern(false);
+const TOKEN_PATTERN_NO_NOSCRIPT = buildTokenPattern(true);
 
 // keepTags: ["a"] のように要素名を渡すと、その要素以外の通常の開始タグを属性ごと
 // 除去する(#322)。別要素の属性値に埋まった疑似 <a>・<script> を実要素として
 // 数えさせないため。省略時は従来どおり通常の開始タグをすべて残す。
 export function stripInertHtml(
   html,
-  { keepScriptTags = false, keepTags = null } = {}
+  { keepScriptTags = false, keepTags = null, dropNoscript = false } = {}
 ) {
   let out = "";
   let last = 0;
   let depth = 0;
-  for (const m of html.matchAll(TOKEN_PATTERN)) {
+  for (const m of html.matchAll(
+    dropNoscript ? TOKEN_PATTERN_NO_NOSCRIPT : TOKEN_PATTERN
+  )) {
     const token = m[0];
     // 通常の開始タグ。keepTags 指定時は対象外の要素だけ除去し、それ以外は読み飛ばす
     if (m[3] !== undefined) {
