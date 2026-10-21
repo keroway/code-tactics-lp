@@ -370,6 +370,29 @@ for (const [label, wrap] of [
   });
 }
 
+test("noscript 内だけの video は実要素として数えず失敗する（#334）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", `<noscript>${FULL_VIDEO_HTML}</noscript>`);
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /静止画フォールバックで出力されています/);
+  });
+});
+
+test("noscript の外に実 video があれば成功する（#334）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      `<noscript>x</noscript>${FULL_VIDEO_HTML}`
+    );
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0);
+  });
+});
+
 test("template や script の外にある実 video は検出して成功する（#301）", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     writeDistHtml(
