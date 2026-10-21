@@ -199,6 +199,46 @@ test("src ではなく data-src だけなら失敗する(#267)", async () => {
   });
 });
 
+test("src のホストだけ大文字なら同じ参照先として成功する(#332)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      BEACON_TAG.replace(
+        "static.cloudflareinsights.com",
+        "STATIC.CloudflareInsights.COM"
+      )
+    );
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: {
+        PUBLIC_CF_BEACON_TOKEN: "dummy",
+        BEACON_GATE_REQUIRE_TOKEN: "true",
+      },
+    });
+    assert.equal(result.status, 0);
+  });
+});
+
+test("src のパスだけ大文字なら別の参照先として失敗する(#332)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      BEACON_TAG.replace("/beacon.min.js", "/BEACON.MIN.JS")
+    );
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: {
+        PUBLIC_CF_BEACON_TOKEN: "dummy",
+        BEACON_GATE_REQUIRE_TOKEN: "true",
+      },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /missing script/);
+  });
+});
+
 const GATE_ENV = {
   PUBLIC_CF_BEACON_TOKEN: "dummy",
   BEACON_GATE_REQUIRE_TOKEN: "true",

@@ -96,6 +96,17 @@ const expectedToken = process.env.PUBLIC_CF_BEACON_TOKEN;
 // 実際に出力された <script> 要素の src と data-cf-beacon の token を検査する。
 // HTML 全体に URL 文字列があるかだけを見ると、コメント内の URL や
 // token 欠落・不一致の script も「出力されている」と誤判定してしまう(#227)。
+// src 全体を小文字化するとパスの大文字小文字まで無視してしまう(#332)。
+// URL として解析し、scheme・host は正規化、pathname は区別して比較する。
+function isBeaconSrc(src) {
+  if (src === undefined) return false;
+  try {
+    return new URL(src).href === BEACON_SRC;
+  } catch {
+    return false;
+  }
+}
+
 function findBeaconIssue(html) {
   // コメント・未展開 template・script 本文内の疑似タグは実行されないので除く(#303)。
   // noscript は JavaScript 無効時の代替で、有効時にビーコンは実行されない(#329)。
@@ -107,8 +118,8 @@ function findBeaconIssue(html) {
   const scriptAttrs = [...live.matchAll(SCRIPT_TAG_PATTERN)].map((m) =>
     parseAttributes(m[1])
   );
-  const beaconAttrs = scriptAttrs.find(
-    (attrs) => findAttrValue(attrs, "src")?.toLowerCase() === BEACON_SRC
+  const beaconAttrs = scriptAttrs.find((attrs) =>
+    isBeaconSrc(findAttrValue(attrs, "src"))
   );
 
   if (!beaconAttrs) return "missing script";
