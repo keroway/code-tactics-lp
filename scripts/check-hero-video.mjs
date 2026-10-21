@@ -77,7 +77,10 @@ function findHeroVideoIssue(html) {
   let heroVideo;
   // video・source 以外の開始タグは属性ごと除去し、別要素の属性値に埋まった
   // 疑似 video / source を実要素と数えない(#324)。
-  const inertFree = stripInertHtml(html, { keepTags: ["video", "source"] });
+  const inertFree = stripInertHtml(html, {
+    keepTags: ["video", "source"],
+    dropNoscript: true,
+  });
   for (const m of inertFree.matchAll(VIDEO_ELEMENT_PATTERN)) {
     const attrs = parseAttributes(m[1]);
     if (attrs.some((a) => a.name === "data-motion-optional")) {

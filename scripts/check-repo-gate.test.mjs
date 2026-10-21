@@ -292,6 +292,44 @@ for (const [label, wrap] of [
   });
 }
 
+test("公開想定で noscript 内だけの本体リンクは数えず失敗する（#334）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    const html = `<noscript>${REPO_LINK}</noscript>`;
+    writeDistHtml(tmp, "index.html", html);
+    writeDistHtml(tmp, "404.html", html);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /次のページに本体リンクがありません/);
+  });
+});
+
+test("公開想定で noscript の外に本体リンクがあれば成功する（#334）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    const html = `<noscript>x</noscript>${REPO_LINK}`;
+    writeDistHtml(tmp, "index.html", html);
+    writeDistHtml(tmp, "404.html", html);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 0);
+  });
+});
+
+test("非公開想定で noscript 内の本体リンクも流出として検出する（#334）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", `<noscript>${REPO_LINK}</noscript>`);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      unset: ["PUBLIC_REPO_PUBLIC"],
+    });
+    assert.equal(result.status, 1);
+  });
+});
+
 const REPO_URL = "https://github.com/keroway/code-tactics";
 
 // title 属性値内の疑似 href は本体リンクではない（#314）。
