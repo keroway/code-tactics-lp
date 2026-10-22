@@ -49,7 +49,7 @@ function findAttrValue(attrs, name) {
 // ブラウザが外部 script として実行する type(WHATWG HTML の JavaScript MIME type
 // と module)。application/json や text/plain はデータブロック扱いで実行されない。
 const EXECUTABLE_TYPE_PATTERN =
-  /^(?:module|(?:text|application)\/(?:x-)?(?:java|ecma|jscript|live)script)$/i;
+  /^(?:module|application\/(?:x-)?(?:java|ecma)script|text\/(?:(?:x-)?(?:java|ecma)script|javascript1\.[0-5]|jscript|livescript))$/i;
 
 // Astro の属性レンダラー(html-escaper の escape)が生成しうる 5 種類の実体参照。
 // data-cf-beacon={JSON.stringify(...)} はここでエスケープされてから出力されるため、
