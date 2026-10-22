@@ -251,6 +251,8 @@ for (const type of [
   'type="text/plain"',
   "type=text/plain",
   "type='application/json'",
+  'type="application/jscriptscript"',
+  'type="text/jscriptscript"',
 ]) {
   test(`実行対象外の script ${type} なら失敗する(#297)`, async () => {
     await withTmpDir("check-beacon-gate-", async (tmp) => {
@@ -265,6 +267,9 @@ for (const type of [
 for (const type of [
   'type="text/javascript"',
   'type="application/javascript"',
+  'type="text/jscript"',
+  'type="text/livescript"',
+  'type="text/javascript1.5"',
   'type="module"',
   'type=""',
 ]) {
