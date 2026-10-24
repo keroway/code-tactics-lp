@@ -95,6 +95,12 @@ function findHeroVideoIssue(html) {
     return "video の poster 属性に hero-poster.jpg が指定されていません";
   }
 
+  // video 自身に src があると子 source は無視される。source 検査が有効な
+  // 構造（src なし）であることを契約として保証する(#338)。
+  if (findAttrValue(heroVideo.attrs, "src") !== undefined) {
+    return "video 自身に src 属性があります（子 source の検査が無効になります）";
+  }
+
   const sourceSrcs = [...heroVideo.innerHtml.matchAll(SOURCE_TAG_PATTERN)]
     .map((m) => findAttrValue(parseAttributes(m[1]), "src"))
     .filter((src) => src !== undefined);
