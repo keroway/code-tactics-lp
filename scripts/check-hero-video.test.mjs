@@ -249,6 +249,34 @@ test("video 自身に src 属性があれば子 source が正しくても失敗�
   });
 });
 
+test("両 source に media 属性があれば失敗する（#340）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source media="not all" src="/code-tactics-lp/hero-battle.webm" type="video/webm"><source media="not all" src="/code-tactics-lp/hero-battle.mp4" type="video/mp4"></video>'
+    );
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /hero-battle\.webm, hero-battle\.mp4/);
+  });
+});
+
+test("片方の source だけ media 属性があれば失敗する（#340）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" type="video/webm"><source media="(min-width: 99999px)" src="/code-tactics-lp/hero-battle.mp4" type="video/mp4"></video>'
+    );
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /hero-battle\.mp4/);
+  });
+});
+
 test("poster が別ファイル名(末尾に文字列付き)なら失敗する（#269）", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     writeDistHtml(
