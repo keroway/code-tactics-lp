@@ -101,8 +101,12 @@ function findHeroVideoIssue(html) {
     return "video 自身に src 属性があります（子 source の検査が無効になります）";
   }
 
+  // media 属性付きの source は条件次第で選ばれないため、必須アセットとして数えない。
+  // 現在の Hero は media を使わない契約（media="not all" で再生不能になる穴を塞ぐ, #340）。
   const sourceSrcs = [...heroVideo.innerHtml.matchAll(SOURCE_TAG_PATTERN)]
-    .map((m) => findAttrValue(parseAttributes(m[1]), "src"))
+    .map((m) => parseAttributes(m[1]))
+    .filter((attrs) => findAttrValue(attrs, "media") === undefined)
+    .map((attrs) => findAttrValue(attrs, "src"))
     .filter((src) => src !== undefined);
   const missing = ["hero-battle.webm", "hero-battle.mp4"].filter(
     (name) => !sourceSrcs.some((src) => refersToAsset(src, name))
