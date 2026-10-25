@@ -185,7 +185,7 @@ test("title 属性の値に > や data-motion-optional 表記があっても実�
     writeDistHtml(
       tmp,
       "index.html",
-      `<video title="a > b" data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source title="x > y" src="/code-tactics-lp/hero-battle.webm" /><source src="/code-tactics-lp/hero-battle.mp4" /></video>`
+      `<video title="a > b" data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source title="x > y" src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" /></video>`
     );
     writeHeroAssets(tmp);
     const result = runScript(SCRIPT, { cwd: tmp });
@@ -314,7 +314,49 @@ test("base パス前置とクエリ付きの参照は成功する（#269）", as
     writeDistHtml(
       tmp,
       "index.html",
-      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg?v=1"><source src="/code-tactics-lp/hero-battle.webm" /><source src="/code-tactics-lp/hero-battle.mp4#t=0" /></video>'
+      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg?v=1"><source src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><source src="/code-tactics-lp/hero-battle.mp4#t=0" type="video/mp4" /></video>'
+    );
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0);
+  });
+});
+
+for (const [label, webm, mp4] of [
+  ["両方の type が省略されている", "", ""],
+  ["webm の type が省略されている", "", ' type="video/mp4"'],
+  [
+    "webm と mp4 の type が取り違えられている",
+    ' type="video/mp4"',
+    ' type="video/webm"',
+  ],
+  [
+    "未対応の type である",
+    ' type="video/ogg"',
+    ' type="application/octet-stream"',
+  ],
+]) {
+  test(`source の type が不正なら失敗する: ${label}（#344）`, async () => {
+    await withTmpDir("check-hero-video-", async (tmp) => {
+      writeDistHtml(
+        tmp,
+        "index.html",
+        `<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm"${webm} /><source src="/code-tactics-lp/hero-battle.mp4"${mp4} /></video>`
+      );
+      writeHeroAssets(tmp);
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /source の type が不正または未指定です/);
+    });
+  });
+}
+
+test("type の大文字小文字と前後空白は許容して成功する（#344）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" type=" Video/WebM " /><source src="/code-tactics-lp/hero-battle.mp4" type="VIDEO/MP4" /></video>'
     );
     writeHeroAssets(tmp);
     const result = runScript(SCRIPT, { cwd: tmp });
