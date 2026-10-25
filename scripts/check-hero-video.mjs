@@ -31,6 +31,10 @@ import { walkHtml } from "./lib/walk-html.mjs";
 
 const DIST_DIR = "dist";
 const HERO_ASSETS = ["hero-poster.jpg", "hero-battle.webm", "hero-battle.mp4"];
+const HERO_SOURCE_TYPES = {
+  "hero-battle.webm": "video/webm",
+  "hero-battle.mp4": "video/mp4",
+};
 // 開始タグの終端は引用符の外の `>` だけ。引用符付き属性値内の `>` で切らない(#318)。
 const VIDEO_ELEMENT_PATTERN =
   /<video\b((?:"[^"]*"|'[^']*'|[^>"'])*)>([\s\S]*?)<\/video>/gi;
@@ -103,17 +107,37 @@ function findHeroVideoIssue(html) {
 
   // media 属性付きの source は条件次第で選ばれないため、必須アセットとして数えない。
   // 現在の Hero は media を使わない契約（media="not all" で再生不能になる穴を塞ぐ, #340）。
-  const sourceSrcs = [...heroVideo.innerHtml.matchAll(SOURCE_TAG_PATTERN)]
+  const sources = [...heroVideo.innerHtml.matchAll(SOURCE_TAG_PATTERN)]
     .map((m) => parseAttributes(m[1]))
     .filter((attrs) => findAttrValue(attrs, "media") === undefined)
-    .map((attrs) => findAttrValue(attrs, "src"))
-    .filter((src) => src !== undefined);
-  const missing = ["hero-battle.webm", "hero-battle.mp4"].filter(
-    (name) => !sourceSrcs.some((src) => refersToAsset(src, name))
+    .map((attrs) => ({
+      src: findAttrValue(attrs, "src"),
+      type: findAttrValue(attrs, "type"),
+    }))
+    .filter((s) => s.src !== undefined);
+  const missing = Object.keys(HERO_SOURCE_TYPES).filter(
+    (name) => !sources.some((s) => refersToAsset(s.src, name))
   );
 
   if (missing.length > 0) {
     return `source の src に ${missing.join(", ")} がありません`;
+  }
+
+  // type は必須で、拡張子と対応する MIME タイプだけを受理する。type の省略や
+  // webm/mp4 の取り違えは、ブラウザが形式を選別できず再生不能になりうる(#344)。
+  // 同じファイルを指す source が複数あるときは、どれかが正しければ足りる。
+  const wrongType = Object.entries(HERO_SOURCE_TYPES)
+    .filter(
+      ([name, mime]) =>
+        !sources.some(
+          (s) =>
+            refersToAsset(s.src, name) && s.type?.trim().toLowerCase() === mime
+        )
+    )
+    .map(([name, mime]) => `${name}(${mime})`);
+
+  if (wrongType.length > 0) {
+    return `source の type が不正または未指定です: ${wrongType.join(", ")}`;
   }
 
   return null;
