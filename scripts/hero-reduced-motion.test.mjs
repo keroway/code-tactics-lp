@@ -32,11 +32,14 @@ function setupHarness() {
     addEventListener(type, cb) {
       videoHandlers[type].push(cb);
     }
+    paused = true;
     play() {
+      this.paused = false;
       state.plays++;
       return Promise.resolve();
     }
     pause() {
+      this.paused = true;
       state.pauses++;
     }
   }
@@ -127,6 +130,32 @@ test("手動停止後は viewport 再入場でも再生しない", () => {
 test("自動停止後の再入場では再生する", () => {
   const h = setupHarness();
   h.enter();
+  h.leave();
+  h.fire("pause");
+  h.enter();
+  assert.equal(h.state.plays, 2);
+});
+
+test("再入場後に遅延して届いた自動停止の pause 通知を手動停止と誤認しない", () => {
+  const h = setupHarness();
+  h.enter();
+  h.leave();
+  h.enter();
+  h.fire("pause"); // 最初の自動停止に対応する遅延通知
+  h.leave();
+  h.fire("pause");
+  h.enter();
+  assert.equal(h.state.plays, 3);
+});
+
+test("遅延通知の後でも、表示中の手動停止は尊重する", () => {
+  const h = setupHarness();
+  h.enter();
+  h.leave();
+  h.enter();
+  h.fire("pause"); // 自動停止の遅延通知
+  h.fire("play");
+  h.fire("pause"); // 利用者が controls で停止
   h.leave();
   h.fire("pause");
   h.enter();

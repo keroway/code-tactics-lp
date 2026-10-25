@@ -123,11 +123,17 @@ const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
     if (mediaQuery.matches || !("IntersectionObserver" in window)) return;
 
     // 利用者が controls で止めた状態を保持する。pause イベントは非同期に届くため、
-    // 「表示中に起きた pause = 手動停止」「画面外へ出た後の pause = 自動停止」と区別する。
+    // 受信時点の可視状態では手動停止と自動停止を区別できない (再入場後に遅延して届く)。
+    // 自動停止で video.pause() を呼んだ回数を数え、その分の pause イベントは読み捨てる。
     // 手動停止後は viewport 再入場だけでは再開せず、利用者が再生した時点で解除する。
     let visible = false;
     let userPaused = false;
+    let pendingAutoPauses = 0;
     video.addEventListener("pause", function () {
+      if (pendingAutoPauses > 0) {
+        pendingAutoPauses--;
+        return;
+      }
       if (visible) userPaused = true;
     });
     video.addEventListener("play", function () {
@@ -146,6 +152,8 @@ const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
             });
           } else {
             visible = false;
+            // 既に停止中なら pause イベントは発火しないので数えない。
+            if (!video.paused) pendingAutoPauses++;
             video.pause();
           }
         });
