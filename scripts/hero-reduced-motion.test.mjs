@@ -75,6 +75,7 @@ function setupHarness() {
 
   return {
     state,
+    video,
     mediaQuery,
     enter() {
       ioCallback([{ isIntersecting: true, intersectionRatio: 1 }]);
@@ -160,6 +161,17 @@ test("遅延通知の後でも、表示中の手動停止は尊重する", () =>
   h.fire("pause");
   h.enter();
   assert.equal(h.state.plays, 2);
+});
+
+test("画面外移動後に届いた手動停止の pause 通知も手動停止として保持する", () => {
+  const h = setupHarness();
+  h.enter();
+  h.fire("play");
+  h.video.pause(); // 利用者が controls で停止 (通知はまだ届いていない)
+  h.leave(); // 既に paused なので自動停止は数えない
+  h.fire("pause"); // 手動停止の遅延通知
+  h.enter();
+  assert.equal(h.state.plays, 1);
 });
 
 test("手動停止後に利用者が再生し直すと、再入場で再び自動再生する", () => {

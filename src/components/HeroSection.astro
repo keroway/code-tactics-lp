@@ -123,10 +123,10 @@ const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
     if (mediaQuery.matches || !("IntersectionObserver" in window)) return;
 
     // 利用者が controls で止めた状態を保持する。pause イベントは非同期に届くため、
-    // 受信時点の可視状態では手動停止と自動停止を区別できない (再入場後に遅延して届く)。
-    // 自動停止で video.pause() を呼んだ回数を数え、その分の pause イベントは読み捨てる。
+    // 受信時点の可視状態では手動停止と自動停止を区別できない (再入場後や画面外移動後に遅延して届く)。
+    // 自動停止で video.pause() を呼んだ回数を数え、その分の pause イベントは読み捨て、
+    // 残りは可視状態に関わらず手動停止として扱う。
     // 手動停止後は viewport 再入場だけでは再開せず、利用者が再生した時点で解除する。
-    let visible = false;
     let userPaused = false;
     let pendingAutoPauses = 0;
     video.addEventListener("pause", function () {
@@ -134,7 +134,7 @@ const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
         pendingAutoPauses--;
         return;
       }
-      if (visible) userPaused = true;
+      userPaused = true;
     });
     video.addEventListener("play", function () {
       userPaused = false;
@@ -145,13 +145,11 @@ const withBase = (p: string) => `${base}/${p}`.replace(/\/+/g, "/");
         if (mediaQuery.matches) return;
         entries.forEach(function (entry) {
           if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-            visible = true;
             if (userPaused) return;
             video.play().catch(function () {
               // ブラウザの自動再生ポリシーで拒否されても controls から再生できる。
             });
           } else {
-            visible = false;
             // 既に停止中なら pause イベントは発火しないので数えない。
             if (!video.paused) pendingAutoPauses++;
             video.pause();
