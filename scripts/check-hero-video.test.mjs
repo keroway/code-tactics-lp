@@ -249,6 +249,26 @@ test("video 自身に src 属性があれば子 source が正しくても失敗�
   });
 });
 
+for (const [label, srcAttr] of [
+  ["値なし", "src"],
+  ["空文字", 'src=""'],
+  ["先頭が値なしの重複", 'src src="/code-tactics-lp/hero-battle.webm"'],
+]) {
+  test(`video 自身に${label}の src 属性があれば失敗する（#352）`, async () => {
+    await withTmpDir("check-hero-video-", async (tmp) => {
+      writeDistHtml(
+        tmp,
+        "index.html",
+        `<video data-motion-optional ${srcAttr} poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" /></video>`
+      );
+      writeHeroAssets(tmp);
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /video 自身に src 属性があります/);
+    });
+  });
+}
+
 test("両 source に media 属性があれば失敗する（#340）", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     writeDistHtml(
