@@ -100,8 +100,9 @@ function findHeroVideoIssue(html) {
   }
 
   // video 自身に src があると子 source は無視される。source 検査が有効な
-  // 構造（src なし）であることを契約として保証する(#338)。
-  if (findAttrValue(heroVideo.attrs, "src") !== undefined) {
+  // 構造（src なし）であることを契約として保証する(#338)。値なし `src` は
+  // findAttrValue が undefined を返すため、値ではなく属性名の存在で判定する(#352)。
+  if (heroVideo.attrs.some((a) => a.name === "src")) {
     return "video 自身に src 属性があります（子 source の検査が無効になります）";
   }
 
