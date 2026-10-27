@@ -259,6 +259,7 @@ for (const [label, wrap] of [
   ["textarea", (h) => `<textarea>${h}</textarea>`],
   ["title", (h) => `<title>${h}</title>`],
   ["style", (h) => `<style>${h}</style>`],
+  ["xmp", (h) => `<xmp>${h}</xmp>`],
   [
     "入れ子の template",
     (h) => `<template><template>x</template>${h}</template>`,
