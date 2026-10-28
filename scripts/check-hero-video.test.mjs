@@ -235,6 +235,46 @@ test("実 video 内の別要素の属性値にある疑似 source は数えず�
   });
 });
 
+for (const [label, inner, missing] of [
+  [
+    "両方を div で包んだ",
+    '<div><source src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" /></div>',
+    /hero-battle\.webm, hero-battle\.mp4/,
+  ],
+  [
+    "片方だけ div で包んだ",
+    '<source src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><div><source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" /></div>',
+    /source の src に hero-battle\.mp4/,
+  ],
+]) {
+  test(`${label} source は直接の子と数えず失敗する（#356）`, async () => {
+    await withTmpDir("check-hero-video-", async (tmp) => {
+      writeDistHtml(
+        tmp,
+        "index.html",
+        `<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg">${inner}</video>`
+      );
+      writeHeroAssets(tmp);
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, missing);
+    });
+  });
+}
+
+test("void 要素や閉じた中間要素を挟んでも直接の子の source は数えて成功する（#356）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><track kind="captions" /><div></div><source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" /></video>'
+    );
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("video 自身に src 属性があれば子 source が正しくても失敗する（#338）", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     writeDistHtml(

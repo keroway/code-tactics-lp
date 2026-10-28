@@ -41,9 +41,16 @@ const TOKEN_PATTERN_NO_NOSCRIPT = buildTokenPattern(true);
 // keepTags: ["a"] のように要素名を渡すと、その要素以外の通常の開始タグを属性ごと
 // 除去する(#322)。別要素の属性値に埋まった疑似 <a>・<script> を実要素として
 // 数えさせないため。省略時は従来どおり通常の開始タグをすべて残す。
+// droppedTagMarker(name) を渡すと、除去した開始タグの位置にその戻り値を残す(#356)。
+// 親子関係(直接の子か)を検査するゲート向け。
 export function stripInertHtml(
   html,
-  { keepScriptTags = false, keepTags = null, dropNoscript = false } = {}
+  {
+    keepScriptTags = false,
+    keepTags = null,
+    dropNoscript = false,
+    droppedTagMarker = null,
+  } = {}
 ) {
   let out = "";
   let last = 0;
@@ -58,6 +65,7 @@ export function stripInertHtml(
         const name = /^<([^\s/>]+)/.exec(token)[1].toLowerCase();
         if (!keepTags.includes(name)) {
           out += html.slice(last, m.index);
+          if (droppedTagMarker) out += droppedTagMarker(name);
           last = m.index + token.length;
         }
       }
