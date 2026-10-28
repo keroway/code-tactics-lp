@@ -77,6 +77,45 @@ function refersToAsset(url, name) {
   );
 }
 
+// stripInertHtml が除去した開始タグの位置に残す目印(#356)。HTML 本文には現れない NUL で囲む。
+const MARKER = "\u0000";
+const VOID_ELEMENTS = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "track",
+  "wbr",
+]);
+const CHILD_TOKEN_PATTERN = new RegExp(
+  `${SOURCE_TAG_PATTERN.source}|${MARKER}([^${MARKER}]+)${MARKER}|<\\/([A-Za-z][^\\s>]*)\\s*>`,
+  "gi"
+);
+
+// video の直接の子の source だけを返す。中間要素(div など)の内側の source は
+// ブラウザの source 選択の対象外なので数えない(#356)。
+function findDirectSourceAttrs(innerHtml) {
+  const result = [];
+  let depth = 0;
+  for (const m of innerHtml.matchAll(CHILD_TOKEN_PATTERN)) {
+    if (m[1] !== undefined) {
+      if (depth === 0) result.push(parseAttributes(m[1]));
+    } else if (m[2] !== undefined) {
+      if (!VOID_ELEMENTS.has(m[2])) depth++;
+    } else if (m[3] !== undefined && depth > 0) {
+      depth--;
+    }
+  }
+  return result;
+}
+
 function findHeroVideoIssue(html) {
   let heroVideo;
   // video・source 以外の開始タグは属性ごと除去し、別要素の属性値に埋まった
@@ -84,6 +123,7 @@ function findHeroVideoIssue(html) {
   const inertFree = stripInertHtml(html, {
     keepTags: ["video", "source"],
     dropNoscript: true,
+    droppedTagMarker: (name) => `${MARKER}${name}${MARKER}`,
   });
   for (const m of inertFree.matchAll(VIDEO_ELEMENT_PATTERN)) {
     const attrs = parseAttributes(m[1]);
@@ -108,8 +148,7 @@ function findHeroVideoIssue(html) {
 
   // media 属性付きの source は条件次第で選ばれないため、必須アセットとして数えない。
   // 現在の Hero は media を使わない契約（media="not all" で再生不能になる穴を塞ぐ, #340）。
-  const sources = [...heroVideo.innerHtml.matchAll(SOURCE_TAG_PATTERN)]
-    .map((m) => parseAttributes(m[1]))
+  const sources = findDirectSourceAttrs(heroVideo.innerHtml)
     .filter((attrs) => findAttrValue(attrs, "media") === undefined)
     .map((attrs) => ({
       src: findAttrValue(attrs, "src"),
