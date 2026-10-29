@@ -260,6 +260,9 @@ for (const [label, wrap] of [
   ["title", (h) => `<title>${h}</title>`],
   ["style", (h) => `<style>${h}</style>`],
   ["xmp", (h) => `<xmp>${h}</xmp>`],
+  ["iframe", (h) => `<iframe>${h}</iframe>`],
+  ["noembed", (h) => `<noembed>${h}</noembed>`],
+  ["noframes", (h) => `<noframes>${h}</noframes>`],
   [
     "入れ子の template",
     (h) => `<template><template>x</template>${h}</template>`,
