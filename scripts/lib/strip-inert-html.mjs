@@ -1,11 +1,12 @@
 // 表示・操作の対象にならない HTML 領域を取り除く(#301)。ビルド成果物ゲートが
-// 正規表現でタグを探す前に通す。対象は次の 7 つ。
+// 正規表現でタグを探す前に通す。対象は次の 9 つ。
 //   - HTML コメント
 //   - <script> の中身(文字列中の疑似タグ)
 //   - <textarea> 全体(本文はタグとして解釈されない RCDATA。#308)
 //   - <title> 全体(RCDATA。#310)
 //   - <style> 全体(生テキスト。#310)
 //   - <xmp> 全体(生テキスト。#354)
+//   - <iframe> / <noembed> / <noframes> 全体(生テキスト。#358)
 //   - <template> の中身(未展開で DOM に描画されない要素。入れ子も 1 つとして扱う)
 //
 // keepScriptTags: true のときは <script> の開始タグだけ残し、中身と閉じタグを除く
@@ -26,6 +27,9 @@ function buildTokenPattern(dropNoscript) {
       String.raw`<title\b${ATTRS}>[\s\S]*?<\/title\s*>`,
       String.raw`<style\b${ATTRS}>[\s\S]*?<\/style\s*>`,
       String.raw`<xmp\b${ATTRS}>[\s\S]*?<\/xmp\s*>`,
+      String.raw`<iframe\b${ATTRS}>[\s\S]*?<\/iframe\s*>`,
+      String.raw`<noembed\b${ATTRS}>[\s\S]*?<\/noembed\s*>`,
+      String.raw`<noframes\b${ATTRS}>[\s\S]*?<\/noframes\s*>`,
       String.raw`<(\/?)template\b${ATTRS}>`,
       // dropNoscript 時だけ <noscript> 全体を領域として除く(#329)。
       // 無効側はグループ番号を保つため、決して一致しない枝にする
