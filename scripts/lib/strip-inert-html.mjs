@@ -7,6 +7,7 @@
 //   - <style> 全体(生テキスト。#310)
 //   - <xmp> 全体(生テキスト。#354)
 //   - <iframe> / <noembed> / <noframes> 全体(生テキスト。#358)
+//   - <plaintext> の開始以降すべて(閉じタグが無い生テキスト。#360)
 //   - <template> の中身(未展開で DOM に描画されない要素。入れ子も 1 つとして扱う)
 //
 // keepScriptTags: true のときは <script> の開始タグだけ残し、中身と閉じタグを除く
@@ -30,6 +31,8 @@ function buildTokenPattern(dropNoscript) {
       String.raw`<iframe\b${ATTRS}>[\s\S]*?<\/iframe\s*>`,
       String.raw`<noembed\b${ATTRS}>[\s\S]*?<\/noembed\s*>`,
       String.raw`<noframes\b${ATTRS}>[\s\S]*?<\/noframes\s*>`,
+      // <plaintext> は閉じタグが無く、開始以降の文書末尾までが生テキスト(#360)
+      String.raw`<plaintext\b${ATTRS}>[\s\S]*`,
       String.raw`<(\/?)template\b${ATTRS}>`,
       // dropNoscript 時だけ <noscript> 全体を領域として除く(#329)。
       // 無効側はグループ番号を保つため、決して一致しない枝にする
