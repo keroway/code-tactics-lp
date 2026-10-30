@@ -240,23 +240,20 @@ async function checkAllSectionsVisible(browserContext, label) {
   return violations;
 }
 
-const browser = await chromium.launch();
-const context = await browser.newContext();
-
-let violationCount = 0;
-
-try {
+// PATHS の全ページを通常状態で axe 検査する。viewport は context 側で決まる (#362)。
+async function checkPaths(browserContext, label) {
+  let violations = 0;
   for (const { path, titleIncludes } of PATHS) {
     const url = new URL(path, BASE_URL).href;
-    const page = await context.newPage();
+    const page = await browserContext.newPage();
     try {
       await gotoAndVerify(page, url, titleIncludes);
       const results = await new AxeBuilder({ page }).analyze();
 
       if (results.violations.length > 0) {
-        violationCount += results.violations.length;
+        violations += results.violations.length;
         console.error(
-          `axe-core (${url}): ${results.violations.length} violation(s) found\n`
+          `axe-core (${label}, ${url}): ${results.violations.length} violation(s) found\n`
         );
         for (const v of results.violations) {
           console.error(`[${v.impact}] ${v.id}: ${v.description}`);
@@ -271,20 +268,35 @@ try {
         }
       } else {
         console.log(
-          `axe-core (${url}): no violations found (${results.passes.length} rules passed)`
+          `axe-core (${label}, ${url}): no violations found (${results.passes.length} rules passed)`
         );
       }
     } finally {
       await page.close();
     }
   }
+  return violations;
+}
+
+const browser = await chromium.launch();
+const context = await browser.newContext();
+
+let violationCount = 0;
+
+try {
+  violationCount += await checkPaths(context, "desktop");
 
   violationCount += await checkFaq(context, "desktop");
   const faqMobileContext = await browser.newContext({
     viewport: { width: 375, height: 667 },
   });
   try {
+    violationCount += await checkPaths(faqMobileContext, "mobile");
     violationCount += await checkFaq(faqMobileContext, "mobile");
+    violationCount += await checkAllSectionsVisible(
+      faqMobileContext,
+      "mobile motion"
+    );
   } finally {
     await faqMobileContext.close();
   }
