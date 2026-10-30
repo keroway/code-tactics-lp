@@ -125,6 +125,11 @@ function findHeroVideoIssue(html) {
     dropNoscript: true,
     droppedTagMarker: (name) => `${MARKER}${name}${MARKER}`,
   });
+  // refersToAsset は固定の PAGE_URL を基準に解決する。base 要素があるとブラウザは
+  // 別の基準でアセットを解決するため、静的サイトの契約として base 要素を禁じる(#364)。
+  if (inertFree.includes(`${MARKER}base${MARKER}`)) {
+    return "base 要素があります（アセット URL の解決基準がずれます）";
+  }
   for (const m of inertFree.matchAll(VIDEO_ELEMENT_PATTERN)) {
     const attrs = parseAttributes(m[1]);
     if (attrs.some((a) => a.name === "data-motion-optional")) {

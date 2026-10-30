@@ -549,3 +549,30 @@ test("template や script の外にある実 video は検出して成功する�
     assert.equal(result.status, 0);
   });
 });
+
+test("外部 origin を指す base 要素があれば、パスが正しくても失敗する（#364）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      `<base href="https://example.invalid/">${FULL_VIDEO_HTML}`
+    );
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /base 要素があります/);
+  });
+});
+
+test("コメント内の base は実要素として数えず成功する（#364）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      `<!-- <base href="https://example.invalid/"> -->${FULL_VIDEO_HTML}`
+    );
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0);
+  });
+});
