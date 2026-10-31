@@ -125,6 +125,65 @@ test("sitemap-0.xml に想定外URLが混ざっていれば失敗する", async 
   });
 });
 
+test("期待URLがすべて XML コメント内にあれば失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<!-- <url><loc>${SITE_URL}/</loc></url>
+<url><loc>${SITE_URL}/privacy/</loc></url> -->
+</urlset>`,
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /不足: /);
+  });
+});
+
+test("想定外URLが XML コメント内にあるだけなら成功する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url><loc>${SITE_URL}/</loc></url>
+<url><loc>${SITE_URL}/privacy/</loc></url>
+<!-- <url><loc>${SITE_URL}/extra/</loc></url> -->
+</urlset>`,
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0);
+  });
+});
+
+test("url 要素の外にある loc は収録URLとして数えない", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url><loc>${SITE_URL}/</loc></url>
+<loc>${SITE_URL}/privacy/</loc>
+</urlset>`,
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /不足: /);
+  });
+});
+
+test("sitemap-index.xml の参照先が XML コメント内だけなら失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      indexXml: `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<!-- <sitemap><loc>${SITE_URL}/sitemap-0.xml</loc></sitemap> -->
+</sitemapindex>`,
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /参照する URL が想定と異なります/);
+  });
+});
+
 test("robots.txt の Sitemap: 行が一致しなければ失敗する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp, {

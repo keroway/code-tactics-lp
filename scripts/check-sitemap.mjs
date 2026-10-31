@@ -23,8 +23,19 @@ const EXPECTED_URLS = new Set(
 const EXPECTED_INDEX_URL = `${SITE_URL}/sitemap-index.xml`;
 const EXPECTED_SITEMAP_URL = `${SITE_URL}/sitemap-0.xml`;
 
-function extractLocs(xml) {
-  return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+// XML コメント内の要素は実在しない扱いにする（#366）。コメント内だけに
+// 期待 URL がある sitemap を成功にしない / コメント内の想定外 URL で落とさない。
+function stripXmlComments(xml) {
+  return xml.replace(/<!--[\s\S]*?-->/g, "");
+}
+
+// `<parent><loc>…</loc></parent>` の階層にある loc だけを集める（#366）。
+// sitemapindex は parent="sitemap"、urlset は parent="url"。
+function extractLocs(xml, parent) {
+  const parentRe = new RegExp(`<${parent}>([\\s\\S]*?)</${parent}>`, "g");
+  return [...stripXmlComments(xml).matchAll(parentRe)].flatMap((block) =>
+    [...block[1].matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
+  );
 }
 
 let indexXml;
@@ -64,7 +75,7 @@ try {
   process.exit(1);
 }
 
-const indexLocs = extractLocs(indexXml);
+const indexLocs = extractLocs(indexXml, "sitemap");
 if (indexLocs.length !== 1 || indexLocs[0] !== EXPECTED_SITEMAP_URL) {
   console.error(
     `sitemap-index.xml が参照する URL が想定と異なります: ${JSON.stringify(indexLocs)}`
@@ -73,7 +84,7 @@ if (indexLocs.length !== 1 || indexLocs[0] !== EXPECTED_SITEMAP_URL) {
   process.exit(1);
 }
 
-const sitemapUrls = new Set(extractLocs(sitemapXml));
+const sitemapUrls = new Set(extractLocs(sitemapXml, "url"));
 const missing = [...EXPECTED_URLS].filter((url) => !sitemapUrls.has(url));
 const unexpected = [...sitemapUrls].filter((url) => !EXPECTED_URLS.has(url));
 
