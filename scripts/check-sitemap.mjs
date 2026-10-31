@@ -29,6 +29,40 @@ function stripXmlComments(xml) {
   return xml.replace(/<!--[\s\S]*?-->/g, "");
 }
 
+// 開始/終了タグの対応と単一ルートを検査する（#368）。loc の抽出は正規表現なので、
+// 閉じタグ欠落などの不正な文書を URL 比較だけで成功にしないための前段ゲート。
+// 不正なら理由の文字列、正常なら null を返す。
+function findXmlSyntaxError(xml) {
+  const body = stripXmlComments(xml)
+    .replace(/<\?[\s\S]*?\?>/g, "")
+    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, "");
+  const tagRe =
+    /<(\/?)([A-Za-z_][\w:.-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?)>/g;
+  const stack = [];
+  let roots = 0;
+  let rest = "";
+  let last = 0;
+  for (const m of body.matchAll(tagRe)) {
+    rest += body.slice(last, m.index);
+    last = m.index + m[0].length;
+    const [, closing, name, , selfClosing] = m;
+    if (closing) {
+      const open = stack.pop();
+      if (open !== name) {
+        return `閉じタグ </${name}> が開始タグ ${open ? `<${open}>` : "(なし)"} と対応しません`;
+      }
+    } else {
+      if (stack.length === 0) roots += 1;
+      if (!selfClosing) stack.push(name);
+    }
+  }
+  rest += body.slice(last);
+  if (rest.includes("<")) return "解釈できない '<' が含まれています";
+  if (stack.length > 0) return `閉じタグ </${stack.at(-1)}> がありません`;
+  if (roots !== 1) return `ルート要素が ${roots} 個あります`;
+  return null;
+}
+
 // `<parent><loc>…</loc></parent>` の階層にある loc だけを集める（#366）。
 // sitemapindex は parent="sitemap"、urlset は parent="url"。
 function extractLocs(xml, parent) {
@@ -73,6 +107,17 @@ try {
     `${DIST_DIR}/robots.txt が見つかりません。public/robots.txt がビルド成果物にコピーされていません。`
   );
   process.exit(1);
+}
+
+for (const [name, xml] of [
+  ["sitemap-index.xml", indexXml],
+  ["sitemap-0.xml", sitemapXml],
+]) {
+  const syntaxError = findXmlSyntaxError(xml);
+  if (syntaxError) {
+    console.error(`${name} が正しい XML ではありません: ${syntaxError}`);
+    process.exit(1);
+  }
 }
 
 const indexLocs = extractLocs(indexXml, "sitemap");
