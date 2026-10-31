@@ -184,6 +184,45 @@ test("sitemap-index.xml の参照先が XML コメント内だけなら失敗す
   });
 });
 
+test("sitemap-0.xml の閉じタグ </urlset> が欠落していれば失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace("</urlset>", ""),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /sitemap-0\.xml が正しい XML ではありません/);
+  });
+});
+
+test("sitemap-index.xml の閉じタグが欠落していれば失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      indexXml: VALID_INDEX_XML.replace("</sitemapindex>", ""),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /sitemap-index\.xml が正しい XML ではありません/
+    );
+  });
+});
+
+test("sitemap-0.xml のタグ対応が崩れていれば失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        `<url><loc>${SITE_URL}/</loc></url>`,
+        `<url><loc>${SITE_URL}/</url></loc>`
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /正しい XML ではありません/);
+  });
+});
+
 test("robots.txt の Sitemap: 行が一致しなければ失敗する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp, {
