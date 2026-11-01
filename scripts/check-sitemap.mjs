@@ -20,6 +20,7 @@ const EXPECTED_PAGES = ["/", "/privacy/"];
 const EXPECTED_URLS = new Set(
   EXPECTED_PAGES.map((page) => `${SITE_URL}${page}`)
 );
+const SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9";
 const EXPECTED_INDEX_URL = `${SITE_URL}/sitemap-index.xml`;
 const EXPECTED_SITEMAP_URL = `${SITE_URL}/sitemap-0.xml`;
 
@@ -63,13 +64,55 @@ function findXmlSyntaxError(xml) {
   return null;
 }
 
-// `<parent><loc>…</loc></parent>` の階層にある loc だけを集める（#366）。
-// sitemapindex は parent="sitemap"、urlset は parent="url"。
-function extractLocs(xml, parent) {
-  const parentRe = new RegExp(`<${parent}>([\\s\\S]*?)</${parent}>`, "g");
-  return [...stripXmlComments(xml).matchAll(parentRe)].flatMap((block) =>
-    [...block[1].matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
-  );
+// コメント・処理命令・CDATA を除いた、要素として実在する部分だけの文字列（#370）。
+function stripNonElements(xml) {
+  return stripXmlComments(xml)
+    .replace(/<\?[\s\S]*?\?>/g, "")
+    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, "");
+}
+
+// `<root><parent><loc>…</loc></parent></root>` の階層にある loc だけを集める
+// （#366, #370）。ルート名が違う文書・標準 namespace を宣言しない文書は
+// 理由の文字列を error に返す。sitemapindex は parent="sitemap"、urlset は
+// parent="url"。CDATA 内の文字列は要素として数えない。
+function extractLocs(xml, root, parent) {
+  const body = stripNonElements(xml);
+  const tagRe =
+    /<(\/?)([A-Za-z_][\w:.-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?)>/g;
+  const path = [];
+  const locs = [];
+  let error = null;
+  let locStart = null;
+  for (const m of body.matchAll(tagRe)) {
+    const [, closing, name, attrs, selfClosing] = m;
+    if (closing) {
+      if (
+        locStart !== null &&
+        name === "loc" &&
+        path.join("/") === `${root}/${parent}/loc`
+      ) {
+        locs.push(body.slice(locStart, m.index).trim());
+        locStart = null;
+      }
+      path.pop();
+      continue;
+    }
+    if (path.length === 0) {
+      if (name !== root) {
+        error = `ルート要素が <${root}> ではなく <${name}> です`;
+      } else if (
+        !new RegExp(`\\sxmlns\\s*=\\s*(["'])${SITEMAP_NS}\\1`).test(attrs)
+      ) {
+        error = `<${root}> に標準 namespace ${SITEMAP_NS} の宣言がありません`;
+      }
+    }
+    if (selfClosing) continue;
+    path.push(name);
+    if (name === "loc" && path.join("/") === `${root}/${parent}/loc`) {
+      locStart = m.index + m[0].length;
+    }
+  }
+  return { locs, error };
 }
 
 let indexXml;
@@ -120,7 +163,17 @@ for (const [name, xml] of [
   }
 }
 
-const indexLocs = extractLocs(indexXml, "sitemap");
+const { locs: indexLocs, error: indexError } = extractLocs(
+  indexXml,
+  "sitemapindex",
+  "sitemap"
+);
+if (indexError) {
+  console.error(
+    `sitemap-index.xml が正しい sitemap ではありません: ${indexError}`
+  );
+  process.exit(1);
+}
 if (indexLocs.length !== 1 || indexLocs[0] !== EXPECTED_SITEMAP_URL) {
   console.error(
     `sitemap-index.xml が参照する URL が想定と異なります: ${JSON.stringify(indexLocs)}`
@@ -129,7 +182,18 @@ if (indexLocs.length !== 1 || indexLocs[0] !== EXPECTED_SITEMAP_URL) {
   process.exit(1);
 }
 
-const sitemapUrls = new Set(extractLocs(sitemapXml, "url"));
+const { locs: sitemapLocs, error: sitemapError } = extractLocs(
+  sitemapXml,
+  "urlset",
+  "url"
+);
+if (sitemapError) {
+  console.error(
+    `sitemap-0.xml が正しい sitemap ではありません: ${sitemapError}`
+  );
+  process.exit(1);
+}
+const sitemapUrls = new Set(sitemapLocs);
 const missing = [...EXPECTED_URLS].filter((url) => !sitemapUrls.has(url));
 const unexpected = [...sitemapUrls].filter((url) => !EXPECTED_URLS.has(url));
 
