@@ -195,6 +195,37 @@ test("sitemap-0.xml の閉じタグ </urlset> が欠落していれば失敗す�
   });
 });
 
+test("sitemap-0.xml のルート終了タグの後ろに文字列があれば失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, { sitemapXml: `${VALID_SITEMAP_XML}BROKEN` });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /sitemap-0\.xml が正しい XML ではありません/);
+  });
+});
+
+test("sitemap-index.xml のルート開始タグの前に文字列があれば失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      indexXml: `BROKEN${VALID_INDEX_XML.replace(/^<\?xml[^>]*\?>\n/, "")}`,
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /sitemap-index\.xml が正しい XML ではありません/
+    );
+  });
+});
+
+test("ルート要素の前後が空白だけなら成功する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, { sitemapXml: `\n  ${VALID_SITEMAP_XML}\n\n` });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("sitemap-index.xml の閉じタグが欠落していれば失敗する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp, {

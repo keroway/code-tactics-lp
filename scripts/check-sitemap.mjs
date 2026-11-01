@@ -43,8 +43,12 @@ function findXmlSyntaxError(xml) {
   let roots = 0;
   let rest = "";
   let last = 0;
+  // ルート要素の外（スタックが空）にある空白以外の文字列を拒否する（#374）。
+  const outsideText = (text) => stack.length === 0 && /\S/.test(text);
   for (const m of body.matchAll(tagRe)) {
-    rest += body.slice(last, m.index);
+    const gap = body.slice(last, m.index);
+    if (outsideText(gap)) return "ルート要素の外に文字列があります";
+    rest += gap;
     last = m.index + m[0].length;
     const [, closing, name, , selfClosing] = m;
     if (closing) {
@@ -57,7 +61,9 @@ function findXmlSyntaxError(xml) {
       if (!selfClosing) stack.push(name);
     }
   }
-  rest += body.slice(last);
+  const tail = body.slice(last);
+  if (outsideText(tail)) return "ルート要素の外に文字列があります";
+  rest += tail;
   if (rest.includes("<")) return "解釈できない '<' が含まれています";
   if (stack.length > 0) return `閉じタグ </${stack.at(-1)}> がありません`;
   if (roots !== 1) return `ルート要素が ${roots} 個あります`;
