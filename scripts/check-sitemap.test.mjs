@@ -265,6 +265,58 @@ test("sitemap-0.xml の namespace が標準でなければ失敗する", async (
   });
 });
 
+test("url 要素で namespace を変更していれば失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        `<url><loc>${SITE_URL}/</loc>`,
+        `<url xmlns="urn:wrong"><loc>${SITE_URL}/</loc>`
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /namespace/);
+  });
+});
+
+test("url 要素で namespace を解除していれば失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        `<url><loc>${SITE_URL}/privacy/</loc>`,
+        `<url xmlns=""><loc>${SITE_URL}/privacy/</loc>`
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /namespace/);
+  });
+});
+
+test("loc 要素で namespace を変更していれば失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      indexXml: VALID_INDEX_XML.replace("<loc>", '<loc xmlns="urn:wrong">'),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /namespace/);
+  });
+});
+
+test("子要素で標準 namespace を再宣言しても成功する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        `<url><loc>${SITE_URL}/</loc>`,
+        `<url xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><loc>${SITE_URL}/</loc>`
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("収録URLがすべて CDATA 内にあれば失敗する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp, {

@@ -80,6 +80,7 @@ function extractLocs(xml, root, parent) {
   const tagRe =
     /<(\/?)([A-Za-z_][\w:.-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?)>/g;
   const path = [];
+  const nsStack = [];
   const locs = [];
   let error = null;
   let locStart = null;
@@ -95,6 +96,7 @@ function extractLocs(xml, root, parent) {
         locStart = null;
       }
       path.pop();
+      nsStack.pop();
       continue;
     }
     if (path.length === 0) {
@@ -106,8 +108,22 @@ function extractLocs(xml, root, parent) {
         error = `<${root}> に標準 namespace ${SITEMAP_NS} の宣言がありません`;
       }
     }
+    // 子要素での xmlns 再宣言・解除（#372）。有効な default namespace を継承
+    // しながら追跡し、root/parent/loc が標準 namespace を外れたら拒否する。
+    const declared = attrs.match(/\sxmlns\s*=\s*(?:"([^"]*)"|'([^']*)')/);
+    const ns = declared ? (declared[1] ?? declared[2]) : nsStack.at(-1);
+    const chain = `${root}/${parent}/loc`;
+    const here = [...path, name].join("/");
+    if (
+      !error &&
+      (chain === here || chain.startsWith(`${here}/`)) &&
+      ns !== SITEMAP_NS
+    ) {
+      error = `<${name}> が標準 namespace ${SITEMAP_NS} に属していません`;
+    }
     if (selfClosing) continue;
     path.push(name);
+    nsStack.push(ns);
     if (name === "loc" && path.join("/") === `${root}/${parent}/loc`) {
       locStart = m.index + m[0].length;
     }
