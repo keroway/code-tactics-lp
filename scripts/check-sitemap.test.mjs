@@ -223,6 +223,77 @@ test("sitemap-0.xml のタグ対応が崩れていれば失敗する", async () 
   });
 });
 
+test("sitemap-index.xml のルート名が sitemapindex でなければ失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      indexXml: VALID_INDEX_XML.replaceAll("sitemapindex", "wrong"),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /sitemap-index\.xml が正しい sitemap ではありません/
+    );
+  });
+});
+
+test("sitemap-0.xml のルート名が urlset でなければ失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replaceAll("urlset", "wrong"),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(
+      result.stderr,
+      /sitemap-0\.xml が正しい sitemap ではありません/
+    );
+  });
+});
+
+test("sitemap-0.xml の namespace が標準でなければ失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        "http://www.sitemaps.org/schemas/sitemap/0.9",
+        "http://example.com/ns"
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /namespace/);
+  });
+});
+
+test("収録URLがすべて CDATA 内にあれば失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<![CDATA[<url><loc>${SITE_URL}/</loc></url>
+<url><loc>${SITE_URL}/privacy/</loc></url>]]>
+</urlset>`,
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /不足: /);
+  });
+});
+
+test("sitemap-index.xml の参照先が CDATA 内だけなら失敗する", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      indexXml: `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<![CDATA[<sitemap><loc>${SITE_URL}/sitemap-0.xml</loc></sitemap>]]>
+</sitemapindex>`,
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /参照する URL が想定と異なります/);
+  });
+});
+
 test("robots.txt の Sitemap: 行が一致しなければ失敗する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp, {
