@@ -30,6 +30,29 @@ function stripXmlComments(xml) {
   return xml.replace(/<!--[\s\S]*?-->/g, "");
 }
 
+// 定義済み実体（amp/lt/gt/quot/apos）と文字参照以外の `&` を返す（#378）。
+// DTD を宣言しない sitemap では、それ以外の実体参照は未定義で整形式エラー。
+function findInvalidEntity(text) {
+  const bad = text.match(
+    /&(?!(?:amp|lt|gt|quot|apos|#[0-9]+|#x[0-9A-Fa-f]+);)[^\s&;<]*;?/
+  );
+  return bad ? bad[0] : null;
+}
+
+// 開始タグ内の属性名の重複と、属性値内の不正な実体参照を検査する（#378）。
+function findAttributeError(tag, attrs) {
+  const seen = new Set();
+  for (const m of attrs.matchAll(/([^\s=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) {
+    if (seen.has(m[1])) return `<${tag}> に属性 ${m[1]} が重複しています`;
+    seen.add(m[1]);
+    const entity = findInvalidEntity(m[2] ?? m[3]);
+    if (entity) {
+      return `<${tag}> の属性 ${m[1]} に未定義または不正な実体参照 ${entity} があります`;
+    }
+  }
+  return null;
+}
+
 // 開始/終了タグの対応と単一ルートを検査する（#368）。loc の抽出は正規表現なので、
 // 閉じタグ欠落などの不正な文書を URL 比較だけで成功にしないための前段ゲート。
 // 不正なら理由の文字列、正常なら null を返す。
@@ -50,13 +73,15 @@ function findXmlSyntaxError(xml) {
     if (outsideText(gap)) return "ルート要素の外に文字列があります";
     rest += gap;
     last = m.index + m[0].length;
-    const [, closing, name, , selfClosing] = m;
+    const [, closing, name, attrs, selfClosing] = m;
     if (closing) {
       const open = stack.pop();
       if (open !== name) {
         return `閉じタグ </${name}> が開始タグ ${open ? `<${open}>` : "(なし)"} と対応しません`;
       }
     } else {
+      const attrError = findAttributeError(name, attrs);
+      if (attrError) return attrError;
       if (stack.length === 0) roots += 1;
       if (!selfClosing) stack.push(name);
     }
@@ -65,6 +90,8 @@ function findXmlSyntaxError(xml) {
   if (outsideText(tail)) return "ルート要素の外に文字列があります";
   rest += tail;
   if (rest.includes("<")) return "解釈できない '<' が含まれています";
+  const textEntity = findInvalidEntity(rest);
+  if (textEntity) return `未定義または不正な実体参照 ${textEntity} があります`;
   if (stack.length > 0) return `閉じタグ </${stack.at(-1)}> がありません`;
   if (roots !== 1) return `ルート要素が ${roots} 個あります`;
   return null;
