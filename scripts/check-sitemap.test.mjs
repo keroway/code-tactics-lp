@@ -414,6 +414,47 @@ test("dist/robots.txt の Sitemap: 行が一致しなければ失敗する", asy
   });
 });
 
+test("sitemap-0.xml のルート属性が重複していれば失敗する（#378）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        "<urlset ",
+        '<urlset broken="1" broken="2" '
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /正しい XML ではありません.*重複/);
+  });
+});
+
+test("sitemap-0.xml に未定義の実体参照があれば失敗する（#378）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        `<url><loc>${SITE_URL}/</loc>`,
+        `<url><loc>${SITE_URL}/</loc><lastmod>&undefined;</lastmod>`
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /正しい XML ではありません.*実体参照/);
+  });
+});
+
+test("定義済み実体・文字参照は許容する（#378）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        `<url><loc>${SITE_URL}/</loc>`,
+        `<url><loc>${SITE_URL}/</loc><lastmod>a&amp;b&#38;&#x26;&lt;</lastmod>`
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0);
+  });
+});
+
 test("すべて整合していれば成功する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp);
