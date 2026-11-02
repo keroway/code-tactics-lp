@@ -39,10 +39,22 @@ function findInvalidEntity(text) {
   return bad ? bad[0] : null;
 }
 
-// 開始タグ内の属性名の重複と、属性値内の不正な実体参照を検査する（#378）。
+// 開始タグの属性領域全体を XML 文法（空白 名前 = 引用符付き値）で先頭から
+// 順に消費し、属性名の重複・属性値内の不正な実体参照・文法外の文字列
+// （引用符なし属性・値なし属性・値内の `<`）を検査する（#378, #381）。
 function findAttributeError(tag, attrs) {
   const seen = new Set();
-  for (const m of attrs.matchAll(/([^\s=]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)) {
+  const attrRe = /\s+([^\s=<>"'/]+)\s*=\s*(?:"([^"<]*)"|'([^'<]*)')/y;
+  let pos = 0;
+  while (pos < attrs.length) {
+    if (/^\s*$/.test(attrs.slice(pos))) break;
+    attrRe.lastIndex = pos;
+    const m = attrRe.exec(attrs);
+    if (!m) {
+      const near = attrs.slice(pos).trim().slice(0, 20);
+      return `<${tag}> の属性が XML 文法に従っていません: ${near}`;
+    }
+    pos = attrRe.lastIndex;
     if (seen.has(m[1])) return `<${tag}> に属性 ${m[1]} が重複しています`;
     seen.add(m[1]);
     const entity = findInvalidEntity(m[2] ?? m[3]);

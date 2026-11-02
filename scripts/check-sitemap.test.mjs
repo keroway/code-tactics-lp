@@ -455,6 +455,49 @@ test("定義済み実体・文字参照は許容する（#378）", async () => {
   });
 });
 
+for (const [label, attr] of [
+  ["引用符なし属性", "broken=1"],
+  ["値のない属性", "broken"],
+  ["属性値内の小なり記号", 'broken="a<b"'],
+]) {
+  test(`sitemap-0.xml のルートに${label}があれば失敗する（#381）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        sitemapXml: VALID_SITEMAP_XML.replace("<urlset ", `<urlset ${attr} `),
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /正しい XML ではありません.*属性/);
+    });
+  });
+}
+
+test("属性間に空白がなければ失敗する（#381）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+        '<urlset a="1"xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+  });
+});
+
+test("引用符付き属性と = 前後の空白は許容する（#381）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        "<urlset ",
+        "<urlset a = '1' xmlns:xsi=\"x\" "
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0);
+  });
+});
+
 test("すべて整合していれば成功する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp);
