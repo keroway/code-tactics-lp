@@ -498,6 +498,52 @@ test("引用符付き属性と = 前後の空白は許容する（#381）", asyn
   });
 });
 
+for (const [label, tail] of [
+  ["名前の後ろの文字列", "</urlset broken>"],
+  ["自己終了スラッシュ", "</urlset/>"],
+]) {
+  test(`sitemap-0.xml のルート終了タグに${label}があれば失敗する（#383）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        sitemapXml: VALID_SITEMAP_XML.replace("</urlset>", tail),
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(
+        result.stderr,
+        /sitemap-0\.xml が正しい XML ではありません.*閉じタグ/
+      );
+    });
+  });
+
+  test(`sitemap-index.xml のルート終了タグに${label}があれば失敗する（#383）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        indexXml: VALID_INDEX_XML.replace(
+          "</sitemapindex>",
+          tail.replace("urlset", "sitemapindex")
+        ),
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(
+        result.stderr,
+        /sitemap-index\.xml が正しい XML ではありません.*閉じタグ/
+      );
+    });
+  });
+}
+
+test("終了タグの末尾空白は許容する（#383）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace("</urlset>", "</urlset \n>"),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("すべて整合していれば成功する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp);
