@@ -87,6 +87,10 @@ function findXmlSyntaxError(xml) {
     last = m.index + m[0].length;
     const [, closing, name, attrs, selfClosing] = m;
     if (closing) {
+      // 終了タグは名前の後ろに空白以外・自己終了スラッシュを持てない（#383）。
+      if (/\S/.test(attrs) || selfClosing) {
+        return `閉じタグ </${name}> の名前の後ろに不正な文字列があります`;
+      }
       const open = stack.pop();
       if (open !== name) {
         return `閉じタグ </${name}> が開始タグ ${open ? `<${open}>` : "(なし)"} と対応しません`;
