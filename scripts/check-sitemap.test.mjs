@@ -544,6 +544,71 @@ test("終了タグの末尾空白は許容する（#383）", async () => {
   });
 });
 
+for (const ref of ["&#0;", "&#x110000;", "&#xD800;", "&#xFFFE;"]) {
+  test(`XML の Char 範囲外の文字参照 ${ref} は失敗する（#385）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        sitemapXml: VALID_SITEMAP_XML.replace(
+          `<url><loc>${SITE_URL}/</loc>`,
+          `<url><loc>${SITE_URL}/</loc><lastmod>${ref}</lastmod>`
+        ),
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /正しい XML ではありません.*実体参照/);
+    });
+  });
+}
+
+test("不正な属性名は失敗する（#385）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        "<urlset ",
+        '<urlset bad?name="x" '
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /正しい XML ではありません.*属性/);
+  });
+});
+
+test("ルート開始タグの前の CDATA は失敗する（#385）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: `<![CDATA[garbage]]>${VALID_SITEMAP_XML}`,
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /正しい XML ではありません/);
+  });
+});
+
+test("ルート終了タグの後ろの CDATA は失敗する（#385）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: `${VALID_SITEMAP_XML}<![CDATA[garbage]]>`,
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /正しい XML ではありません/);
+  });
+});
+
+test("有効な文字参照・要素内 CDATA は許容する（#385）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        `<url><loc>${SITE_URL}/</loc>`,
+        `<url><loc>${SITE_URL}/</loc><lastmod>&#9;&#xA;&#x10FFFF;<![CDATA[ok]]></lastmod>`
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("すべて整合していれば成功する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp);
