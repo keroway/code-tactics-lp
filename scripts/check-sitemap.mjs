@@ -36,7 +36,20 @@ function findInvalidEntity(text) {
   const bad = text.match(
     /&(?!(?:amp|lt|gt|quot|apos|#[0-9]+|#x[0-9A-Fa-f]+);)[^\s&;<]*;?/
   );
-  return bad ? bad[0] : null;
+  if (bad) return bad[0];
+  // 文字参照は XML 1.0 の Char 生成規則に収まる符号位置のみ有効（#385）。
+  for (const m of text.matchAll(/&#(?:x([0-9A-Fa-f]+)|([0-9]+));/g)) {
+    const cp = m[1] ? Number.parseInt(m[1], 16) : Number.parseInt(m[2], 10);
+    const valid =
+      cp === 0x9 ||
+      cp === 0xa ||
+      cp === 0xd ||
+      (cp >= 0x20 && cp <= 0xd7ff) ||
+      (cp >= 0xe000 && cp <= 0xfffd) ||
+      (cp >= 0x10000 && cp <= 0x10ffff);
+    if (!valid) return m[0];
+  }
+  return null;
 }
 
 // 開始タグの属性領域全体を XML 文法（空白 名前 = 引用符付き値）で先頭から
@@ -44,7 +57,8 @@ function findInvalidEntity(text) {
 // （引用符なし属性・値なし属性・値内の `<`）を検査する（#378, #381）。
 function findAttributeError(tag, attrs) {
   const seen = new Set();
-  const attrRe = /\s+([^\s=<>"'/]+)\s*=\s*(?:"([^"<]*)"|'([^'<]*)')/y;
+  // 属性名は XML の Name（ASCII 範囲）に限る（#385）。
+  const attrRe = /\s+([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"<]*)"|'([^'<]*)')/y;
   let pos = 0;
   while (pos < attrs.length) {
     if (/^\s*$/.test(attrs.slice(pos))) break;
@@ -71,7 +85,9 @@ function findAttributeError(tag, attrs) {
 function findXmlSyntaxError(xml) {
   const body = stripXmlComments(xml)
     .replace(/<\?[\s\S]*?\?>/g, "")
-    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, "");
+    // CDATA は要素内のテキストとしては有効だが、ルート外では文字列扱いにする
+    // ため、削除せず非空白のプレースホルダに置き換える（#385）。
+    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, "x");
   const tagRe =
     /<(\/?)([A-Za-z_][\w:.-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?)>/g;
   const stack = [];
