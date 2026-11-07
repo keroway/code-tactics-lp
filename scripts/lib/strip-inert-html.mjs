@@ -7,6 +7,7 @@
 //   - <style> 全体(生テキスト。#310)
 //   - <xmp> 全体(生テキスト。#354)
 //   - <iframe> / <noembed> / <noframes> 全体(生テキスト。#358)
+//   - 上記 textarea〜noframes と script は閉じタグが無ければ文書末尾までを領域とする(#389, #391)
 //   - <plaintext> の開始以降すべて(閉じタグが無い生テキスト。#360)
 //   - <template> の中身(未展開で DOM に描画されない要素。入れ子も 1 つとして扱う)
 //
@@ -28,13 +29,14 @@ function buildTokenPattern(dropNoscript) {
       String.raw`<!--[\s\S]*?-->`,
       // 閉じタグが無い script は文書末尾までが生テキスト(#389)
       String.raw`(<script\b${ATTRS}>)(?:[\s\S]*?<\/script\s*>|[\s\S]*)`,
-      String.raw`<textarea\b${ATTRS}>[\s\S]*?<\/textarea\s*>`,
-      String.raw`<title\b${ATTRS}>[\s\S]*?<\/title\s*>`,
-      String.raw`<style\b${ATTRS}>[\s\S]*?<\/style\s*>`,
-      String.raw`<xmp\b${ATTRS}>[\s\S]*?<\/xmp\s*>`,
-      String.raw`<iframe\b${ATTRS}>[\s\S]*?<\/iframe\s*>`,
-      String.raw`<noembed\b${ATTRS}>[\s\S]*?<\/noembed\s*>`,
-      String.raw`<noframes\b${ATTRS}>[\s\S]*?<\/noframes\s*>`,
+      // 以下 7 要素も閉じタグが無ければ文書末尾までが生テキスト/RCDATA(#391)
+      String.raw`<textarea\b${ATTRS}>(?:[\s\S]*?<\/textarea\s*>|[\s\S]*)`,
+      String.raw`<title\b${ATTRS}>(?:[\s\S]*?<\/title\s*>|[\s\S]*)`,
+      String.raw`<style\b${ATTRS}>(?:[\s\S]*?<\/style\s*>|[\s\S]*)`,
+      String.raw`<xmp\b${ATTRS}>(?:[\s\S]*?<\/xmp\s*>|[\s\S]*)`,
+      String.raw`<iframe\b${ATTRS}>(?:[\s\S]*?<\/iframe\s*>|[\s\S]*)`,
+      String.raw`<noembed\b${ATTRS}>(?:[\s\S]*?<\/noembed\s*>|[\s\S]*)`,
+      String.raw`<noframes\b${ATTRS}>(?:[\s\S]*?<\/noframes\s*>|[\s\S]*)`,
       // <plaintext> は閉じタグが無く、開始以降の文書末尾までが生テキスト(#360)
       String.raw`<plaintext\b${ATTRS}>[\s\S]*`,
       String.raw`<(\/?)template\b${ATTRS}>`,
