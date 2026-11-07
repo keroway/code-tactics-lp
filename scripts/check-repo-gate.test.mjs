@@ -297,6 +297,32 @@ for (const [label, wrap] of [
   });
 }
 
+for (const name of [
+  "template-widget",
+  "script-x",
+  "textarea-x",
+  "title-x",
+  "style-x",
+  "xmp-x",
+  "iframe-x",
+  "noembed-x",
+  "noframes-x",
+  "plaintext-x",
+]) {
+  test(`公開想定で ${name} カスタム要素内の実リンクは通常要素として数える（#387）`, async () => {
+    await withTmpDir("check-repo-gate-", async (tmp) => {
+      const html = `<${name}>${REPO_LINK}</${name}>`;
+      writeDistHtml(tmp, "index.html", html);
+      writeDistHtml(tmp, "404.html", html);
+      const result = runScript(SCRIPT, {
+        cwd: tmp,
+        env: { PUBLIC_REPO_PUBLIC: "true" },
+      });
+      assert.equal(result.status, 0, result.stderr);
+    });
+  });
+}
+
 test("公開想定で plaintext より前の実リンクは数えて成功する（#360）", async () => {
   await withTmpDir("check-repo-gate-", async (tmp) => {
     const html = `${REPO_LINK}<plaintext>x`;
