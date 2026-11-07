@@ -336,6 +336,33 @@ test("公開想定で plaintext より前の実リンクは数えて成功する
   });
 });
 
+test("公開想定で未閉鎖 script 内だけの本体リンクは数えず失敗する（#389）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    const html = `<script>const unfinished = 1; ${REPO_LINK}`;
+    writeDistHtml(tmp, "index.html", html);
+    writeDistHtml(tmp, "404.html", html);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /本体リポジトリへのリンクが 1 件もありません/);
+  });
+});
+
+test("公開想定で未閉鎖 script より前の実リンクは数えて成功する（#389）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    const html = `${REPO_LINK}<script>x`;
+    writeDistHtml(tmp, "index.html", html);
+    writeDistHtml(tmp, "404.html", html);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("公開想定で noscript 内だけの本体リンクは数えず失敗する（#334）", async () => {
   await withTmpDir("check-repo-gate-", async (tmp) => {
     const html = `<noscript>${REPO_LINK}</noscript>`;
