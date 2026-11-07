@@ -26,7 +26,8 @@ function buildTokenPattern(dropNoscript) {
   return new RegExp(
     [
       String.raw`<!--[\s\S]*?-->`,
-      String.raw`(<script\b${ATTRS}>)[\s\S]*?<\/script\s*>`,
+      // 閉じタグが無い script は文書末尾までが生テキスト(#389)
+      String.raw`(<script\b${ATTRS}>)(?:[\s\S]*?<\/script\s*>|[\s\S]*)`,
       String.raw`<textarea\b${ATTRS}>[\s\S]*?<\/textarea\s*>`,
       String.raw`<title\b${ATTRS}>[\s\S]*?<\/title\s*>`,
       String.raw`<style\b${ATTRS}>[\s\S]*?<\/style\s*>`,
