@@ -17,7 +17,10 @@
 // 開始タグの属性部は引用符付き属性値を 1 かたまりで読む(#316)。属性値内の
 // `>` や疑似 <template> を領域の開始・終了と誤認しない。その他の開始タグも
 // 読み飛ばして残し、属性値の中身を後続トークンとして拾わせない。
-const ATTRS = `(?:"[^"]*"|'[^']*'|[^>"'])*`;
+// 先頭の先読みはタグ名の終端(#387)。タグ名の直後の `\b` だけだと template-widget の
+// ようにハイフンで続く別名の要素にも一致するため、空白・`/`・`>` のいずれかを要求して
+// タグ名を完全一致にする。
+const ATTRS = `(?=[\\s/>])(?:"[^"]*"|'[^']*'|[^>"'])*`;
 const NOSCRIPT = String.raw`<noscript\b${ATTRS}>[\s\S]*?<\/noscript\s*>`;
 function buildTokenPattern(dropNoscript) {
   return new RegExp(
