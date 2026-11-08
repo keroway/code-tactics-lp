@@ -403,6 +403,46 @@ for (const name of [
   });
 }
 
+test("公開想定で未終端コメント内だけの本体リンクは数えず失敗する（#395）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    const html = `<!-- unclosed comment ${REPO_LINK}`;
+    writeDistHtml(tmp, "index.html", html);
+    writeDistHtml(tmp, "404.html", html);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /本体リポジトリへのリンクが 1 件もありません/);
+  });
+});
+
+test("公開想定で未終端コメントより前の実リンクは数えて成功する（#395）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    const html = `${REPO_LINK}<!-- unclosed`;
+    writeDistHtml(tmp, "index.html", html);
+    writeDistHtml(tmp, "404.html", html);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
+test("公開想定で閉じたコメント後の実リンクは数えて成功する（#395）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    const html = `<!-- closed -->${REPO_LINK}`;
+    writeDistHtml(tmp, "index.html", html);
+    writeDistHtml(tmp, "404.html", html);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("公開想定で noscript 内だけの本体リンクは数えず失敗する（#334）", async () => {
   await withTmpDir("check-repo-gate-", async (tmp) => {
     const html = `<noscript>${REPO_LINK}</noscript>`;
