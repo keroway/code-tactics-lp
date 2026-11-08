@@ -1,6 +1,6 @@
 // 表示・操作の対象にならない HTML 領域を取り除く(#301)。ビルド成果物ゲートが
 // 正規表現でタグを探す前に通す。対象は次の 9 つ。
-//   - HTML コメント
+//   - HTML コメント(閉じ記号が無ければ文書末尾まで。#395)
 //   - <script> の中身(文字列中の疑似タグ)
 //   - <textarea> 全体(本文はタグとして解釈されない RCDATA。#308)
 //   - <title> 全体(RCDATA。#310)
@@ -26,7 +26,8 @@ const NOSCRIPT = String.raw`<noscript\b${ATTRS}>[\s\S]*?<\/noscript\s*>`;
 function buildTokenPattern(dropNoscript) {
   return new RegExp(
     [
-      String.raw`<!--[\s\S]*?-->`,
+      // 閉じ記号が無いコメントは文書末尾までがコメント(#395)
+      String.raw`<!--(?:[\s\S]*?-->|[\s\S]*)`,
       // 閉じタグが無い script は文書末尾までが生テキスト(#389)
       String.raw`(<script\b${ATTRS}>)(?:[\s\S]*?<\/script\s*>|[\s\S]*)`,
       // 以下 7 要素も閉じタグが無ければ文書末尾までが生テキスト/RCDATA(#391)
