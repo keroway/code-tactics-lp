@@ -30,6 +30,18 @@ function stripXmlComments(xml) {
   return xml.replace(/<!--[\s\S]*?-->/g, "");
 }
 
+// XML 1.0 の Char 生成規則に収まる符号位置か（#385, #393）。
+function isXmlChar(cp) {
+  return (
+    cp === 0x9 ||
+    cp === 0xa ||
+    cp === 0xd ||
+    (cp >= 0x20 && cp <= 0xd7ff) ||
+    (cp >= 0xe000 && cp <= 0xfffd) ||
+    (cp >= 0x10000 && cp <= 0x10ffff)
+  );
+}
+
 // 定義済み実体（amp/lt/gt/quot/apos）と文字参照以外の `&` を返す（#378）。
 // DTD を宣言しない sitemap では、それ以外の実体参照は未定義で整形式エラー。
 function findInvalidEntity(text) {
@@ -40,14 +52,7 @@ function findInvalidEntity(text) {
   // 文字参照は XML 1.0 の Char 生成規則に収まる符号位置のみ有効（#385）。
   for (const m of text.matchAll(/&#(?:x([0-9A-Fa-f]+)|([0-9]+));/g)) {
     const cp = m[1] ? Number.parseInt(m[1], 16) : Number.parseInt(m[2], 10);
-    const valid =
-      cp === 0x9 ||
-      cp === 0xa ||
-      cp === 0xd ||
-      (cp >= 0x20 && cp <= 0xd7ff) ||
-      (cp >= 0xe000 && cp <= 0xfffd) ||
-      (cp >= 0x10000 && cp <= 0x10ffff);
-    if (!valid) return m[0];
+    if (!isXmlChar(cp)) return m[0];
   }
   return null;
 }
@@ -83,6 +88,15 @@ function findAttributeError(tag, attrs) {
 // 閉じタグ欠落などの不正な文書を URL 比較だけで成功にしないための前段ゲート。
 // 不正なら理由の文字列、正常なら null を返す。
 function findXmlSyntaxError(xml) {
+  // 生の文字も XML 1.0 の Char 生成規則に収まる必要がある（#393）。
+  // コメント・CDATA・処理命令の中でも許されないので、加工前の全文を検査する。
+  for (const ch of xml) {
+    const cp = ch.codePointAt(0);
+    if (!isXmlChar(cp)) {
+      const hex = cp.toString(16).toUpperCase().padStart(4, "0");
+      return `XML で許可されない文字 U+${hex} が含まれています`;
+    }
+  }
   const body = stripXmlComments(xml)
     .replace(/<\?[\s\S]*?\?>/g, "")
     // CDATA は要素内のテキストとしては有効だが、ルート外では文字列扱いにする
@@ -122,6 +136,8 @@ function findXmlSyntaxError(xml) {
   if (outsideText(tail)) return "ルート要素の外に文字列があります";
   rest += tail;
   if (rest.includes("<")) return "解釈できない '<' が含まれています";
+  // CDATA 外のテキストに終端文字列 `]]>` は書けない（#393）。
+  if (rest.includes("]]>")) return "CDATA 外に ']]>' が含まれています";
   const textEntity = findInvalidEntity(rest);
   if (textEntity) return `未定義または不正な実体参照 ${textEntity} があります`;
   if (stack.length > 0) return `閉じタグ </${stack.at(-1)}> がありません`;

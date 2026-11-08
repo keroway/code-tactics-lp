@@ -609,6 +609,41 @@ test("有効な文字参照・要素内 CDATA は許容する（#385）", async 
   });
 });
 
+function withLastmod(body) {
+  return VALID_SITEMAP_XML.replace(
+    `<url><loc>${SITE_URL}/</loc>`,
+    `<url><loc>${SITE_URL}/</loc><lastmod>${body}</lastmod>`
+  );
+}
+
+test("生の NUL 文字を含む sitemap は失敗する（#393）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, { sitemapXml: withLastmod("\u0000") });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /正しい XML ではありません.*U\+0000/);
+  });
+});
+
+test("CDATA 外の ]]> を含む sitemap は失敗する（#393）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, { sitemapXml: withLastmod("]]>") });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /正しい XML ではありません.*\]\]>/);
+  });
+});
+
+test("空白・通常テキスト・CDATA 内の ]] は許容する（#393）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: withLastmod("\t\r\n text <![CDATA[a]]b]]>"),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("すべて整合していれば成功する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp);
