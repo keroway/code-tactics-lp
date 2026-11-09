@@ -22,7 +22,8 @@
 // ようにハイフンで続く別名の要素にも一致するため、空白・`/`・`>` のいずれかを要求して
 // タグ名を完全一致にする。
 const ATTRS = `(?=[\\s/>])(?:"[^"]*"|'[^']*'|[^>"'])*`;
-const NOSCRIPT = String.raw`<noscript\b${ATTRS}>[\s\S]*?<\/noscript\s*>`;
+// 閉じタグが無い noscript も文書末尾までを領域とする(#405)
+const NOSCRIPT = String.raw`<noscript\b${ATTRS}>(?:[\s\S]*?<\/noscript\s*>|[\s\S]*)`;
 function buildTokenPattern(dropNoscript) {
   return new RegExp(
     [

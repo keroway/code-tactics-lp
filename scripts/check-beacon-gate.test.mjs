@@ -377,6 +377,23 @@ test("noscript の外に実ビーコンがあれば noscript があっても成�
   });
 });
 
+test("未終端 noscript 内だけにビーコンがあれば失敗する(#405)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", `<noscript>${BEACON_TAG}`);
+    const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+    assert.equal(result.status, 1);
+  });
+});
+
+test("未終端 noscript の前に実ビーコンがあれば成功する(#405)", async () => {
+  await withTmpDir("check-beacon-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", `${BEACON_TAG}<noscript>x`);
+    const result = runScript(SCRIPT, { cwd: tmp, env: GATE_ENV });
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /OK/);
+  });
+});
+
 test("引用符内の > を含む正常なビーコンタグは成功する(#320)", async () => {
   await withTmpDir("check-beacon-gate-", async (tmp) => {
     writeDistHtml(

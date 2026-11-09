@@ -537,6 +537,25 @@ test("noscript の外に実 video があれば成功する（#334）", async () 
   });
 });
 
+test("未終端 noscript 内だけの video は実要素として数えず失敗する（#405）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", `<noscript>${FULL_VIDEO_HTML}`);
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /静止画フォールバックで出力されています/);
+  });
+});
+
+test("未終端 noscript の前に実 video があれば成功する（#405）", async () => {
+  await withTmpDir("check-hero-video-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", `${FULL_VIDEO_HTML}<noscript>x`);
+    writeHeroAssets(tmp);
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0);
+  });
+});
+
 test("template や script の外にある実 video は検出して成功する（#301）", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     writeDistHtml(

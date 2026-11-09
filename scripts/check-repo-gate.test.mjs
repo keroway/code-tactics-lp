@@ -501,6 +501,44 @@ test("公開想定で noscript の外に本体リンクがあれば成功する�
   });
 });
 
+test("公開想定で未終端 noscript 内だけの本体リンクは数えず失敗する（#405）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    const html = `<noscript>${REPO_LINK}`;
+    writeDistHtml(tmp, "index.html", html);
+    writeDistHtml(tmp, "404.html", html);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /次のページに本体リンクがありません/);
+  });
+});
+
+test("公開想定で未終端 noscript の前に本体リンクがあれば成功する（#405）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    const html = `${REPO_LINK}<noscript>x`;
+    writeDistHtml(tmp, "index.html", html);
+    writeDistHtml(tmp, "404.html", html);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      env: { PUBLIC_REPO_PUBLIC: "true" },
+    });
+    assert.equal(result.status, 0);
+  });
+});
+
+test("非公開想定で未終端 noscript 内の本体リンクも流出として検出する（#405）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(tmp, "index.html", `<noscript>${REPO_LINK}`);
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      unset: ["PUBLIC_REPO_PUBLIC"],
+    });
+    assert.equal(result.status, 1);
+  });
+});
+
 test("非公開想定で noscript 内の本体リンクも流出として検出する（#334）", async () => {
   await withTmpDir("check-repo-gate-", async (tmp) => {
     writeDistHtml(tmp, "index.html", `<noscript>${REPO_LINK}</noscript>`);
