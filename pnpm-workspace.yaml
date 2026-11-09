@@ -1,6 +1,3 @@
-# サプライチェーン保護水準をワークスペース全体で統一 (agent-assets#171、2026-08-14決定)。
-# pnpm 11 既定の minimumReleaseAge (1440分=1日) を 3日 (4320分) に固定し、
-# 制約を満たすバージョンが無いときに resolve を失敗させる minimumReleaseAgeStrict も有効化する。
 minimumReleaseAge: 4320
 minimumReleaseAgeStrict: true
 # time フィールドを持たないレジストリ/ミラー経由でも age チェックを素通りさせない
@@ -55,7 +52,7 @@ overrides:
   svgo: ">=4.1.0 <5"
   # GHSA-9rgm-9g3h-6x36 (devalue <5.9.2) — astro の直接依存経由。#220
   # 2026-10-17: 7 件の advisory (vuln <5.9.3) に対応し下限を引き上げ (#305)。
-  devalue: ">=5.9.3 <6"
+  devalue: ">=5.9.3 <7"
   # osv-scanner 検出分（2026-10-17、#305）。いずれも修正版が提示された advisory のみ上限付きで上書きする。
   # GHSA-vc2v-76pw-4v95 (compression <1.8.2) — @lhci/cli 経由（devDependency）。
   compression: ">=1.8.2 <2"
