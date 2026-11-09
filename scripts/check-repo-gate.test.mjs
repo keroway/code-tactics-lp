@@ -53,6 +53,37 @@ test("非公開想定でリンクが無ければ成功する", async () => {
   });
 });
 
+test("base href と相対リンクの組み合わせは本体リンク漏れを隠すため失敗する（#399）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "404.html",
+      '<base href="https://github.com/keroway/"><a href="code-tactics">GitHub</a>'
+    );
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      unset: ["PUBLIC_REPO_PUBLIC"],
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /<base>/);
+  });
+});
+
+test("コメント内の base は不活性領域として無視する（#399）", async () => {
+  await withTmpDir("check-repo-gate-", async (tmp) => {
+    writeDistHtml(
+      tmp,
+      "index.html",
+      '<!-- <base href="https://github.com/keroway/"> --><p>no link</p>'
+    );
+    const result = runScript(SCRIPT, {
+      cwd: tmp,
+      unset: ["PUBLIC_REPO_PUBLIC"],
+    });
+    assert.equal(result.status, 0);
+  });
+});
+
 test("公開想定なのにリンクが無ければ失敗する", async () => {
   await withTmpDir("check-repo-gate-", async (tmp) => {
     writeDistHtml(tmp, "index.html", "<p>no link</p>");
