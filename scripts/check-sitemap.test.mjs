@@ -644,6 +644,86 @@ test("空白・通常テキスト・CDATA 内の ]] は許容する（#393）", 
   });
 });
 
+for (const [label, comment] of [
+  ["コメント内の --", "<!-- bad -- comment -->"],
+  ["--> 直前の -", "<!-- bad --->"],
+]) {
+  test(`不正なコメント（${label}）は失敗する（#403）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        indexXml: VALID_INDEX_XML.replace(
+          "<sitemapindex",
+          `${comment}<sitemapindex`
+        ),
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /正しい XML ではありません.*コメント/);
+    });
+  });
+}
+
+for (const [label, pi] of [
+  ["空", "<??>"],
+  ["target が数字始まり", "<?1a x?>"],
+  ["文書先頭以外の xml 宣言", '<?xml version="1.0"?>'],
+]) {
+  test(`不正な処理命令（${label}）は失敗する（#403）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        indexXml: VALID_INDEX_XML.replace(
+          "<sitemapindex",
+          `${pi}<sitemapindex`
+        ),
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /正しい XML ではありません.*処理命令/);
+    });
+  });
+}
+
+test("未宣言の namespace 接頭辞を持つ属性は失敗する（#403）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      indexXml: VALID_INDEX_XML.replace(
+        "<sitemapindex ",
+        '<sitemapindex missing:attr="value" '
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /正しい XML ではありません.*missing:attr/);
+  });
+});
+
+test("未宣言の namespace 接頭辞を持つ要素は失敗する（#403）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: withLastmod("x").replace(
+        "<lastmod>x</lastmod>",
+        "<foo:lastmod>x</foo:lastmod>"
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /正しい XML ではありません.*foo:lastmod/);
+  });
+});
+
+test("宣言済みの接頭辞・xml: 接頭辞・通常のコメントと処理命令は許容する（#403）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      indexXml: VALID_INDEX_XML.replace(
+        "<sitemapindex ",
+        '<!-- ok - comment --><?pi data?><sitemapindex xmlns:x="urn:x" x:a="1" xml:lang="ja" '
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("すべて整合していれば成功する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp);
