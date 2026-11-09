@@ -130,6 +130,14 @@ function relativeToDist(file) {
 
 // dropNoscript: JS 有効時の表示を保証したい検査（公開時の必須リンク）では
 // noscript 内を除く。非公開時の流出検出は JS 無効の訪問者にも見えるため含める（#334）。
+// <base href> があると相対 href の解決基準が変わり、PAGE_URL 基準の判定と食い違う（#399）。
+// 解決を再実装せず、不活性領域外の <base> は明示的に拒否する。
+const BASE_PATTERN = /<base\b/i;
+
+function hasActiveBase(html) {
+  return BASE_PATTERN.test(stripInertHtml(html, { keepTags: ["base"] }));
+}
+
 function countRepoAnchors(html, { dropNoscript = false } = {}) {
   let count = 0;
   for (const anchor of stripInertHtml(html, {
@@ -147,6 +155,7 @@ function countRepoAnchors(html, { dropNoscript = false } = {}) {
 const repoIsPublic = process.env.PUBLIC_REPO_PUBLIC === "true";
 
 const hits = [];
+const baseFiles = [];
 const requiredFileHits = new Map(
   REQUIRED_PUBLIC_FILES.map((name) => [name, 0])
 );
@@ -155,6 +164,7 @@ let htmlCount = 0;
 for await (const file of walkHtml(DIST_DIR)) {
   htmlCount++;
   const html = await readFile(file, "utf8");
+  if (hasActiveBase(html)) baseFiles.push(file);
   const count = countRepoAnchors(html);
   if (count > 0) hits.push({ file, count });
   const relPath = relativeToDist(file);
@@ -172,6 +182,14 @@ if (htmlCount === 0) {
   console.error(
     `${DIST_DIR}/ に HTML がありません。先に \`pnpm run build\` を実行してください。`
   );
+  process.exit(1);
+}
+
+if (baseFiles.length > 0) {
+  console.error(
+    "<base> 要素があると相対 href の解決基準が変わり、本体リンクの判定が信頼できません（#399）。"
+  );
+  for (const file of baseFiles) console.error(`  ${file}`);
   process.exit(1);
 }
 
