@@ -97,7 +97,27 @@ function findXmlSyntaxError(xml) {
       return `XML で許可されない文字 U+${hex} が含まれています`;
     }
   }
-  const body = stripXmlComments(xml)
+  // コメント本文に `--` は書けず、`--->` で閉じることもできない（#403）。
+  for (const m of xml.matchAll(/<!--([\s\S]*?)-->/g)) {
+    if (m[1].includes("--") || m[1].endsWith("-")) {
+      return "コメント内に '--' が含まれているか '--->' で閉じています";
+    }
+  }
+  const noComments = stripXmlComments(xml);
+  // 処理命令は `<?Name ...?>` の文法に従う必要がある。target `xml`（大小無視）は
+  // 文書先頭の XML 宣言にだけ許される（#403）。
+  for (const m of noComments.matchAll(/<\?([\s\S]*?)\?>/g)) {
+    const pi = /^([A-Za-z_:][\w:.-]*)(?:\s[\s\S]*)?$/.exec(m[1]);
+    if (!pi)
+      return `処理命令が XML 文法に従っていません: <?${m[1].slice(0, 20)}?>`;
+    if (
+      /^xml$/i.test(pi[1]) &&
+      (pi[1] !== "xml" || /\S/.test(noComments.slice(0, m.index)))
+    ) {
+      return `処理命令の target ${pi[1]} は文書先頭の XML 宣言以外では使えません`;
+    }
+  }
+  const body = noComments
     .replace(/<\?[\s\S]*?\?>/g, "")
     // CDATA は要素内のテキストとしては有効だが、ルート外では文字列扱いにする
     // ため、削除せず非空白のプレースホルダに置き換える（#385）。
@@ -105,6 +125,7 @@ function findXmlSyntaxError(xml) {
   const tagRe =
     /<(\/?)([A-Za-z_][\w:.-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?)>/g;
   const stack = [];
+  const scopes = [];
   let roots = 0;
   let rest = "";
   let last = 0;
@@ -122,14 +143,42 @@ function findXmlSyntaxError(xml) {
         return `閉じタグ </${name}> の名前の後ろに不正な文字列があります`;
       }
       const open = stack.pop();
+      scopes.pop();
       if (open !== name) {
         return `閉じタグ </${name}> が開始タグ ${open ? `<${open}>` : "(なし)"} と対応しません`;
       }
     } else {
       const attrError = findAttributeError(name, attrs);
       if (attrError) return attrError;
+      const scope = new Map(scopes.at(-1) ?? [["xml", true]]);
+      const attrPairs = [
+        ...attrs.matchAll(
+          /\s+([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
+        ),
+      ];
+      for (const [, attrName, v1, v2] of attrPairs) {
+        if (attrName.startsWith("xmlns:"))
+          scope.set(attrName.slice(6), (v1 ?? v2) !== "");
+      }
+      // 接頭辞付きの要素名・属性名は、その接頭辞が束縛済みでなければならない（#403）。
+      const unbound = [name, ...attrPairs.map((a) => a[1])].find((n) => {
+        const parts = n.split(":");
+        if (n.startsWith("xmlns:") || n === "xmlns") return false;
+        if (parts.length === 1) return false;
+        return (
+          parts.length > 2 ||
+          parts[0] === "" ||
+          parts[1] === "" ||
+          !scope.get(parts[0])
+        );
+      });
+      if (unbound)
+        return `名前 ${unbound} の namespace 接頭辞が宣言されていません`;
       if (stack.length === 0) roots += 1;
-      if (!selfClosing) stack.push(name);
+      if (!selfClosing) {
+        stack.push(name);
+        scopes.push(scope);
+      }
     }
   }
   const tail = body.slice(last);
