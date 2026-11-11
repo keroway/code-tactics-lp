@@ -724,6 +724,46 @@ test("宣言済みの接頭辞・xml: 接頭辞・通常のコメントと処理
   });
 });
 
+for (const [label, extra, pattern] of [
+  ["xml 接頭辞の再束縛", 'xmlns:xml="urn:wrong"', /予約接頭辞 xml/],
+  ["xmlns 接頭辞の宣言", 'xmlns:xmlns="urn:wrong"', /予約接頭辞 xmlns/],
+  [
+    "xml namespace の他接頭辞への束縛",
+    'xmlns:a="http://www.w3.org/XML/1998/namespace"',
+    /接頭辞 xml 以外/,
+  ],
+  [
+    "展開名が同じ属性の重複",
+    'xmlns:a="urn:same" xmlns:b="urn:same" a:id="1" b:id="2"',
+    /展開名が同じ属性/,
+  ],
+]) {
+  test(`${label}は失敗する（#408）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        sitemapXml: VALID_SITEMAP_XML.replace("<urlset ", `<urlset ${extra} `),
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /正しい XML ではありません/);
+      assert.match(result.stderr, pattern);
+    });
+  });
+}
+
+test("異なる namespace の同名属性・xml 接頭辞の正規束縛は許容する（#408）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        "<urlset ",
+        '<urlset xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:a="urn:a" xmlns:b="urn:b" a:id="1" b:id="2" id="3" '
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("すべて整合していれば成功する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp);
