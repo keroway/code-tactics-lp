@@ -21,6 +21,8 @@ const EXPECTED_URLS = new Set(
   EXPECTED_PAGES.map((page) => `${SITE_URL}${page}`)
 );
 const SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9";
+const XML_NS = "http://www.w3.org/XML/1998/namespace";
+const XMLNS_NS = "http://www.w3.org/2000/xmlns/";
 const EXPECTED_INDEX_URL = `${SITE_URL}/sitemap-index.xml`;
 const EXPECTED_SITEMAP_URL = `${SITE_URL}/sitemap-0.xml`;
 
@@ -150,15 +152,46 @@ function findXmlSyntaxError(xml) {
     } else {
       const attrError = findAttributeError(name, attrs);
       if (attrError) return attrError;
-      const scope = new Map(scopes.at(-1) ?? [["xml", true]]);
+      const scope = new Map(scopes.at(-1) ?? [["xml", XML_NS]]);
       const attrPairs = [
         ...attrs.matchAll(
           /\s+([A-Za-z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
         ),
       ];
       for (const [, attrName, v1, v2] of attrPairs) {
-        if (attrName.startsWith("xmlns:"))
-          scope.set(attrName.slice(6), (v1 ?? v2) !== "");
+        if (attrName.startsWith("xmlns:")) {
+          const prefix = attrName.slice(6);
+          const uri = v1 ?? v2;
+          // 予約接頭辞の束縛（Namespaces in XML 1.0 §3）。xmlns 接頭辞は宣言不可、
+          // xml 接頭辞は XML_NS 以外に束縛不可、XML_NS を他の接頭辞に束縛するのも不可、
+          // XMLNS_NS は束縛不可（#408）。
+          if (prefix === "xmlns") {
+            return "予約接頭辞 xmlns は宣言できません";
+          }
+          if (prefix === "xml" && uri !== XML_NS) {
+            return `予約接頭辞 xml は ${XML_NS} 以外に束縛できません`;
+          }
+          if (prefix !== "xml" && uri === XML_NS) {
+            return `namespace ${XML_NS} は接頭辞 xml 以外に束縛できません`;
+          }
+          if (uri === XMLNS_NS) {
+            return `namespace ${XMLNS_NS} は束縛できません`;
+          }
+          scope.set(prefix, uri);
+        }
+      }
+      // 展開名（namespace URI + ローカル名）が同じ属性の重複（#408）。
+      // 接頭辞なしの属性は namespace を持たない。
+      const expanded = new Set();
+      for (const [, attrName] of attrPairs) {
+        if (attrName === "xmlns" || attrName.startsWith("xmlns:")) continue;
+        const idx = attrName.indexOf(":");
+        const uri = idx === -1 ? "" : (scope.get(attrName.slice(0, idx)) ?? "");
+        const key = `${uri}\n${attrName.slice(idx + 1)}`;
+        if (expanded.has(key)) {
+          return `<${name}> に展開名が同じ属性 ${attrName} が重複しています`;
+        }
+        expanded.add(key);
       }
       // 接頭辞付きの要素名・属性名は、その接頭辞が束縛済みでなければならない（#403）。
       const unbound = [name, ...attrPairs.map((a) => a[1])].find((n) => {
