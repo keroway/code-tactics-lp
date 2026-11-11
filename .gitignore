@@ -1,5 +1,7 @@
 # dependencies
 node_modules/
+# pnpm のコンテンツアドレス式ストア (SQLite の WAL を含むためコミット不可)
+.pnpm-store/
 
 # build output (フレームワーク確定後に調整)
 dist/
