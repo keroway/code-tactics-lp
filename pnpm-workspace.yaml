@@ -66,3 +66,7 @@ overrides:
   # GHSA-r4xh-jqrq-34v2 (smol-toml <1.9.0)。既存 override の下限を引き上げ。
   # GHSA-68fv-2mgg-jv7q (source-map-js <1.2.2) — tailwind / postcss / astro 経由（ビルド時のみ）。
   source-map-js: ">=1.2.2 <2"
+  # @emnapi/runtime 2.0.0-beta.2 は終了時クリーンアップで "bridge.deleteEnv is not a function" と
+  #   クラッシュし、astro check が @astrojs/check を未インストールと誤報して失敗する（#411）。
+  #   sharp の wasm32 optional 依存経由。beta を引かないよう 1.x 系に上限を付ける。
+  "@emnapi/runtime": ">=1.11.3 <2"
