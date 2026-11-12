@@ -72,6 +72,15 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
       >
         <span class="log-stream-cursor">_</span>
       </div>
+      <!-- 演出の停止/再生。JS が演出を有効化したときだけ表示する (hidden が既定)。 -->
+      <button
+        type="button"
+        id="log-stream-toggle"
+        hidden
+        class="self-start rounded-md border border-slate-700 px-3 py-1.5 font-mono text-xs text-slate-200 transition hover:border-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
+      >
+        擬似ログを停止
+      </button>
     </div>
 
     <!-- プログラムエディタ (実画面) -->
@@ -172,6 +181,20 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
     let index = 0;
     let timer = null;
     let started = false;
+    // 利用者が手動で止めた状態。再入場しても勝手に再開せず、明示的な再開まで保持する。
+    // 停止中も表示済みのログ行は残す (可読性を保つ)。
+    let paused = false;
+    let inView = false;
+    const toggle = document.getElementById("log-stream-toggle");
+
+    function syncToggle() {
+      if (!toggle) return;
+      toggle.textContent = paused ? "擬似ログを再生" : "擬似ログを停止";
+    }
+    if (toggle) {
+      toggle.hidden = false;
+      syncToggle();
+    }
 
     function appendLine() {
       const row = document.createElement("p");
@@ -208,8 +231,9 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
       function (entries) {
         if (mediaQuery.matches) return;
         entries.forEach(function (entry) {
+          inView = entry.isIntersecting;
           if (entry.isIntersecting) {
-            start();
+            if (!paused) start();
           } else {
             stop();
           }
@@ -219,12 +243,26 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
     );
     io.observe(container);
 
+    if (toggle) {
+      toggle.addEventListener("click", function () {
+        if (mediaQuery.matches) return;
+        paused = !paused;
+        syncToggle();
+        if (paused) {
+          stop();
+        } else if (inView) {
+          start();
+        }
+      });
+    }
+
     // 再生開始後に OS/ブラウザ設定が reduce へ切り替わった場合、擬似ストリームを止める
     // (issue 236 / PR 238 と同じパターン)。
     mediaQuery.addEventListener("change", function (event) {
       if (!event.matches) return;
       io.disconnect();
       stop();
+      if (toggle) toggle.hidden = true;
     });
   })();
 </script>
