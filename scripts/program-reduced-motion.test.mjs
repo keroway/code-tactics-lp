@@ -71,8 +71,21 @@ function setupHarness() {
     querySelectorAll: () => rows,
   };
 
+  // 停止/再生ボタンのスタブ。hidden と表示文言、click ハンドラを保持する。
+  let clickHandler;
+  const toggle = {
+    hidden: true,
+    textContent: "ルール強調を停止",
+    addEventListener(type, cb) {
+      if (type === "click") clickHandler = cb;
+    },
+  };
+
   vm.runInNewContext(loadInlineScript(), {
-    document: { getElementById: () => section },
+    document: {
+      getElementById: (id) =>
+        id === "program-motion-toggle" ? toggle : section,
+    },
     window: {
       matchMedia: () => mediaQuery,
       IntersectionObserver: FakeIntersectionObserver,
@@ -104,6 +117,11 @@ function setupHarness() {
     activePositions: () =>
       rows.flatMap((el, pos) => (el.classList.has("is-active") ? [pos] : [])),
     isRunning: () => intervalActive,
+    toggle,
+    clickToggle() {
+      assert.ok(clickHandler, "click リスナーが登録されていない");
+      clickHandler();
+    },
     enter() {
       ioCallback([{ isIntersecting: true }]);
     },
@@ -183,4 +201,60 @@ test("reduced-motion へ切り替わると強調が消える", () => {
   h.tick();
   h.toggleReduceMotion(true);
   assert.deepEqual(h.activePositions(), []);
+});
+
+test("通常設定では停止ボタンが表示される", () => {
+  const h = setupHarness();
+  assert.equal(h.toggle.hidden, false);
+  assert.equal(h.toggle.textContent, "ルール強調を停止");
+});
+
+test("停止ボタンで強調が止まり、文言が再生に切り替わる", () => {
+  const h = setupHarness();
+  h.enter();
+  h.tick();
+  h.clickToggle();
+  assert.equal(h.isRunning(), false);
+  assert.deepEqual(h.activePositions(), []);
+  assert.equal(h.toggle.textContent, "ルール強調を再生");
+});
+
+test("手動停止後は viewport 再入場でも再開しない", () => {
+  const h = setupHarness();
+  h.enter();
+  h.clickToggle();
+  h.leave();
+  h.enter();
+  assert.equal(h.isRunning(), false);
+});
+
+test("明示的な再開で画面内なら強調が再開する", () => {
+  const h = setupHarness();
+  h.enter();
+  h.clickToggle();
+  h.clickToggle();
+  assert.equal(h.isRunning(), true);
+  assert.equal(h.toggle.textContent, "ルール強調を停止");
+  assert.equal(h.activePositions().length, 2);
+});
+
+test("画面外で再開操作をしても開始せず、再入場で開始する", () => {
+  const h = setupHarness();
+  h.enter();
+  h.clickToggle();
+  h.leave();
+  h.clickToggle();
+  assert.equal(h.isRunning(), false);
+  h.enter();
+  assert.equal(h.isRunning(), true);
+});
+
+test("reduced-motion へ切り替わるとボタンが隠れ、再開操作でも動かない", () => {
+  const h = setupHarness();
+  h.enter();
+  h.clickToggle();
+  h.toggleReduceMotion(true);
+  assert.equal(h.toggle.hidden, true);
+  h.clickToggle();
+  assert.equal(h.isRunning(), false);
 });

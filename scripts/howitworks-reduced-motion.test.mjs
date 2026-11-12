@@ -59,6 +59,16 @@ function setupHarness() {
 
   const container = makeContainer();
 
+  // 停止/再生ボタンのスタブ。hidden と表示文言、click ハンドラを保持する。
+  let clickHandler;
+  const toggle = {
+    hidden: true,
+    textContent: "擬似ログを停止",
+    addEventListener(type, cb) {
+      if (type === "click") clickHandler = cb;
+    },
+  };
+
   const mediaQuery = {
     matches: false,
     addEventListener(type, cb) {
@@ -78,7 +88,7 @@ function setupHarness() {
 
   vm.runInNewContext(loadInlineScript(), {
     document: {
-      getElementById: () => container,
+      getElementById: (id) => (id === "log-stream-toggle" ? toggle : container),
       createElement: () => {
         const classes = new Set();
         return {
@@ -134,6 +144,11 @@ function setupHarness() {
         .filter((el) => !el.isCursor)
         .map((el) => el.textContent),
     isRunning: () => intervalActive,
+    toggle,
+    clickToggle() {
+      assert.ok(clickHandler, "click リスナーが登録されていない");
+      clickHandler();
+    },
     enter() {
       ioCallback([{ isIntersecting: true }]);
     },
@@ -222,4 +237,59 @@ test("viewport を出ると周期処理が解除され追記が止まる", () =>
   assert.equal(h.isRunning(), false);
   assert.throws(() => h.tick(), /周期処理が登録されていない/);
   assert.equal(h.lines().length, 2);
+});
+
+test("通常設定では停止ボタンが表示される", () => {
+  const h = setupHarness();
+  assert.equal(h.toggle.hidden, false);
+  assert.equal(h.toggle.textContent, "擬似ログを停止");
+});
+
+test("停止ボタンで追記が止まり、表示済みログは残り、文言が再生に切り替わる", () => {
+  const h = setupHarness();
+  h.enter();
+  h.tick();
+  h.clickToggle();
+  assert.equal(h.isRunning(), false);
+  assert.equal(h.lines().length, 2);
+  assert.equal(h.toggle.textContent, "擬似ログを再生");
+});
+
+test("手動停止後は viewport 再入場でも再開しない", () => {
+  const h = setupHarness();
+  h.enter();
+  h.clickToggle();
+  h.leave();
+  h.enter();
+  assert.equal(h.isRunning(), false);
+});
+
+test("明示的な再開で画面内なら追記が再開する", () => {
+  const h = setupHarness();
+  h.enter();
+  h.clickToggle();
+  h.clickToggle();
+  assert.equal(h.isRunning(), true);
+  assert.equal(h.toggle.textContent, "擬似ログを停止");
+});
+
+test("画面外で再開操作をしても開始せず、再入場で開始する", () => {
+  const h = setupHarness();
+  h.enter();
+  h.clickToggle();
+  h.leave();
+  h.clickToggle();
+  assert.equal(h.isRunning(), false);
+  h.enter();
+  assert.equal(h.isRunning(), true);
+});
+
+test("reduced-motion へ切り替わるとボタンが隠れ、再開操作でも動かない", () => {
+  const h = setupHarness();
+  h.enter();
+  h.clickToggle();
+  h.toggleReduceMotion(true);
+  assert.equal(h.toggle.hidden, true);
+  h.clickToggle();
+  assert.equal(h.isRunning(), false);
 });
