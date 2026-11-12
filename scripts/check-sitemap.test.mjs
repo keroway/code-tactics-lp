@@ -683,6 +683,39 @@ for (const [label, pi] of [
   });
 }
 
+for (const [label, decl] of [
+  ["version 欠落", "<?xml?>"],
+  ["standalone の不正値", '<?xml version="1.0" standalone="maybe"?>'],
+  ["疑似属性の順序違反", '<?xml encoding="UTF-8" version="1.0"?>'],
+]) {
+  test(`不正な XML 宣言（${label}）は失敗する（#415）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        indexXml: VALID_INDEX_XML.replace(/^<\?xml[^>]*\?>/, decl),
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /正しい XML ではありません.*XML 宣言/);
+    });
+  });
+}
+
+test("最小・standalone 付きの正しい XML 宣言は許容する（#415）", async () => {
+  for (const decl of [
+    '<?xml version="1.0"?>',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
+    "<?xml version='1.0' standalone='no'?>",
+  ]) {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        indexXml: VALID_INDEX_XML.replace(/^<\?xml[^>]*\?>/, decl),
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 0, result.stderr);
+    });
+  }
+});
+
 test("未宣言の namespace 接頭辞を持つ属性は失敗する（#403）", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp, {

@@ -86,6 +86,11 @@ function findAttributeError(tag, attrs) {
   return null;
 }
 
+// XML 宣言の本体（`<?` と `?>` の間）。version 必須、encoding・standalone は
+// この順の任意指定で、standalone は yes / no のみ（XML 1.0 §2.8）。
+const XML_DECL_RE =
+  /^xml\s+version\s*=\s*(?:"1\.[0-9]+"|'1\.[0-9]+')(?:\s+encoding\s*=\s*(?:"[A-Za-z][A-Za-z0-9._-]*"|'[A-Za-z][A-Za-z0-9._-]*'))?(?:\s+standalone\s*=\s*(?:"(?:yes|no)"|'(?:yes|no)'))?\s*$/;
+
 // 開始/終了タグの対応と単一ルートを検査する（#368）。loc の抽出は正規表現なので、
 // 閉じタグ欠落などの不正な文書を URL 比較だけで成功にしないための前段ゲート。
 // 不正なら理由の文字列、正常なら null を返す。
@@ -117,6 +122,10 @@ function findXmlSyntaxError(xml) {
       (pi[1] !== "xml" || /\S/.test(noComments.slice(0, m.index)))
     ) {
       return `処理命令の target ${pi[1]} は文書先頭の XML 宣言以外では使えません`;
+    }
+    // XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'（#415）。
+    if (pi[1] === "xml" && !XML_DECL_RE.test(m[1])) {
+      return `XML 宣言が XML 文法に従っていません: <?${m[1].slice(0, 60)}?>`;
     }
   }
   const body = noComments
