@@ -165,6 +165,11 @@ pre .rule-row {
   .log-stream-cursor {
     animation: ct-blink 1s step-end infinite;
   }
+  /* 手動停止中はカーソル点滅も止めて静止表示にする (#419) */
+  #log-stream[data-paused="true"] .log-stream-cursor {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 /* アンカー遷移のスムーズスクロール。動きを抑える設定では無効化する (#21 ナビ)。 */

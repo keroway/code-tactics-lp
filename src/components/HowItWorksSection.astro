@@ -191,6 +191,10 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
       if (!toggle) return;
       toggle.textContent = paused ? "擬似ログを再生" : "擬似ログを停止";
     }
+    // CSS 側でカーソル点滅を止めるため、手動停止状態をコンテナへ反映する (#419)
+    function syncPausedAttr() {
+      container.setAttribute("data-paused", paused ? "true" : "false");
+    }
     if (toggle) {
       toggle.hidden = false;
       syncToggle();
@@ -248,6 +252,7 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
         if (mediaQuery.matches) return;
         paused = !paused;
         syncToggle();
+        syncPausedAttr();
         if (paused) {
           stop();
         } else if (inView) {
