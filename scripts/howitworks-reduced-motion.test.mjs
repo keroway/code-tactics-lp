@@ -29,7 +29,12 @@ function makeContainer() {
   const children = [];
   const cursor = { isCursor: true };
   children.push(cursor);
+  const attrs = {};
   return {
+    attrs,
+    setAttribute(name, value) {
+      attrs[name] = value;
+    },
     querySelector: () => cursor,
     // 実 DOM と同じく ref の直前へ挿入する (カーソルは常に末尾に残る)。
     insertBefore(row, ref) {
@@ -253,6 +258,26 @@ test("停止ボタンで追記が止まり、表示済みログは残り、文�
   assert.equal(h.isRunning(), false);
   assert.equal(h.lines().length, 2);
   assert.equal(h.toggle.textContent, "擬似ログを再生");
+});
+
+test("手動停止でコンテナに data-paused=true が付き、再開で false に戻る (カーソル点滅の CSS 連動, #419)", () => {
+  const h = setupHarness();
+  h.enter();
+  h.clickToggle();
+  assert.equal(h.container.attrs["data-paused"], "true");
+  h.clickToggle();
+  assert.equal(h.container.attrs["data-paused"], "false");
+});
+
+test("global.css が data-paused 中のカーソル点滅を止める規則を持つ (#419)", () => {
+  const css = readFileSync(
+    join(dirname(HOW_IT_WORKS_SECTION), "..", "styles", "global.css"),
+    "utf8"
+  );
+  assert.match(
+    css,
+    /#log-stream\[data-paused="true"\]\s+\.log-stream-cursor\s*\{[^}]*animation:\s*none/
+  );
 });
 
 test("手動停止後は viewport 再入場でも再開しない", () => {
