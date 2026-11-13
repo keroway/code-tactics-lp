@@ -30,7 +30,12 @@ overrides:
   # GHSA-22jq-vg5j-6vgg / GHSA-4xrf-jv44-h6hh / GHSA-mwp4-54f8-5fhr (ip-address)
   #   — @lhci/cli / lighthouse > puppeteer-core > proxy-agent > socks 経由。
   # 2026-10-02: GHSA-2vr4-cq9g-pvrc / GHSA-rpw4-54j3-4h4q (vuln <10.5.1) に対応し下限を引き上げ (#263)。
-  ip-address: ">=10.5.1 <11"
+  # 2026-11-13: GHSA-rxp7-6hxx-x8q5 (vuln <10.7.4) に対応し下限を引き上げ (#257)。
+  ip-address: ">=10.7.4 <11"
+  # GHSA-27r3-jxmh-p828 (body-parser <1.20.9) — @lhci/cli > express 経由（devDependency）。#257
+  body-parser: ">=1.20.9 <2"
+  # GHSA-mrhx-c7xc-m3w5 (zod <4.6.6) — @astrojs/sitemap の直接依存経由（ビルド時のみ）。#257
+  zod: ">=4.6.6 <5"
   # GHSA-2v37-7h3g-55p8 (nanoid <3.3.17) — size=0 で customAlphabet / customRandom が無限ループする。
   #   postcss（ソースマップ用 ID 生成、size は固定）経由。advisory の影響範囲が
   #   2026-08-08 に 3.3.16 まで拡大されたため追加。
