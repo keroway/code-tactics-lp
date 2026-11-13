@@ -28,8 +28,13 @@ const EXPECTED_SITEMAP_URL = `${SITE_URL}/sitemap-0.xml`;
 
 // XML コメント内の要素は実在しない扱いにする（#366）。コメント内だけに
 // 期待 URL がある sitemap を成功にしない / コメント内の想定外 URL で落とさない。
+// コメント・処理命令・CDATA は文書の先頭から 1 パスで切り出す（#425）。種別ごとに
+// 順に置換すると、CDATA 内の `<!--…-->` や `<?…?>` をコメント・処理命令として
+// 削除してしまい、loc の実際の文字データとずれる。
+const MARKUP_RE = /<!--[\s\S]*?-->|<\?[\s\S]*?\?>|<!\[CDATA\[[\s\S]*?\]\]>/g;
+
 function stripXmlComments(xml) {
-  return xml.replace(/<!--[\s\S]*?-->/g, "");
+  return xml.replace(MARKUP_RE, (m) => (m.startsWith("<!--") ? "" : m));
 }
 
 // XML 1.0 の Char 生成規則に収まる符号位置か（#385, #393）。
@@ -105,7 +110,9 @@ function findXmlSyntaxError(xml) {
     }
   }
   // コメント本文に `--` は書けず、`--->` で閉じることもできない（#403）。
-  for (const m of xml.matchAll(/<!--([\s\S]*?)-->/g)) {
+  for (const c of xml.matchAll(MARKUP_RE)) {
+    if (!c[0].startsWith("<!--")) continue;
+    const m = [c[0], c[0].slice(4, -3)];
     if (m[1].includes("--") || m[1].endsWith("-")) {
       return "コメント内に '--' が含まれているか '--->' で閉じています";
     }
@@ -113,7 +120,9 @@ function findXmlSyntaxError(xml) {
   const noComments = stripXmlComments(xml);
   // 処理命令は `<?Name ...?>` の文法に従う必要がある。target `xml`（大小無視）は
   // 文書先頭の XML 宣言にだけ許される（#403）。
-  for (const m of noComments.matchAll(/<\?([\s\S]*?)\?>/g)) {
+  for (const piMatch of noComments.matchAll(MARKUP_RE)) {
+    if (!piMatch[0].startsWith("<?")) continue;
+    const m = { 1: piMatch[0].slice(2, -2), index: piMatch.index };
     const pi = /^([A-Za-z_:][\w:.-]*)(?:\s[\s\S]*)?$/.exec(m[1]);
     if (!pi)
       return `処理命令が XML 文法に従っていません: <?${m[1].slice(0, 20)}?>`;
@@ -128,11 +137,11 @@ function findXmlSyntaxError(xml) {
       return `XML 宣言が XML 文法に従っていません: <?${m[1].slice(0, 60)}?>`;
     }
   }
-  const body = noComments
-    .replace(/<\?[\s\S]*?\?>/g, "")
-    // CDATA は要素内のテキストとしては有効だが、ルート外では文字列扱いにする
-    // ため、削除せず非空白のプレースホルダに置き換える（#385）。
-    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, "x");
+  // CDATA は要素内のテキストとしては有効だが、ルート外では文字列扱いにする
+  // ため、削除せず非空白のプレースホルダに置き換える（#385）。
+  const body = noComments.replace(MARKUP_RE, (m) =>
+    m.startsWith("<?") ? "" : "x"
+  );
   const tagRe =
     /<(\/?)([A-Za-z_][\w:.-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)(\/?)>/g;
   const stack = [];
@@ -240,11 +249,10 @@ function findXmlSyntaxError(xml) {
 // 文字列（#370, #423）。CDATA 内の疑似タグは要素として数えず（`<` を実体化）、
 // 一方で loc の文字データとしては残す（削除すると URL の一部を無視して成功する）。
 function stripNonElements(xml) {
-  return stripXmlComments(xml)
-    .replace(/<\?[\s\S]*?\?>/g, "")
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, (_, text) =>
-      text.replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    );
+  return xml.replace(MARKUP_RE, (m) => {
+    if (!m.startsWith("<![CDATA[")) return "";
+    return m.slice(9, -3).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  });
 }
 
 // `<root><parent><loc>…</loc></parent></root>` の階層にある loc だけを集める
