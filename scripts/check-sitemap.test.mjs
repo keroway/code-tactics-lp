@@ -403,6 +403,37 @@ test("sitemap-index.xml の loc 末尾に CDATA が付いた想定外 URL は失
   });
 });
 
+for (const [label, cdata] of [
+  ["コメント風", "<![CDATA[<!--unexpected-->]]>"],
+  ["処理命令風", "<![CDATA[<?unexpected value?>]]>"],
+]) {
+  test(`収録ページの loc 末尾に ${label} の CDATA が付いた想定外 URL は失敗する（#425）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        sitemapXml: VALID_SITEMAP_XML.replace(
+          `<loc>${SITE_URL}/</loc>`,
+          `<loc>${SITE_URL}/${cdata}</loc>`
+        ),
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /想定外: /);
+    });
+  });
+
+  test(`sitemap-index.xml の loc 末尾に ${label} の CDATA が付いた想定外 URL は失敗する（#425）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        indexXml: `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><sitemap><loc>${SITE_URL}/sitemap-0.xml${cdata}</loc></sitemap></sitemapindex>`,
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /参照する URL が想定と異なります/);
+    });
+  });
+}
+
 test("loc 全体が CDATA でも URL が一致すれば成功する（#423）", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp, {
