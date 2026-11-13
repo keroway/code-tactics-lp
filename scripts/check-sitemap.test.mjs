@@ -377,6 +377,45 @@ test("sitemap-index.xml の参照先が CDATA 内だけなら失敗する", asyn
   });
 });
 
+test("収録ページの loc 末尾に CDATA が付いた想定外 URL は失敗する（#423）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        `<loc>${SITE_URL}/privacy/</loc>`,
+        `<loc>${SITE_URL}/privacy/<![CDATA[missing]]></loc>`
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /想定外: /);
+  });
+});
+
+test("sitemap-index.xml の loc 末尾に CDATA が付いた想定外 URL は失敗する（#423）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      indexXml: `<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><sitemap><loc>${SITE_URL}/sitemap-0.xml<![CDATA[.missing]]></loc></sitemap></sitemapindex>`,
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /参照する URL が想定と異なります/);
+  });
+});
+
+test("loc 全体が CDATA でも URL が一致すれば成功する（#423）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        `<loc>${SITE_URL}/privacy/</loc>`,
+        `<loc><![CDATA[${SITE_URL}/privacy/]]></loc>`
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("robots.txt の Sitemap: 行が一致しなければ失敗する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp, {

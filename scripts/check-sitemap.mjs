@@ -236,11 +236,15 @@ function findXmlSyntaxError(xml) {
   return null;
 }
 
-// コメント・処理命令・CDATA を除いた、要素として実在する部分だけの文字列（#370）。
+// コメント・処理命令を除き、CDATA は内容をエスケープした通常文字列へ置き換えた
+// 文字列（#370, #423）。CDATA 内の疑似タグは要素として数えず（`<` を実体化）、
+// 一方で loc の文字データとしては残す（削除すると URL の一部を無視して成功する）。
 function stripNonElements(xml) {
   return stripXmlComments(xml)
     .replace(/<\?[\s\S]*?\?>/g, "")
-    .replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, "");
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, (_, text) =>
+      text.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    );
 }
 
 // `<root><parent><loc>…</loc></parent></root>` の階層にある loc だけを集める
