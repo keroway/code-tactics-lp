@@ -280,6 +280,23 @@ test("global.css が data-paused 中のカーソル点滅を止める規則を�
   );
 });
 
+test("HTML 初期状態はカーソル点滅停止 (data-paused=true)、有効化時に false になる (#427)", () => {
+  const source = readFileSync(HOW_IT_WORKS_SECTION, "utf8");
+  assert.match(source, /id="log-stream"[^>]*data-paused="true"/);
+  const h = setupHarness();
+  assert.equal(h.container.attrs["data-paused"], "false");
+});
+
+test("reduced-motion へ切り替わるとカーソル点滅も停止し、通常に戻っても停止のまま (#427)", () => {
+  const h = setupHarness();
+  h.enter();
+  h.toggleReduceMotion(true);
+  assert.equal(h.container.attrs["data-paused"], "true");
+  assert.equal(h.toggle.hidden, true);
+  h.toggleReduceMotion(false);
+  assert.equal(h.container.attrs["data-paused"], "true");
+});
+
 test("手動停止後は viewport 再入場でも再開しない", () => {
   const h = setupHarness();
   h.enter();

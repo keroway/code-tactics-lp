@@ -68,6 +68,7 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
       <div
         id="log-stream"
         aria-hidden="true"
+        data-paused="true"
         class="overflow-hidden rounded-lg border border-slate-800 bg-slate-950/80 p-3 font-mono text-xs text-slate-400"
       >
         <span class="log-stream-cursor">_</span>
@@ -195,6 +196,9 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
     function syncPausedAttr() {
       container.setAttribute("data-paused", paused ? "true" : "false");
     }
+    // 初期状態 (HTML) はカーソル点滅を停止 (data-paused=true)。演出を有効化し
+    // 停止操作を提供できるここで初めて点滅を有効化する (#427)
+    syncPausedAttr();
     if (toggle) {
       toggle.hidden = false;
       syncToggle();
@@ -267,6 +271,8 @@ import multiUnitBattleImg from "../assets/game-multi-unit-battle.png";
       if (!event.matches) return;
       io.disconnect();
       stop();
+      // 停止操作を隠すため、カーソル点滅も止めて静止表示にする (#427)
+      container.setAttribute("data-paused", "true");
       if (toggle) toggle.hidden = true;
     });
   })();
