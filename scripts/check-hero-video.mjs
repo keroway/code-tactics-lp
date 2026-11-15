@@ -185,6 +185,12 @@ function findHeroVideoIssue(html) {
     return `source の type が不正または未指定です: ${wrongType.join(", ")}`;
   }
 
+  // 停止・手動再生（reduced-motion・自動再生拒否時の唯一の操作手段）は controls に依存する。
+  // 属性名単位で判定するので data-controls や他属性の値の中身は数えない(#429)。
+  if (!heroVideo.attrs.some((a) => a.name === "controls")) {
+    return "video に controls 属性がありません（停止・手動再生の操作手段が失われます）";
+  }
+
   return null;
 }
 

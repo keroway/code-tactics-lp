@@ -10,7 +10,7 @@ const SCRIPT = join(
   "check-hero-video.mjs"
 );
 const FULL_VIDEO_HTML = `
-<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg">
+<video data-motion-optional controls poster="/code-tactics-lp/hero-poster.jpg">
   <source src="/code-tactics-lp/hero-battle.webm" type="video/webm" />
   <source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" />
 </video>
@@ -185,7 +185,7 @@ test("title 属性の値に > や data-motion-optional 表記があっても実�
     writeDistHtml(
       tmp,
       "index.html",
-      `<video title="a > b" data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source title="x > y" src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" /></video>`
+      `<video title="a > b" data-motion-optional controls poster="/code-tactics-lp/hero-poster.jpg"><source title="x > y" src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" /></video>`
     );
     writeHeroAssets(tmp);
     const result = runScript(SCRIPT, { cwd: tmp });
@@ -267,7 +267,7 @@ test("void 要素や閉じた中間要素を挟んでも直接の子の source �
     writeDistHtml(
       tmp,
       "index.html",
-      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><track kind="captions" /><div></div><source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" /></video>'
+      '<video data-motion-optional controls poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><track kind="captions" /><div></div><source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" /></video>'
     );
     writeHeroAssets(tmp);
     const result = runScript(SCRIPT, { cwd: tmp });
@@ -374,7 +374,7 @@ test("base パス前置とクエリ付きの参照は成功する（#269）", as
     writeDistHtml(
       tmp,
       "index.html",
-      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg?v=1"><source src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><source src="/code-tactics-lp/hero-battle.mp4#t=0" type="video/mp4" /></video>'
+      '<video data-motion-optional controls poster="/code-tactics-lp/hero-poster.jpg?v=1"><source src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><source src="/code-tactics-lp/hero-battle.mp4#t=0" type="video/mp4" /></video>'
     );
     writeHeroAssets(tmp);
     const result = runScript(SCRIPT, { cwd: tmp });
@@ -416,7 +416,7 @@ test("type の大文字小文字と前後空白は許容して成功する（#34
     writeDistHtml(
       tmp,
       "index.html",
-      '<video data-motion-optional poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" type=" Video/WebM " /><source src="/code-tactics-lp/hero-battle.mp4" type="VIDEO/MP4" /></video>'
+      '<video data-motion-optional controls poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" type=" Video/WebM " /><source src="/code-tactics-lp/hero-battle.mp4" type="VIDEO/MP4" /></video>'
     );
     writeHeroAssets(tmp);
     const result = runScript(SCRIPT, { cwd: tmp });
@@ -461,6 +461,28 @@ test("poster だけ base が正しく source の base が欠落していれば�
     );
   });
 });
+
+for (const [label, attr, ok] of [
+  ["controls が無い", "", false],
+  ["値なしの controls がある", "controls", true],
+  ["空値の controls がある", 'controls=""', true],
+  ["data-controls だけで controls が無い", "data-controls", false],
+  ["他属性の値の中に controls 表記があるだけ", 'title=" controls"', false],
+]) {
+  test(`${label}場合は${ok ? "成功" : "失敗"}する（#429）`, async () => {
+    await withTmpDir("check-hero-video-", async (tmp) => {
+      writeDistHtml(
+        tmp,
+        "index.html",
+        `<video data-motion-optional ${attr} poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" /></video>`
+      );
+      writeHeroAssets(tmp);
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, ok ? 0 : 1, result.stderr);
+      if (!ok) assert.match(result.stderr, /controls 属性がありません/);
+    });
+  });
+}
 
 test("動画タグと必要アセットが揃っていれば成功する", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
