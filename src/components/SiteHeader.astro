@@ -50,6 +50,7 @@ import {
       id="menu-toggle"
       type="button"
       class="-mr-1 ml-1 inline-flex size-9 items-center justify-center rounded-md text-slate-300 transition hover:text-emerald-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 sm:hidden"
+      hidden
       aria-expanded="false"
       aria-controls="mobile-menu"
       aria-label="メニューを開く"
@@ -75,12 +76,12 @@ import {
 
   <!--
     モバイル開閉パネル (sm 未満のみ)。デスクトップナビとは別立てで、
-    hidden 属性で初期非表示。トグルで hidden を外し is-open を付与する。
+    JS 無効時は常時表示のナビとして機能する (#431)。初期化 JS が hidden を付けて
+    折りたたみ、トグルで hidden を外し is-open を付与する。
   -->
   <div
     id="mobile-menu"
     class="mobile-menu border-t border-slate-800/80 sm:hidden"
-    hidden
   >
     <ul class="mx-auto flex max-w-5xl flex-col gap-1 px-6 py-3 text-slate-300">
       {
@@ -113,6 +114,12 @@ import {
     const toggle = document.getElementById("menu-toggle");
     const menu = document.getElementById("mobile-menu");
     if (!toggle || !menu) return;
+
+    // 初期化成功後にだけ折りたたみ + トグル表示へ切り替える (#431)。
+    // JS 無効・読み込み失敗時はパネルが開いたままのナビとして残り、トグルは出ない
+    menu.hidden = true;
+    menu.dataset.ready = "";
+    toggle.hidden = false;
 
     const isOpen = () => toggle.getAttribute("aria-expanded") === "true";
     const focusables = () =>

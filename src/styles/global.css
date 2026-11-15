@@ -183,6 +183,10 @@ pre .rule-row {
  * モバイルナビ (#41)。ハンバーガー ⇄ クローズのアイコン切替と開閉アニメ。
  * トグルの aria-expanded を単一の真実源にし、アイコン表示を CSS だけで連動させる。
  */
+/* JS 初期化前 (無効時を含む) はトグルを出さない。utility の display より優先させる (#431) */
+#menu-toggle[hidden] {
+  display: none;
+}
 #menu-toggle .menu-icon-close,
 #menu-toggle[aria-expanded="true"] .menu-icon-open {
   display: none;
@@ -196,7 +200,7 @@ pre .rule-row {
  * reduce 時は瞬時に開閉する (* セレクタの duration 上書きとも整合)。
  */
 @media (prefers-reduced-motion: no-preference) {
-  .mobile-menu {
+  .mobile-menu[data-ready] {
     overflow: hidden;
     max-height: 0;
     opacity: 0;
@@ -204,7 +208,7 @@ pre .rule-row {
       max-height 0.25s ease-out,
       opacity 0.25s ease-out;
   }
-  .mobile-menu.is-open {
+  .mobile-menu[data-ready].is-open {
     /* 全項目 (現状 22.25rem) が収まる上限。項目追加時はスモークの収まり検査が検知する */
     max-height: 40rem;
     opacity: 1;
