@@ -268,6 +268,7 @@ function extractLocs(xml, root, parent) {
   const locs = [];
   let error = null;
   let locStart = null;
+  let locCount = 0;
   for (const m of body.matchAll(tagRe)) {
     const [, closing, name, attrs, selfClosing] = m;
     if (closing) {
@@ -278,6 +279,11 @@ function extractLocs(xml, root, parent) {
       ) {
         locs.push(body.slice(locStart, m.index).trim());
         locStart = null;
+      }
+      if (name === parent && path.join("/") === `${root}/${parent}`) {
+        if (locCount !== 1 && !error) {
+          error = `<${parent}> の直接の子 <loc> が ${locCount} 個です（ちょうど 1 個必要）`;
+        }
       }
       path.pop();
       nsStack.pop();
@@ -304,6 +310,16 @@ function extractLocs(xml, root, parent) {
       ns !== SITEMAP_NS
     ) {
       error = `<${name}> が標準 namespace ${SITEMAP_NS} に属していません`;
+    }
+    // 各 parent（url / sitemap）は直接の子 loc をちょうど 1 個持つ（#433）。
+    // 集合比較だけだと、複数 loc を 1 個の parent に詰めた入力を通してしまう。
+    const parentPath = `${root}/${parent}`;
+    if (name === "loc" && path.join("/") === parentPath) locCount += 1;
+    if (name === parent && path.join("/") === root) {
+      locCount = 0;
+      if (selfClosing && !error) {
+        error = `<${parent}> の直接の子 <loc> が 0 個です（ちょうど 1 個必要）`;
+      }
     }
     if (selfClosing) continue;
     path.push(name);
