@@ -314,6 +314,27 @@ try {
     await reducedContext.close();
   }
 
+  // JS disabled + mobile: section links stay usable and no dead toggle remains (#431).
+  const noJsContext = await browser.newContext({
+    viewport: { width: 375, height: 667 },
+    javaScriptEnabled: false,
+  });
+  const noJsPage = await noJsContext.newPage();
+  try {
+    await noJsPage.goto(new URL("", BASE_URL).href, {
+      waitUntil: "domcontentloaded",
+    });
+    if (await noJsPage.isVisible("#menu-toggle")) {
+      throw new Error("no-JS mobile: dead #menu-toggle is still visible");
+    }
+    if (!(await noJsPage.isVisible("#mobile-menu a[href]"))) {
+      throw new Error("no-JS mobile: section links are not usable");
+    }
+    console.log("no-JS mobile: nav links visible, no dead menu toggle");
+  } finally {
+    await noJsContext.close();
+  }
+
   // Mobile viewport pass: verify the hamburger menu opens and is axe-clean (#004).
   const mobileUrl = new URL("", BASE_URL).href;
   const mobileContext = await browser.newContext({
