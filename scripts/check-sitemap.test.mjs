@@ -262,9 +262,10 @@ test("sitemap-index.xml のルート開始タグの前に文字列があれば�
   });
 });
 
-test("ルート要素の前後が空白だけなら成功する", async () => {
+test("ルート要素の後ろが空白だけなら成功する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
-    setupFixture(tmp, { sitemapXml: `\n  ${VALID_SITEMAP_XML}\n\n` });
+    // XML 宣言の前の空白は不正（#437）。前置空白は宣言なしの文書で別に検査する。
+    setupFixture(tmp, { sitemapXml: `${VALID_SITEMAP_XML}\n\n` });
     const result = runScript(SCRIPT, { cwd: tmp });
     assert.equal(result.status, 0, result.stderr);
   });
@@ -828,6 +829,31 @@ test("最小・standalone 付きの正しい XML 宣言は許容する（#415）
       assert.equal(result.status, 0, result.stderr);
     });
   }
+});
+
+for (const [label, prefix] of [
+  ["半角空白", " "],
+  ["改行", "\n"],
+  ["コメント", "<!--before-->"],
+]) {
+  test(`XML 宣言の前の${label}は失敗する（#437）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, { indexXml: prefix + VALID_INDEX_XML });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /正しい XML ではありません.*XML 宣言の前/);
+    });
+  });
+}
+
+test("宣言を持たない文書の前後の空白・コメントは許容する（#437）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      indexXml: `\n<!--c-->\n${VALID_INDEX_XML.replace(/^<\?xml[^>]*\?>/, "")}\n`,
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0, result.stderr);
+  });
 });
 
 test("未宣言の namespace 接頭辞を持つ属性は失敗する（#403）", async () => {
