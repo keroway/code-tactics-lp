@@ -117,6 +117,17 @@ function findXmlSyntaxError(xml) {
       return "コメント内に '--' が含まれているか '--->' で閉じています";
     }
   }
+  // XML 宣言は加工前の文書の先頭（BOM のみ許可）になければならない（#437）。
+  // コメントを除いた後の位置で見ると、宣言前のコメント・空白を見逃す。
+  const declStart = xml.startsWith("﻿") ? 1 : 0;
+  for (const d of xml.matchAll(MARKUP_RE)) {
+    if (!/^<\?xml[\s?]/i.test(d[0])) continue;
+    // 2 個目以降の宣言は後段の処理命令検査が拒否する。
+    if (d.index !== declStart) {
+      return "XML 宣言の前に空白またはコメントがあります（宣言は文書の先頭に置く）";
+    }
+    break;
+  }
   const noComments = stripXmlComments(xml);
   // 処理命令は `<?Name ...?>` の文法に従う必要がある。target `xml`（大小無視）は
   // 文書先頭の XML 宣言にだけ許される（#403）。
