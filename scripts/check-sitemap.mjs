@@ -266,6 +266,28 @@ function stripNonElements(xml) {
   });
 }
 
+// 定義済み実体と十進・十六進文字参照を 1 回だけ復号する（#439）。1 パスの
+// 置換なので `&amp;#47;` は `&#47;` のまま残る（二重復号しない）。不正・未定義の
+// 参照は findXmlSyntaxError が先に拒否しているので、ここでは一致したものだけ扱う。
+// CDATA の内容は stripNonElements がエスケープ済みで、復号すると文字どおりに戻る。
+const PREDEFINED_ENTITIES = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+};
+function decodeXmlText(text) {
+  return text.replace(
+    /&(?:(amp|lt|gt|quot|apos)|#x([0-9A-Fa-f]+)|#([0-9]+));/g,
+    (m, name, hex, dec) => {
+      if (name) return PREDEFINED_ENTITIES[name];
+      const cp = hex ? Number.parseInt(hex, 16) : Number.parseInt(dec, 10);
+      return isXmlChar(cp) ? String.fromCodePoint(cp) : m;
+    }
+  );
+}
+
 // `<root><parent><loc>…</loc></parent></root>` の階層にある loc だけを集める
 // （#366, #370）。ルート名が違う文書・標準 namespace を宣言しない文書は
 // 理由の文字列を error に返す。sitemapindex は parent="sitemap"、urlset は
@@ -288,7 +310,7 @@ function extractLocs(xml, root, parent) {
         name === "loc" &&
         path.join("/") === `${root}/${parent}/loc`
       ) {
-        locs.push(body.slice(locStart, m.index).trim());
+        locs.push(decodeXmlText(body.slice(locStart, m.index).trim()));
         locStart = null;
       }
       if (name === parent && path.join("/") === `${root}/${parent}`) {
