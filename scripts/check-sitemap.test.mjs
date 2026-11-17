@@ -492,6 +492,76 @@ test("loc 全体が CDATA でも URL が一致すれば成功する（#423）", 
   });
 });
 
+for (const [label, ref] of [
+  ["十進", "&#47;"],
+  ["十六進", "&#x2F;"],
+]) {
+  test(`sitemap-0.xml の loc 内の${label}文字参照は復号して比較する（#439）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        sitemapXml: VALID_SITEMAP_XML.replace(
+          `<loc>${SITE_URL}/</loc>`,
+          `<loc>${SITE_URL}${ref}</loc>`
+        ),
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 0, result.stderr);
+    });
+  });
+
+  test(`sitemap-index.xml の loc 内の${label}文字参照は復号して比較する（#439）`, async () => {
+    await withTmpDir("check-sitemap-", async (tmp) => {
+      setupFixture(tmp, {
+        indexXml: VALID_INDEX_XML.replace(
+          "/sitemap-0.xml</loc>",
+          `${ref}sitemap-0.xml</loc>`
+        ),
+      });
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, 0, result.stderr);
+    });
+  });
+}
+
+test("loc 内の文字参照を二重に復号しない（#439）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        `<loc>${SITE_URL}/</loc>`,
+        `<loc>${SITE_URL}&amp;#47;</loc>`
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+  });
+});
+
+test("CDATA 内の文字参照風文字列は文字どおり扱う（#439）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        `<loc>${SITE_URL}/</loc>`,
+        `<loc><![CDATA[${SITE_URL}&#47;]]></loc>`
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 1);
+  });
+});
+
+test("CDATA と文字参照を併用した loc も復号して比較する（#439）", async () => {
+  await withTmpDir("check-sitemap-", async (tmp) => {
+    setupFixture(tmp, {
+      sitemapXml: VALID_SITEMAP_XML.replace(
+        `<loc>${SITE_URL}/privacy/</loc>`,
+        `<loc><![CDATA[${SITE_URL}]]>&#47;privacy&#x2F;</loc>`
+      ),
+    });
+    const result = runScript(SCRIPT, { cwd: tmp });
+    assert.equal(result.status, 0, result.stderr);
+  });
+});
+
 test("robots.txt の Sitemap: 行が一致しなければ失敗する", async () => {
   await withTmpDir("check-sitemap-", async (tmp) => {
     setupFixture(tmp, {
