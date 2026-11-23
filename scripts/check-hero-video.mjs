@@ -191,6 +191,13 @@ function findHeroVideoIssue(html) {
     return "video に controls 属性がありません（停止・手動再生の操作手段が失われます）";
   }
 
+  // 再生方針は JS 側（通常設定かつ表示領域内のみ自動再生、reduce 時は手動再生）が担う。
+  // HTML の autoplay 属性は reduce 設定でも再生を始めてしまうため、値(false 等)を問わず
+  // 属性名の存在だけで拒否する。data-autoplay や他属性の値の中身は数えない(#445)。
+  if (heroVideo.attrs.some((a) => a.name === "autoplay")) {
+    return "video に autoplay 属性があります（reduced-motion 時も自動再生される恐れがあります）";
+  }
+
   return null;
 }
 
