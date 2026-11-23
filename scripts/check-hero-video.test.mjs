@@ -484,6 +484,30 @@ for (const [label, attr, ok] of [
   });
 }
 
+for (const [label, attr, ok] of [
+  ["autoplay が無い", "", true],
+  ["値なしの autoplay がある", "autoplay", false],
+  ["空値の autoplay がある", 'autoplay=""', false],
+  ["autoplay=false がある", 'autoplay="false"', false],
+  ["大文字の AUTOPLAY がある", "AUTOPLAY", false],
+  ["data-autoplay だけで autoplay が無い", "data-autoplay", true],
+  ["他属性の値の中に autoplay 表記があるだけ", 'title=" autoplay"', true],
+]) {
+  test(`${label}場合は${ok ? "成功" : "失敗"}する（#445）`, async () => {
+    await withTmpDir("check-hero-video-", async (tmp) => {
+      writeDistHtml(
+        tmp,
+        "index.html",
+        `<video data-motion-optional controls ${attr} poster="/code-tactics-lp/hero-poster.jpg"><source src="/code-tactics-lp/hero-battle.webm" type="video/webm" /><source src="/code-tactics-lp/hero-battle.mp4" type="video/mp4" /></video>`
+      );
+      writeHeroAssets(tmp);
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, ok ? 0 : 1, result.stderr);
+      if (!ok) assert.match(result.stderr, /autoplay 属性があります/);
+    });
+  });
+}
+
 test("動画タグと必要アセットが揃っていれば成功する", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     writeDistHtml(tmp, "index.html", FULL_VIDEO_HTML);
