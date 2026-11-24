@@ -71,6 +71,30 @@ pnpm run lint
 # 整形 (Prettier + prettier-plugin-astro)
 pnpm run format        # 上書き整形
 pnpm run format:check  # 差分チェックのみ
+
+# ユニットテスト (scripts/*.test.mjs の CI ゲートスクリプトのテスト)
+pnpm run test
+
+# PR 前の全通し (lint + format:check + astro check + test)
+pnpm run check
+```
+
+#### CI ゲート・計測 (build 後に実行する)
+
+以下は `pnpm run build` で `dist/` を生成した後に実行する。CI では
+`.github/workflows/ci.yml` の該当ジョブが同じコマンドを走らせる。
+
+```sh
+pnpm run check:repo-gate    # 本体リポジトリの公開状態フラグに応じた GitHub リンク表示の検査
+pnpm run check:hero-video   # Hero 動画アセット・属性の検査
+pnpm run check:sitemap      # sitemap の XML・loc の検査
+pnpm run check:beacon-gate  # アクセス解析ビーコンのトークン有無による出力の検査
+
+# axe-core による a11y スモーク (build 後に pnpm run preview を起動した状態で実行)
+pnpm run smoke:a11y
+
+# Lighthouse CI (閾値は lighthouserc.json)
+pnpm run lhci
 ```
 
 > GitHub Pages のサブパス配信に合わせ `astro.config.mjs` で `base: /code-tactics-lp` を
