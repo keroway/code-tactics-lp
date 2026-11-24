@@ -24,6 +24,6 @@ lint:
 format:
     pnpm run format
 
-# lint / format:check / astro check をまとめて実行（コミット前の全通し確認）
+# lint / format:check / astro check / test をまとめて実行（コミット前の全通し確認）
 check:
     pnpm run check
