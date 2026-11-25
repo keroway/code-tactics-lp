@@ -37,9 +37,10 @@ src/ and documentation in docs/ and has no dependency on build/code fixes.
 
 ## Findings considered and rejected / deferred
 
-- `extract-zip` high advisory: **rejected for now**. npm's latest is still
-  `2.0.1`; advisory metadata names `>=2.0.2`, but that version is not
-  published. Retain the documented `osv-scanner.toml` ignore until a fix ships.
+- `extract-zip` high advisory: **resolved (2026-11-13, #257 / PR #421)**.
+  No fixed `extract-zip` was ever published; instead `@lhci/cli` 0.16 /
+  puppeteer-core 25 dropped it from `pnpm-lock.yaml`, and the
+  `osv-scanner.toml` ignore was removed.
 - `qs` moderates (two): **deferred**. They are transitive under `@lhci/cli`
   only; compare a safe bounded update when a direct parent offers a compatible
   fix rather than forcing a broad override.
