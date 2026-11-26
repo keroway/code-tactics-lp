@@ -508,6 +508,59 @@ for (const [label, attr, ok] of [
   });
 }
 
+const V = FULL_VIDEO_HTML.trim();
+const HIDDEN_V = V.replace("<video ", "<video hidden ");
+for (const [label, html, ok] of [
+  ["通常の動画", V, true],
+  ["video 自身が hidden", HIDDEN_V, false],
+  ["video 自身が inert", V.replace("<video ", "<video inert "), false],
+  ["hidden な div の内側", `<div hidden>${V}</div>`, false],
+  ["inert な div の内側", `<div inert>${V}</div>`, false],
+  [
+    "hidden な入れ子の内側",
+    `<div hidden><section><p>x</p>${V}</section></div>`,
+    false,
+  ],
+  [
+    "閉じた hidden 要素の後ろ",
+    `<div hidden><p>x</p></div><div>${V}</div>`,
+    true,
+  ],
+  ["通常動画と非表示動画の併存", `${HIDDEN_V}${V}`, true],
+  [
+    "hidden 動画の後ろに通常動画 (div hidden 併存)",
+    `<div hidden>${V}</div>${V}`,
+    true,
+  ],
+  [
+    "video の属性値に閉じタグ表記があっても hidden 祖先を保つ",
+    `<div hidden><video title="</div>" data-x>x</video>${V}</div>`,
+    false,
+  ],
+  ["li の終了タグ省略後の兄弟 li", `<ul><li hidden>a<li>${V}</ul>`, true],
+  [
+    "hidden な li の内側の入れ子リスト",
+    `<ul><li hidden><ul><li>a<li>${V}</ul></ul>`,
+    false,
+  ],
+  ["data-hidden だけで hidden が無い", `<div data-hidden>${V}</div>`, true],
+  [
+    "他属性の値の中に hidden 表記があるだけ",
+    `<div title=" hidden">${V}</div>`,
+    true,
+  ],
+]) {
+  test(`Hero 動画: ${label}なら${ok ? "成功" : "失敗"}する（#453）`, async () => {
+    await withTmpDir("check-hero-video-", async (tmp) => {
+      writeDistHtml(tmp, "index.html", html);
+      writeHeroAssets(tmp);
+      const result = runScript(SCRIPT, { cwd: tmp });
+      assert.equal(result.status, ok ? 0 : 1, result.stderr);
+      if (!ok) assert.match(result.stderr, /hidden または inert/);
+    });
+  });
+}
+
 test("動画タグと必要アセットが揃っていれば成功する", async () => {
   await withTmpDir("check-hero-video-", async (tmp) => {
     writeDistHtml(tmp, "index.html", FULL_VIDEO_HTML);
