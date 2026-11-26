@@ -532,6 +532,17 @@ for (const [label, html, ok] of [
     `<div hidden>${V}</div>${V}`,
     true,
   ],
+  [
+    "video の属性値に閉じタグ表記があっても hidden 祖先を保つ",
+    `<div hidden><video title="</div>" data-x>x</video>${V}</div>`,
+    false,
+  ],
+  ["li の終了タグ省略後の兄弟 li", `<ul><li hidden>a<li>${V}</ul>`, true],
+  [
+    "hidden な li の内側の入れ子リスト",
+    `<ul><li hidden><ul><li>a<li>${V}</ul></ul>`,
+    false,
+  ],
   ["data-hidden だけで hidden が無い", `<div data-hidden>${V}</div>`, true],
   [
     "他属性の値の中に hidden 表記があるだけ",

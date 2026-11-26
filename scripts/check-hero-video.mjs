@@ -116,10 +116,14 @@ function findDirectSourceAttrs(innerHtml) {
   return result;
 }
 
+// 残った video / source の開始タグは先に 1 かたまりで読み飛ばし、属性値内の
+// `</div>` のような文字列を閉じタグと誤認しない。
 const ANCESTOR_TOKEN_PATTERN = new RegExp(
-  `${MARKER}([^${MARKER}]+)${MARKER}|<\\/([A-Za-z][^\\s>]*)\\s*>`,
+  `<(?:video|source)\\b(?:"[^"]*"|'[^']*'|[^>"'])*>|${MARKER}([^${MARKER}]+)${MARKER}|<\\/([A-Za-z][^\\s>]*)\\s*>`,
   "gi"
 );
+// li の終了タグは省略できる。新しい li は、同じリスト内で開いたままの先行 li を閉じる。
+const LIST_BOUNDARIES = new Set(["ul", "ol", "menu"]);
 
 // video の直前までの HTML から、開いたままの祖先に hidden・inert があるかを返す(#453)。
 // 閉じタグは同名の直近の開始タグまで巻き戻す(暗黙の終了タグがあっても破綻しにくい)。
@@ -128,9 +132,18 @@ function hasUnusableAncestor(htmlBefore) {
   for (const m of htmlBefore.matchAll(ANCESTOR_TOKEN_PATTERN)) {
     if (m[1] !== undefined) {
       const [name, flag] = m[1].split(" ");
+      if (name === "li") {
+        for (let i = stack.length - 1; i >= 0; i--) {
+          if (LIST_BOUNDARIES.has(stack[i].name)) break;
+          if (stack[i].name === "li") {
+            stack.length = i;
+            break;
+          }
+        }
+      }
       if (!VOID_ELEMENTS.has(name))
         stack.push({ name, unusable: flag === "hidden" });
-    } else {
+    } else if (m[2] !== undefined) {
       const name = m[2].toLowerCase();
       const idx = stack.map((e) => e.name).lastIndexOf(name);
       if (idx >= 0) stack.length = idx;
