@@ -108,12 +108,35 @@ function findDirectSourceAttrs(innerHtml) {
     if (m[1] !== undefined) {
       if (depth === 0) result.push(parseAttributes(m[1]));
     } else if (m[2] !== undefined) {
-      if (!VOID_ELEMENTS.has(m[2])) depth++;
+      if (!VOID_ELEMENTS.has(m[2].split(" ")[0])) depth++;
     } else if (m[3] !== undefined && depth > 0) {
       depth--;
     }
   }
   return result;
+}
+
+const ANCESTOR_TOKEN_PATTERN = new RegExp(
+  `${MARKER}([^${MARKER}]+)${MARKER}|<\\/([A-Za-z][^\\s>]*)\\s*>`,
+  "gi"
+);
+
+// video の直前までの HTML から、開いたままの祖先に hidden・inert があるかを返す(#453)。
+// 閉じタグは同名の直近の開始タグまで巻き戻す(暗黙の終了タグがあっても破綻しにくい)。
+function hasUnusableAncestor(htmlBefore) {
+  const stack = [];
+  for (const m of htmlBefore.matchAll(ANCESTOR_TOKEN_PATTERN)) {
+    if (m[1] !== undefined) {
+      const [name, flag] = m[1].split(" ");
+      if (!VOID_ELEMENTS.has(name))
+        stack.push({ name, unusable: flag === "hidden" });
+    } else {
+      const name = m[2].toLowerCase();
+      const idx = stack.map((e) => e.name).lastIndexOf(name);
+      if (idx >= 0) stack.length = idx;
+    }
+  }
+  return stack.some((e) => e.unusable);
 }
 
 function findHeroVideoIssue(html) {
@@ -123,21 +146,42 @@ function findHeroVideoIssue(html) {
   const inertFree = stripInertHtml(html, {
     keepTags: ["video", "source"],
     dropNoscript: true,
-    droppedTagMarker: (name) => `${MARKER}${name}${MARKER}`,
+    droppedTagMarker: (name, token) => {
+      // hidden・inert を持つ要素は目印に " hidden" を足し、祖先判定に使う(#453)。
+      // void 要素は子を持たないので足さない(base の検査も目印の完全一致に依存する)。
+      const attrs = parseAttributes(token.slice(1 + name.length, -1));
+      const unusable = attrs.some(
+        (a) => a.name === "hidden" || a.name === "inert"
+      );
+      return `${MARKER}${name}${unusable && !VOID_ELEMENTS.has(name) ? " hidden" : ""}${MARKER}`;
+    },
   });
   // refersToAsset は固定の PAGE_URL を基準に解決する。base 要素があるとブラウザは
   // 別の基準でアセットを解決するため、静的サイトの契約として base 要素を禁じる(#364)。
   if (inertFree.includes(`${MARKER}base${MARKER}`)) {
     return "base 要素があります（アセット URL の解決基準がずれます）";
   }
+  let hiddenHeroFound = false;
   for (const m of inertFree.matchAll(VIDEO_ELEMENT_PATTERN)) {
     const attrs = parseAttributes(m[1]);
     if (attrs.some((a) => a.name === "data-motion-optional")) {
+      // 自身または祖先が hidden・inert の動画は表示・操作できないので採用しない(#453)。
+      if (
+        attrs.some((a) => a.name === "hidden" || a.name === "inert") ||
+        hasUnusableAncestor(inertFree.slice(0, m.index))
+      ) {
+        hiddenHeroFound = true;
+        continue;
+      }
       heroVideo = { attrs, innerHtml: m[2] };
       break;
     }
   }
-  if (!heroVideo) return "静止画フォールバックで出力されています";
+  if (!heroVideo) {
+    return hiddenHeroFound
+      ? "Hero 動画が hidden または inert で非表示・操作不可になっています"
+      : "静止画フォールバックで出力されています";
+  }
 
   const poster = findAttrValue(heroVideo.attrs, "poster");
   if (poster === undefined || !refersToAsset(poster, "hero-poster.jpg")) {

@@ -80,7 +80,7 @@ export function stripInertHtml(
         const name = /^<([^\s/>]+)/.exec(token)[1].toLowerCase();
         if (!keepTags.includes(name)) {
           out += html.slice(last, m.index);
-          if (droppedTagMarker) out += droppedTagMarker(name);
+          if (droppedTagMarker) out += droppedTagMarker(name, token);
           last = m.index + token.length;
         }
       }
